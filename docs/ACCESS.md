@@ -12,6 +12,9 @@
 Não há credenciais fixas do dashboard em si — o login é feito com o email/senha de cada
 usuário, cadastrado no Supabase Auth pelo Super Admin (ver "Gestão de usuários" abaixo).
 
+O primeiro Super Admin (antes de existir qualquer usuário pra convidar os demais pela UI) é
+criado rodando `scripts/seed-admin.mjs` — ver [`README.md`](../README.md#rodando-localmente).
+
 | Serviço | Onde ver/gerenciar |
 | --- | --- |
 | Supabase (projeto) | painel do Supabase — Project Settings → API para URL/keys |

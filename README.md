@@ -15,7 +15,14 @@ npm run dev
 ```
 
 Abra [http://localhost:3000](http://localhost:3000). Sem sessão válida, qualquer rota redireciona
-para `/login`.
+para `/login`. Com o banco migrado (ver [`supabase/README.md`](./supabase/README.md)) mas sem
+nenhum usuário ainda, crie o primeiro login de Super Admin com:
+
+```bash
+SEED_ADMIN_EMAIL=voce@dominio.com node --env-file=.env.local scripts/seed-admin.mjs
+```
+
+Sem `SEED_ADMIN_PASSWORD`, uma senha é gerada e impressa uma única vez no terminal.
 
 ## Variáveis de ambiente
 
@@ -87,5 +94,6 @@ supabase/
   migrations/            # schema + RLS + view de performance, numeradas e idempotentes
   seed/academias.sql      # seed manual das 31 unidades (preencher antes de rodar)
 scripts/
+  seed-admin.mjs          # cria/promove o primeiro Super Admin via Admin API
   create-test-users.mjs   # cria 1 usuário de teste por role via Admin API
 ```

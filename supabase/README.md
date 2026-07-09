@@ -34,10 +34,15 @@ psql "$DATABASE_URL" -f supabase/seed/academias.sql
 | `0008_rls_policies.sql` | Habilita RLS e cria as policies por role em todas as tabelas |
 | `0009_realtime.sql` | Adiciona `contacts`, `conversions`, `manual_data` à publication `supabase_realtime` |
 | `0010_academia_performance_view.sql` | View `academia_performance` (contatos/conversões agregados por unidade, com RLS via `security_invoker`) |
+| `0011_contacts_telefone.sql` | Adiciona `telefone` em `contacts` (telefone individual do contato, usado no relatório diário) |
+| `0012_report_settings.sql` | Tabela `report_settings` (URL do webhook do relatório diário, ver `/configuracoes`) |
 
 ## Depois de aplicar
 
 1. Rodar `seed/academias.sql` com a lista real das 31 unidades (nome + número de WhatsApp)
 2. Resolver o backfill de `academia_id` em `contacts`/`conversions` (ponto de atenção do 0006)
-3. Criar os usuários de teste: `node --env-file=.env.local scripts/create-test-users.mjs`
-4. Seguir o checklist de `docs/SPRINT2_RLS_TESTING.md`
+3. Criar o primeiro Super Admin (só assim dá pra logar e convidar o resto pela própria UI):
+   `SEED_ADMIN_EMAIL=voce@dominio.com node --env-file=.env.local scripts/seed-admin.mjs`
+4. Em dev/teste, opcionalmente criar um usuário de cada role:
+   `node --env-file=.env.local scripts/create-test-users.mjs`
+5. Seguir o checklist de `docs/SPRINT2_RLS_TESTING.md`
