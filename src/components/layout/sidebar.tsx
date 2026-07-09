@@ -12,9 +12,10 @@ const NAV_ITEMS: { label: string; href: string; roles?: UserRole[]; icon: IconNa
   { label: 'Números (WhatsApp)', href: '/numeros', icon: 'chat' },
   { label: 'Academias Treinadas', href: '/treinadas', icon: 'badge' },
   { label: 'Usuários', href: '/usuarios', roles: ['super_admin'], icon: 'users' },
+  { label: 'Configurações', href: '/configuracoes', roles: ['super_admin'], icon: 'settings' },
 ]
 
-type IconName = 'chart' | 'bars' | 'pen' | 'chat' | 'badge' | 'users'
+type IconName = 'chart' | 'bars' | 'pen' | 'chat' | 'badge' | 'users' | 'settings'
 
 function NavIcon({ name, className }: { name: IconName; className?: string }) {
   const paths: Record<IconName, React.ReactNode> = {
@@ -52,6 +53,13 @@ function NavIcon({ name, className }: { name: IconName; className?: string }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m5-3.13a4 4 0 100-8 4 4 0 000 8zm7 3a4 4 0 00-3-3.87"
+      />
+    ),
+    settings: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z"
       />
     ),
   }

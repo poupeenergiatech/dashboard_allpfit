@@ -11,7 +11,8 @@ export const dynamic = 'force-dynamic'
 type AgregadorContato = {
   id: string
   nome?: string
-  numero_telefone: string // deve bater com academias.numero_telefone
+  numero_telefone: string // número da ACADEMIA (instância) — deve bater com academias.numero_telefone
+  telefone_contato?: string // PREMISSA A VALIDAR: telefone individual do cliente, se o agregador expuser esse campo
   criado_em: string
 }
 
@@ -48,6 +49,7 @@ export async function GET() {
       .map((c) => ({
         id: c.id,
         nome: c.nome ?? null,
+        telefone: c.telefone_contato ?? null,
         academia_id: academiaIdByPhone.get(c.numero_telefone) ?? null,
         created_at: c.criado_em,
       }))
