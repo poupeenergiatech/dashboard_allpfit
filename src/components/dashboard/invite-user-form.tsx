@@ -12,7 +12,13 @@ const ROLES: { value: string; label: string }[] = [
   { value: 'visualizador', label: 'Visualizador' },
 ]
 
-export function InviteUserForm({ academias }: { academias: Academia[] }) {
+export function InviteUserForm({
+  academias,
+  onInvite = inviteUser,
+}: {
+  academias: Academia[]
+  onInvite?: (formData: FormData) => Promise<void>
+}) {
   const [role, setRole] = useState('coordenador')
   const [pending, startTransition] = useTransition()
   const { showToast } = useToast()
@@ -25,7 +31,7 @@ export function InviteUserForm({ academias }: { academias: Academia[] }) {
 
     startTransition(async () => {
       try {
-        await inviteUser(formData)
+        await onInvite(formData)
         showToast('Convite enviado.')
         form.reset()
         setRole('coordenador')
@@ -36,34 +42,19 @@ export function InviteUserForm({ academias }: { academias: Academia[] }) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:grid-cols-2 lg:grid-cols-4"
-    >
+    <form onSubmit={handleSubmit} className="card grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
       <div className="lg:col-span-2">
-        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="email">
+        <label className="field-label" htmlFor="email">
           Email
         </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-        />
+        <input id="email" name="email" type="email" required className="input" placeholder="nome@exemplo.com" />
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="role">
+        <label className="field-label" htmlFor="role">
           Role
         </label>
-        <select
-          id="role"
-          name="role"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-        >
+        <select id="role" name="role" value={role} onChange={(e) => setRole(e.target.value)} className="select">
           {ROLES.map((r) => (
             <option key={r.value} value={r.value}>
               {r.label}
@@ -73,7 +64,7 @@ export function InviteUserForm({ academias }: { academias: Academia[] }) {
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="academia_id">
+        <label className="field-label" htmlFor="academia_id">
           Academia
         </label>
         <select
@@ -81,7 +72,7 @@ export function InviteUserForm({ academias }: { academias: Academia[] }) {
           name="academia_id"
           disabled={!needsAcademia}
           required={needsAcademia}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-400"
+          className="select"
         >
           <option value="">—</option>
           {academias.map((a) => (
@@ -93,11 +84,7 @@ export function InviteUserForm({ academias }: { academias: Academia[] }) {
       </div>
 
       <div className="flex items-end lg:col-span-4">
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-blue-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800 disabled:opacity-50"
-        >
+        <button type="submit" disabled={pending} className="btn-primary">
           {pending ? 'Enviando…' : 'Convidar'}
         </button>
       </div>

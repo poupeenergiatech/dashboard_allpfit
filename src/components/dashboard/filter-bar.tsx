@@ -26,7 +26,7 @@ export function FilterBar({
   const showAllTab = academias.length > 1
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-wrap gap-2">
         {showAllTab && (
           <FilterTab active={academiaId === null} onClick={() => onAcademiaChange(null)}>
@@ -44,15 +44,15 @@ export function FilterBar({
         ))}
       </div>
 
-      <div className="flex gap-1 rounded-lg bg-slate-100 p-1">
+      <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
         {PERIODS.map((p) => (
           <button
             key={p.value}
             type="button"
             onClick={() => onPeriodChange(p.value)}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+            className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold transition ${
               period === p.value
-                ? 'bg-white text-blue-800 shadow-sm'
+                ? 'bg-white text-blue-700 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
@@ -77,8 +77,10 @@ function FilterTab({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
-        active ? 'bg-blue-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+      className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+        active
+          ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/25'
+          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
       }`}
     >
       {children}

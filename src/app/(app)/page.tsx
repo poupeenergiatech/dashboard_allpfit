@@ -9,7 +9,7 @@ export default async function DashboardHomePage() {
 
   if (typeof profile === 'string' || !profile) {
     return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800">
+      <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-6 text-sm font-medium text-amber-800">
         {typeof profile === 'string' ? profile : 'Nenhum perfil encontrado para este usuário.'}
       </div>
     )

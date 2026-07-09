@@ -18,9 +18,12 @@ export function FunnelDashboard({
   const { counts, loading, error, lastUpdatedAt } = useFunnelData(academiaId, period)
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-900">Funil de conversão</h2>
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="page-title">Funil de conversão</h2>
+          <p className="page-subtitle">Do QR code na academia até a assinatura do contrato.</p>
+        </div>
         <LiveIndicator lastUpdatedAt={lastUpdatedAt} />
       </div>
 
@@ -32,12 +35,16 @@ export function FunnelDashboard({
         onPeriodChange={setPeriod}
       />
 
-      {error && <p className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>}
+      {error && (
+        <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+          {error}
+        </p>
+      )}
 
       {loading && !counts ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-28 animate-pulse rounded-xl bg-slate-100" />
+            <div key={i} className="skeleton h-32 rounded-2xl" />
           ))}
         </div>
       ) : (

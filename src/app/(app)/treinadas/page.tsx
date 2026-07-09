@@ -10,8 +10,8 @@ export default async function TreinadasPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">Academias treinadas</h2>
-        <p className="text-sm text-slate-500">
+        <h2 className="page-title">Academias treinadas</h2>
+        <p className="page-subtitle">
           {canEdit
             ? 'Marque as unidades que já passaram pelo treinamento.'
             : 'Somente Super Admin e Gestor podem alterar esse status.'}

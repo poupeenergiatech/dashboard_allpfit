@@ -17,15 +17,15 @@ export default async function PerformancePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900">Performance por academia</h2>
-        <p className="text-sm text-slate-500">Totais acumulados de contatos e conversões por unidade.</p>
+        <h2 className="page-title">Performance por academia</h2>
+        <p className="page-subtitle">Totais acumulados de contatos e conversões por unidade.</p>
       </div>
 
       <AcademiaTable rows={rows} />
 
       {profile && canWrite(profile.role) && (
         <div>
-          <h3 className="mb-2 text-sm font-semibold text-slate-900">Atualizar dados manuais do dia</h3>
+          <h3 className="mb-3 text-sm font-semibold text-slate-900">Atualizar dados manuais do dia</h3>
           <ManualDataForm
             academias={academias}
             fixedAcademiaId={seesAllAcademias(profile.role) ? null : profile.academiaId}

@@ -4,7 +4,7 @@ export default function Loading() {
   return (
     <div className="space-y-4">
       <PageHeaderSkeleton />
-      <div className="h-16 animate-pulse rounded-xl bg-slate-100" />
+      <div className="skeleton h-16 rounded-2xl" />
       <CardsSkeleton count={4} />
     </div>
   )
