@@ -13,8 +13,10 @@ que o ambiente onde estou não tem o Docker disponível para buildar a imagem de
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
-   - `AGREGADOR_API_URL` / `AGREGADOR_API_KEY` (se já tiver)
+   - `AGREGADOR_API_URL` / `AGREGADOR_API_KEY` (se já tiver, só usado pelo modo pull antigo)
    - `CRON_SECRET` (protege `/api/relatorio` — gere um valor aleatório qualquer)
+   - `AGREGADOR_WEBHOOK_SECRET` (protege `POST /api/webhooks/agregador` — gere outro valor
+     aleatório, diferente do `CRON_SECRET`, e configure o mesmo valor no painel do agregador)
 
    **Atenção:** as duas primeiras (`NEXT_PUBLIC_*`) precisam estar disponíveis em **build
    time**, não só em runtime — elas ficam embutidas no bundle JS que vai pro navegador. Se o
@@ -44,6 +46,19 @@ O endpoint aceita `?data=YYYY-MM-DD` pra reprocessar um dia específico manualme
 destino do relatório (pra onde o POST é enviado) é configurada pelo Super Admin em
 `/configuracoes`, não por variável de ambiente.
 
+## Webhook de entrada do agregador (`POST /api/webhooks/agregador`)
+
+Direção oposta ao cron acima: aqui é o **agregador** que chama o dashboard, não o contrário.
+Configure no painel/sistema do agregador:
+
+- **URL:** `https://SEU_DOMINIO/api/webhooks/agregador`
+- **Método:** `POST`
+- **Header:** `Authorization: Bearer <AGREGADOR_WEBHOOK_SECRET>` (mesmo valor da env var acima)
+- **Corpo:** o payload de relatório diário — formato completo em `docs/SPRINT7_NOTES.md`
+
+Sem a env var configurada, o endpoint recusa qualquer chamada (503) — ele grava dados, então
+não tem "modo sem checagem" como o `/api/relatorio`.
+
 ## Checklist de validação pós-deploy
 
 - [ ] URL pública acessível com SSL ativo
@@ -55,6 +70,8 @@ destino do relatório (pra onde o POST é enviado) é configurada pelo Super Adm
 - [ ] `/api/relatorio?data=YYYY-MM-DD` (com o header `Authorization`) retorna `sent: true`
       depois de configurar uma URL de teste em `/configuracoes`
 - [ ] Cron externo do relatório diário configurado (ver seção acima)
+- [ ] `POST /api/webhooks/agregador` configurado no painel do agregador e testado com um
+      envio real (conferir `academias_nao_encontradas` na resposta)
 
 Isso fecha o que tinha ficado pendente da Sprint 1 (S1-09 a S1-11) — eu não tenho acesso ao
 painel do EasyPanel, então esses passos precisam ser executados por você.

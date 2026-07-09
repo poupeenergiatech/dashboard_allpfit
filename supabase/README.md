@@ -36,6 +36,7 @@ psql "$DATABASE_URL" -f supabase/seed/academias.sql
 | `0010_academia_performance_view.sql` | View `academia_performance` (contatos/conversões agregados por unidade, com RLS via `security_invoker`) |
 | `0011_contacts_telefone.sql` | Adiciona `telefone` em `contacts` (telefone individual do contato, usado no relatório diário) |
 | `0012_report_settings.sql` | Tabela `report_settings` (URL do webhook do relatório diário, ver `/configuracoes`) |
+| `0013_contacts_webhook_unique.sql` | Constraint única em `contacts (academia_id, telefone, created_at)` — upsert idempotente em `POST /api/webhooks/agregador` |
 
 ## Depois de aplicar
 

@@ -1,3 +1,4 @@
+import { formatDateBR, formatDateTimeBR } from './date-br'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export type ReportContact = {
@@ -18,18 +19,6 @@ export type ReportPayload = {
   gerado_em: string
   total_novos_contatos: number
   por_academia: ReportAcademia[]
-}
-
-function pad(n: number): string {
-  return String(n).padStart(2, '0')
-}
-
-function formatDateBR(date: Date): string {
-  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`
-}
-
-function formatDateTimeBR(date: Date): string {
-  return `${formatDateBR(date)} ${pad(date.getHours())}:${pad(date.getMinutes())}`
 }
 
 // Monta o relatório de novos contatos de um dia específico, agrupado por academia — payload
