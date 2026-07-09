@@ -1,7 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PUBLIC_PATHS = ['/login', '/auth']
+// /preview é uma rota de demonstração com dados fictícios (sem Supabase real) — só
+// existe fora de produção, pra nunca virar um jeito de pular a autenticação de verdade.
+const PUBLIC_PATHS =
+  process.env.NODE_ENV === 'production' ? ['/login', '/auth'] : ['/login', '/auth', '/preview']
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
