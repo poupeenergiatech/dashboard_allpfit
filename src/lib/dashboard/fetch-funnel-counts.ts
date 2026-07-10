@@ -17,6 +17,10 @@ function enumerateDays(fromDate: string, days: number): string[] {
   })
 }
 
+function keyOf(academiaId: string, day: string): string {
+  return `${academiaId}|${day}`
+}
+
 // Chamada como Server Action direto do hook client (use-funnel-data.ts) — roda em
 // Node.js runtime, então pode falar com o Postgres. requestedAcademiaId vem do filtro
 // escolhido no client, mas é sempre resolvido de novo aqui via scopeAcademiaId: sem
@@ -32,38 +36,30 @@ export async function fetchFunnelCounts(
   const academiaId = scopeAcademiaId(profile, requestedAcademiaId)
   const { from, fromDate } = periodRange(period)
 
-  const [
-    { rows: contactsRows },
-    { rows: conversionsRows },
-    { rows: manualRows },
-    { rows: contatosPorDia },
-    { rows: conversoesPorDia },
-  ] = await Promise.all([
-    pool.query<{ count: number }>(
-      `select count(*) as count from contacts
-       where created_at >= $1 and ($2::uuid is null or academia_id = $2)`,
-      [from, academiaId]
-    ),
-    pool.query<{ count: number }>(
-      `select count(*) as count from conversions
-       where created_at >= $1 and ($2::uuid is null or academia_id = $2)`,
-      [from, academiaId]
-    ),
-    pool.query<{ academia_id: string; data: string; total_alunos: number; total_scans: number }>(
-      `select academia_id, data, total_alunos, total_scans from manual_data
+  const [{ rows: manualRows }, { rows: contatosPorDia }, { rows: conversoesPorDia }] = await Promise.all([
+    pool.query<{
+      academia_id: string
+      data: string
+      total_alunos: number
+      total_scans: number
+      contatos_ajuste: number | null
+      conversoes_ajuste: number | null
+    }>(
+      `select academia_id, data, total_alunos, total_scans, contatos_ajuste, conversoes_ajuste
+       from manual_data
        where data >= $1 and ($2::uuid is null or academia_id = $2)`,
       [fromDate, academiaId]
     ),
-    pool.query<{ day: string; count: number }>(
-      `select date_trunc('day', created_at)::date as day, count(*) as count from contacts
+    pool.query<{ academia_id: string; day: string; count: number }>(
+      `select academia_id, date_trunc('day', created_at)::date as day, count(*) as count from contacts
        where created_at >= $1 and ($2::uuid is null or academia_id = $2)
-       group by day`,
+       group by academia_id, day`,
       [from, academiaId]
     ),
-    pool.query<{ day: string; count: number }>(
-      `select date_trunc('day', created_at)::date as day, count(*) as count from conversions
+    pool.query<{ academia_id: string; day: string; count: number }>(
+      `select academia_id, date_trunc('day', created_at)::date as day, count(*) as count from conversions
        where created_at >= $1 and ($2::uuid is null or academia_id = $2)
-       group by day`,
+       group by academia_id, day`,
       [from, academiaId]
     ),
   ])
@@ -87,20 +83,49 @@ export async function fetchFunnelCounts(
     0
   )
 
-  const contatosByDay = new Map(contatosPorDia.map((r) => [r.day, r.count]))
-  const conversoesByDay = new Map(conversoesPorDia.map((r) => [r.day, r.count]))
+  // Contatos/conversões: por padrão é a contagem automática (contacts/conversions,
+  // por academia+dia); quando existe um ajuste manual pra aquele academia+dia (ver
+  // migration 0002), ele substitui a contagem automática por completo — não soma em
+  // cima. O merge é por chave academia_id+dia pra um ajuste não "vazar" pra outra
+  // academia quando o filtro é "todas".
+  const rawContatos = new Map(contatosPorDia.map((r) => [keyOf(r.academia_id, r.day), r.count]))
+  const rawConversoes = new Map(conversoesPorDia.map((r) => [keyOf(r.academia_id, r.day), r.count]))
+  const effectiveContatos = new Map(rawContatos)
+  const effectiveConversoes = new Map(rawConversoes)
+
+  for (const row of manualRows) {
+    const key = keyOf(row.academia_id, row.data)
+    if (row.contatos_ajuste != null) effectiveContatos.set(key, row.contatos_ajuste)
+    if (row.conversoes_ajuste != null) effectiveConversoes.set(key, row.conversoes_ajuste)
+  }
+
+  let totalContatos = 0
+  let totalConversoes = 0
+  const contatosPorDiaEfetivo = new Map<string, number>()
+  const conversoesPorDiaEfetivo = new Map<string, number>()
+
+  for (const [key, value] of effectiveContatos) {
+    const day = key.split('|')[1]
+    totalContatos += value
+    contatosPorDiaEfetivo.set(day, (contatosPorDiaEfetivo.get(day) ?? 0) + value)
+  }
+  for (const [key, value] of effectiveConversoes) {
+    const day = key.split('|')[1]
+    totalConversoes += value
+    conversoesPorDiaEfetivo.set(day, (conversoesPorDiaEfetivo.get(day) ?? 0) + value)
+  }
 
   const series: DailyFunnelPoint[] = enumerateDays(fromDate, DAYS_BY_PERIOD[period]).map((date) => ({
     date,
-    contatos: contatosByDay.get(date) ?? 0,
-    conversoes: conversoesByDay.get(date) ?? 0,
+    contatos: contatosPorDiaEfetivo.get(date) ?? 0,
+    conversoes: conversoesPorDiaEfetivo.get(date) ?? 0,
   }))
 
   return {
     totalAlunos,
     totalScans,
-    totalContatos: contactsRows[0]?.count ?? 0,
-    totalConversoes: conversionsRows[0]?.count ?? 0,
+    totalContatos,
+    totalConversoes,
     series,
   }
 }

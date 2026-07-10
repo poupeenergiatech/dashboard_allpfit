@@ -5,6 +5,7 @@ import type { AcademiaPerformance } from '@/lib/dashboard/fetch-academia-perform
 import type { PendingSignature } from '@/lib/dashboard/fetch-pendentes'
 import type { NumeroGroup } from '@/lib/dashboard/fetch-numeros'
 import type { TreinadaStatus } from '@/lib/dashboard/fetch-treinadas'
+import type { ManualDataEntry } from '@/lib/dashboard/fetch-manual-data-history'
 import type { UserRow } from '@/components/dashboard/users-table'
 
 export const MOCK_ACADEMIAS: Academia[] = [
@@ -40,6 +41,31 @@ export const MOCK_PERFORMANCE: AcademiaPerformance[] = MOCK_ACADEMIAS.map((a, i)
   totalContatos: 60 - i * 6,
   totalConversoes: 14 - i,
 }))
+
+// Uma linha com ajuste manual de contatos (ex.: correção de um dia em que o
+// webhook do agregador falhou), pra ilustrar o badge no histórico.
+export const MOCK_MANUAL_DATA_HISTORY: ManualDataEntry[] = [
+  {
+    id: 'md1',
+    academiaId: MOCK_ACADEMIAS[0].id,
+    academiaNome: MOCK_ACADEMIAS[0].nome,
+    data: '2026-07-10',
+    totalAlunos: 812,
+    totalScans: 34,
+    contatosAjuste: 12,
+    conversoesAjuste: null,
+  },
+  {
+    id: 'md2',
+    academiaId: MOCK_ACADEMIAS[1].id,
+    academiaNome: MOCK_ACADEMIAS[1].nome,
+    data: '2026-07-09',
+    totalAlunos: 654,
+    totalScans: 21,
+    contatosAjuste: null,
+    conversoesAjuste: null,
+  },
+]
 
 export const MOCK_PENDENTES: PendingSignature[] = [
   { id: 'p1', nome: 'Carla Souza', academiaNome: MOCK_ACADEMIAS[0].nome, dataContato: '2026-07-05' },

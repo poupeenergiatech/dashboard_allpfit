@@ -1,7 +1,7 @@
 import { AcademiaPerformanceChart } from '@/components/dashboard/academia-performance-chart'
 import { AcademiaTable } from '@/components/dashboard/academia-table'
-import { ManualDataForm } from '@/components/dashboard/manual-data-form'
-import { MOCK_ACADEMIAS, MOCK_PERFORMANCE } from '@/lib/preview/mock-data'
+import { ManualDataSection } from '@/components/dashboard/manual-data-section'
+import { MOCK_ACADEMIAS, MOCK_MANUAL_DATA_HISTORY, MOCK_PERFORMANCE } from '@/lib/preview/mock-data'
 import { mockSave } from '@/lib/preview/mock-actions'
 
 export default function PreviewPerformancePage() {
@@ -17,8 +17,13 @@ export default function PreviewPerformancePage() {
       <AcademiaTable rows={MOCK_PERFORMANCE} />
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900">Atualizar dados manuais do dia</h3>
-        <ManualDataForm academias={MOCK_ACADEMIAS} fixedAcademiaId={null} onSave={mockSave} />
+        <h3 className="mb-3 text-sm font-semibold text-slate-900">Dados manuais</h3>
+        <ManualDataSection
+          academias={MOCK_ACADEMIAS}
+          fixedAcademiaId={null}
+          history={MOCK_MANUAL_DATA_HISTORY}
+          onSave={mockSave}
+        />
       </div>
     </div>
   )
