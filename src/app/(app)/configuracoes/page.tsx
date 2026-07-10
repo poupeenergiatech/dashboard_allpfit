@@ -1,4 +1,5 @@
 import { ReportWebhookForm } from '@/components/dashboard/report-webhook-form'
+import { SyncAlleDocumentosButton } from '@/components/dashboard/sync-alle-documentos-button'
 import { fetchReportWebhookUrl } from '@/lib/dashboard/fetch-report-config'
 import { canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
 
@@ -23,6 +24,7 @@ export default async function ConfiguracoesPage() {
       </div>
 
       <ReportWebhookForm initialUrl={webhookUrl} />
+      <SyncAlleDocumentosButton />
     </div>
   )
 }
