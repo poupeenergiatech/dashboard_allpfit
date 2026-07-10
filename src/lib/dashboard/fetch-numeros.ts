@@ -5,7 +5,7 @@ export type NumeroGroup = {
   numeroTelefone: string | null
   ativo: boolean
   mensagensHoje: number
-  unidades: { academiaId: string; nome: string }[]
+  unidades: { academiaId: string; nome: string; ativo: boolean }[]
 }
 
 // PREMISSA A VALIDAR: "status online/offline" (S4-06) idealmente viria do agregador em
@@ -52,13 +52,13 @@ export async function fetchNumeros(profile: UserProfile): Promise<NumeroGroup[]>
     if (existing) {
       existing.mensagensHoje += row.mensagens_hoje
       existing.ativo = existing.ativo || row.ativo
-      existing.unidades.push({ academiaId: row.academia_id, nome: row.nome })
+      existing.unidades.push({ academiaId: row.academia_id, nome: row.nome, ativo: row.ativo })
     } else {
       groups.set(key, {
         numeroTelefone: row.numero_telefone,
         ativo: row.ativo,
         mensagensHoje: row.mensagens_hoje,
-        unidades: [{ academiaId: row.academia_id, nome: row.nome }],
+        unidades: [{ academiaId: row.academia_id, nome: row.nome, ativo: row.ativo }],
       })
     }
   }

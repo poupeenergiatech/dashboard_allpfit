@@ -55,21 +55,21 @@ export const MOCK_NUMEROS: NumeroGroup[] = [
     ativo: true,
     mensagensHoje: 32 + 28,
     unidades: [
-      { academiaId: MOCK_ACADEMIAS[0].id, nome: MOCK_ACADEMIAS[0].nome },
-      { academiaId: MOCK_ACADEMIAS[1].id, nome: MOCK_ACADEMIAS[1].nome },
+      { academiaId: MOCK_ACADEMIAS[0].id, nome: MOCK_ACADEMIAS[0].nome, ativo: true },
+      { academiaId: MOCK_ACADEMIAS[1].id, nome: MOCK_ACADEMIAS[1].nome, ativo: false },
     ],
   },
   ...MOCK_ACADEMIAS.slice(2, 5).map((a, i) => ({
     numeroTelefone: `551199${String(1000000 + i).slice(-7)}`,
     ativo: i % 3 !== 2,
     mensagensHoje: 24 - i * 5,
-    unidades: [{ academiaId: a.id, nome: a.nome }],
+    unidades: [{ academiaId: a.id, nome: a.nome, ativo: i % 3 !== 2 }],
   })),
   {
     numeroTelefone: null,
     ativo: false,
     mensagensHoje: 0,
-    unidades: [{ academiaId: MOCK_ACADEMIAS[5].id, nome: MOCK_ACADEMIAS[5].nome }],
+    unidades: [{ academiaId: MOCK_ACADEMIAS[5].id, nome: MOCK_ACADEMIAS[5].nome, ativo: false }],
   },
 ]
 
