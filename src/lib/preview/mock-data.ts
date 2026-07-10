@@ -3,7 +3,7 @@
 import type { Academia, FunnelCounts } from '@/lib/dashboard/types'
 import type { AcademiaPerformance } from '@/lib/dashboard/fetch-academia-performance'
 import type { PendingSignature } from '@/lib/dashboard/fetch-pendentes'
-import type { NumeroStatus } from '@/lib/dashboard/fetch-numeros'
+import type { NumeroGroup } from '@/lib/dashboard/fetch-numeros'
 import type { TreinadaStatus } from '@/lib/dashboard/fetch-treinadas'
 import type { UserRow } from '@/components/dashboard/users-table'
 
@@ -36,13 +36,31 @@ export const MOCK_PENDENTES: PendingSignature[] = [
   { id: 'p3', nome: 'Fernanda Lima', academiaNome: MOCK_ACADEMIAS[2].nome, dataContato: '2026-07-07' },
 ]
 
-export const MOCK_NUMEROS: NumeroStatus[] = MOCK_ACADEMIAS.map((a, i) => ({
-  academiaId: a.id,
-  nome: a.nome,
-  numeroTelefone: `551199${String(1000000 + i).slice(-7)}`,
-  ativo: i % 4 !== 3,
-  mensagensHoje: 32 - i * 4,
-}))
+// Duas unidades (Pinheiros e Moema) compartilhando o mesmo número, pra ilustrar o
+// agrupamento — o resto tem número próprio ou nenhum configurado ainda.
+export const MOCK_NUMEROS: NumeroGroup[] = [
+  {
+    numeroTelefone: '5511987650001',
+    ativo: true,
+    mensagensHoje: 32 + 28,
+    unidades: [
+      { academiaId: MOCK_ACADEMIAS[0].id, nome: MOCK_ACADEMIAS[0].nome },
+      { academiaId: MOCK_ACADEMIAS[1].id, nome: MOCK_ACADEMIAS[1].nome },
+    ],
+  },
+  ...MOCK_ACADEMIAS.slice(2, 5).map((a, i) => ({
+    numeroTelefone: `551199${String(1000000 + i).slice(-7)}`,
+    ativo: i % 3 !== 2,
+    mensagensHoje: 24 - i * 5,
+    unidades: [{ academiaId: a.id, nome: a.nome }],
+  })),
+  {
+    numeroTelefone: null,
+    ativo: false,
+    mensagensHoje: 0,
+    unidades: [{ academiaId: MOCK_ACADEMIAS[5].id, nome: MOCK_ACADEMIAS[5].nome }],
+  },
+]
 
 export const MOCK_TREINADAS: TreinadaStatus[] = MOCK_ACADEMIAS.map((a, i) => ({
   academiaId: a.id,

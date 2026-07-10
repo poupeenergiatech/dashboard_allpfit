@@ -1,18 +1,17 @@
 import { pool } from '@/lib/db/pool'
 import { seesAllAcademias, type UserProfile } from '@/lib/auth/profile'
 
-export type NumeroStatus = {
-  academiaId: string
-  nome: string
+export type NumeroGroup = {
   numeroTelefone: string | null
   ativo: boolean
   mensagensHoje: number
+  unidades: { academiaId: string; nome: string }[]
 }
 
 // PREMISSA A VALIDAR: "status online/offline" (S4-06) idealmente viria do agregador em
 // tempo real, mas não temos esse dado modelado ainda — usamos `academias.ativo` como
 // proxy até o agregador expor um status real por número.
-export async function fetchNumeros(profile: UserProfile): Promise<NumeroStatus[]> {
+export async function fetchNumeros(profile: UserProfile): Promise<NumeroGroup[]> {
   const scopedAcademiaId = seesAllAcademias(profile.role) ? null : profile.academiaId
 
   // Calculado em JS (fuso do processo Node), não com now()/date_trunc do Postgres, pra
@@ -41,11 +40,36 @@ export async function fetchNumeros(profile: UserProfile): Promise<NumeroStatus[]
     [scopedAcademiaId, todayStart.toISOString()]
   )
 
-  return rows.map((row) => ({
-    academiaId: row.academia_id,
-    nome: row.nome,
-    numeroTelefone: row.numero_telefone,
-    ativo: row.ativo,
-    mensagensHoje: row.mensagens_hoje,
-  }))
+  // Agrupa por número — várias unidades podem compartilhar a mesma instância
+  // WhatsApp do agregador. Unidades sem número configurado não são agrupadas entre
+  // si (cada uma vira seu próprio grupo de 1), pra não esconder quem falta configurar.
+  const groups = new Map<string, NumeroGroup>()
+
+  for (const row of rows) {
+    const key = row.numero_telefone ?? `__sem-numero:${row.academia_id}`
+    const existing = groups.get(key)
+
+    if (existing) {
+      existing.mensagensHoje += row.mensagens_hoje
+      existing.ativo = existing.ativo || row.ativo
+      existing.unidades.push({ academiaId: row.academia_id, nome: row.nome })
+    } else {
+      groups.set(key, {
+        numeroTelefone: row.numero_telefone,
+        ativo: row.ativo,
+        mensagensHoje: row.mensagens_hoje,
+        unidades: [{ academiaId: row.academia_id, nome: row.nome }],
+      })
+    }
+  }
+
+  // Números com mais unidades vinculadas primeiro (é o que mais interessa checar);
+  // sem número configurado sempre por último.
+  return [...groups.values()].sort((a, b) => {
+    if (!a.numeroTelefone && !b.numeroTelefone) return 0
+    if (!a.numeroTelefone) return 1
+    if (!b.numeroTelefone) return -1
+    if (b.unidades.length !== a.unidades.length) return b.unidades.length - a.unidades.length
+    return a.numeroTelefone.localeCompare(b.numeroTelefone)
+  })
 }
