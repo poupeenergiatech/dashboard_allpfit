@@ -26,11 +26,16 @@ que o ambiente onde estou não tem o Docker disponível para buildar a imagem de
    injeta env vars em runtime, configure-as também como build args do serviço (ou rode
    `docker build --build-arg` apontando pra elas, ajustando o Dockerfile pra declarar
    `ARG`/`ENV` correspondentes).
-5. Antes do primeiro deploy (ou logo depois, com acesso ao `DATABASE_URL` de produção),
-   aplicar o schema e criar o primeiro Super Admin — ver "Rodando localmente" no
-   [`README.md`](../README.md), mesmos comandos (`scripts/migrate.mjs`, depois
-   `scripts/seed-admin.mjs`), só que apontando pro `DATABASE_URL` de produção. Sem isso, o
-   primeiro deploy fica sem nenhum usuário capaz de logar.
+5. O container aplica o schema sozinho a cada start (`docker-entrypoint.sh` roda
+   `scripts/migrate.mjs`, idempotente, antes do `server.js`) — não precisa rodar migration
+   manualmente. Falta só criar o primeiro Super Admin, senão o primeiro deploy fica sem
+   nenhum usuário capaz de logar:
+   ```bash
+   SEED_ADMIN_EMAIL=voce@dominio.com DATABASE_URL=<connection string de produção> \
+     node scripts/seed-admin.mjs
+   ```
+   Rode isso de qualquer máquina com acesso de rede ao Postgres de produção (ou via um
+   shell dentro do próprio container, se o EasyPanel oferecer isso).
 6. Reservar/configurar a porta e o domínio do serviço, com SSL (Let's Encrypt automático do
    EasyPanel, se disponível).
 7. Deploy. Testar a URL pública: deve redirecionar pra `/login` sem sessão.
@@ -70,7 +75,9 @@ não tem "modo sem checagem" como o `/api/relatorio`.
 ## Checklist de validação pós-deploy
 
 - [ ] URL pública acessível com SSL ativo
-- [ ] `/login` carrega e autentica com um usuário real
+- [ ] Log do container mostra as migrations aplicadas na subida (`docker-entrypoint.sh` →
+      `scripts/migrate.mjs`) sem erro
+- [ ] `/login` carrega e autentica com um usuário real (criado via `scripts/seed-admin.mjs`)
 - [ ] Rotas protegidas redirecionam sem sessão
 - [ ] Funil carrega dados reais e atualiza sozinho (polling a cada ~10s, indicador "AO VIVO")
 - [ ] `/api/agregador` consegue alcançar a API do agregador (sem bloqueio de rede/firewall
