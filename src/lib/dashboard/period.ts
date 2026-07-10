@@ -1,6 +1,6 @@
 import type { Period } from './types'
 
-const DAYS_BY_PERIOD: Record<Period, number> = {
+export const DAYS_BY_PERIOD: Record<Period, number> = {
   hoje: 1,
   '7dias': 7,
   '30dias': 30,

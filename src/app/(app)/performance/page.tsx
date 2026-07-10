@@ -1,3 +1,4 @@
+import { AcademiaPerformanceChart } from '@/components/dashboard/academia-performance-chart'
 import { AcademiaTable } from '@/components/dashboard/academia-table'
 import { ManualDataForm } from '@/components/dashboard/manual-data-form'
 import { fetchAcademiaPerformance } from '@/lib/dashboard/fetch-academia-performance'
@@ -18,6 +19,8 @@ export default async function PerformancePage() {
         <h2 className="page-title">Performance por academia</h2>
         <p className="page-subtitle">Totais acumulados de contatos e conversões por unidade.</p>
       </div>
+
+      <AcademiaPerformanceChart rows={rows} />
 
       <AcademiaTable rows={rows} />
 

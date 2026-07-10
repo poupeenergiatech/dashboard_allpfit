@@ -1,3 +1,4 @@
+import { AcademiaPerformanceChart } from '@/components/dashboard/academia-performance-chart'
 import { AcademiaTable } from '@/components/dashboard/academia-table'
 import { ManualDataForm } from '@/components/dashboard/manual-data-form'
 import { MOCK_ACADEMIAS, MOCK_PERFORMANCE } from '@/lib/preview/mock-data'
@@ -10,6 +11,8 @@ export default function PreviewPerformancePage() {
         <h2 className="page-title">Performance por academia</h2>
         <p className="page-subtitle">Totais acumulados de contatos e conversões por unidade.</p>
       </div>
+
+      <AcademiaPerformanceChart rows={MOCK_PERFORMANCE} />
 
       <AcademiaTable rows={MOCK_PERFORMANCE} />
 

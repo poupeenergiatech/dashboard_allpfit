@@ -5,9 +5,16 @@ export type Academia = {
   nome: string
 }
 
+export type DailyFunnelPoint = {
+  date: string
+  contatos: number
+  conversoes: number
+}
+
 export type FunnelCounts = {
   totalAlunos: number
   totalScans: number
   totalContatos: number
   totalConversoes: number
+  series: DailyFunnelPoint[]
 }

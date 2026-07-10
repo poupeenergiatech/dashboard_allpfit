@@ -1,6 +1,6 @@
 // Dados fictícios usados só pela rota /preview (sem Supabase real). Nunca
 // importar isso fora de src/app/preview/.
-import type { Academia, FunnelCounts } from '@/lib/dashboard/types'
+import type { Academia, DailyFunnelPoint, FunnelCounts } from '@/lib/dashboard/types'
 import type { AcademiaPerformance } from '@/lib/dashboard/fetch-academia-performance'
 import type { PendingSignature } from '@/lib/dashboard/fetch-pendentes'
 import type { NumeroGroup } from '@/lib/dashboard/fetch-numeros'
@@ -16,11 +16,22 @@ export const MOCK_ACADEMIAS: Academia[] = [
   { id: '6', nome: 'Allp Fit - Ipiranga' },
 ]
 
+const MOCK_FUNNEL_SERIES: DailyFunnelPoint[] = Array.from({ length: 14 }, (_, i) => {
+  const date = new Date('2026-06-27T00:00:00')
+  date.setDate(date.getDate() + i)
+  return {
+    date: date.toISOString().slice(0, 10),
+    contatos: 10 + Math.round(6 * Math.sin(i / 2)) + i,
+    conversoes: 2 + Math.round(1.5 * Math.sin(i / 2 + 1)) + Math.floor(i / 4),
+  }
+})
+
 export const MOCK_FUNNEL_COUNTS: FunnelCounts = {
   totalAlunos: 4820,
   totalScans: 612,
   totalContatos: 214,
   totalConversoes: 47,
+  series: MOCK_FUNNEL_SERIES,
 }
 
 export const MOCK_PERFORMANCE: AcademiaPerformance[] = MOCK_ACADEMIAS.map((a, i) => ({

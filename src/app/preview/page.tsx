@@ -2,6 +2,8 @@
 
 import { FilterBar } from '@/components/dashboard/filter-bar'
 import { FunnelGrid } from '@/components/dashboard/funnel-grid'
+import { FunnelStagesChart } from '@/components/dashboard/funnel-stages-chart'
+import { FunnelTrendChart } from '@/components/dashboard/funnel-trend-chart'
 import { LiveIndicator } from '@/components/dashboard/live-indicator'
 import { useAcademiaFilter } from '@/lib/dashboard/use-academia-filter'
 import { MOCK_ACADEMIAS, MOCK_FUNNEL_COUNTS } from '@/lib/preview/mock-data'
@@ -28,6 +30,11 @@ export default function PreviewFunnelPage() {
       />
 
       <FunnelGrid counts={MOCK_FUNNEL_COUNTS} />
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <FunnelStagesChart counts={MOCK_FUNNEL_COUNTS} />
+        <FunnelTrendChart series={MOCK_FUNNEL_COUNTS.series} />
+      </div>
     </div>
   )
 }

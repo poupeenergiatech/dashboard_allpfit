@@ -2,6 +2,8 @@
 
 import { FilterBar } from './filter-bar'
 import { FunnelGrid } from './funnel-grid'
+import { FunnelStagesChart } from './funnel-stages-chart'
+import { FunnelTrendChart } from './funnel-trend-chart'
 import { LiveIndicator } from './live-indicator'
 import { useAcademiaFilter } from '@/lib/dashboard/use-academia-filter'
 import { useFunnelData } from '@/lib/dashboard/use-funnel-data'
@@ -42,13 +44,27 @@ export function FunnelDashboard({
       )}
 
       {loading && !counts ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="skeleton h-32 rounded-2xl" />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="skeleton h-32 rounded-2xl" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="skeleton h-72 rounded-2xl" />
+            <div className="skeleton h-72 rounded-2xl" />
+          </div>
+        </>
       ) : (
-        counts && <FunnelGrid counts={counts} />
+        counts && (
+          <>
+            <FunnelGrid counts={counts} />
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              <FunnelStagesChart counts={counts} />
+              <FunnelTrendChart series={counts.series} />
+            </div>
+          </>
+        )
       )}
     </div>
   )
