@@ -1,8 +1,8 @@
 // Cria (ou promove a super_admin) o primeiro usuário do sistema — resolve o problema de
-// "ovo e galinha": convidar usuários só é possível de dentro do dashboard, logado como
+// "ovo e galinha": criar usuários só é possível de dentro do dashboard, logado como
 // Super Admin, mas sem nenhum usuário ainda não tem como logar.
 //
-// Requer as tabelas já migradas (ver supabase/README.md).
+// Requer o schema já migrado (node --env-file=.env.local scripts/migrate.mjs).
 //
 // Uso:
 //   SEED_ADMIN_EMAIL=voce@dominio.com node --env-file=.env.local scripts/seed-admin.mjs
@@ -10,19 +10,27 @@
 // Opcional: SEED_ADMIN_PASSWORD — se omitida, uma senha aleatória é gerada e impressa uma
 // única vez (guarde na hora, não fica salva em nenhum lugar).
 //
-// Necessário no .env.local: NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY
-// (a service role key nunca deve rodar no browser — só aqui, em script local).
+// Necessário no .env.local: DATABASE_URL
 
-import { randomBytes } from 'node:crypto'
-import { createClient } from '@supabase/supabase-js'
+import { randomBytes, scrypt } from 'node:crypto'
+import { promisify } from 'node:util'
+import pg from 'pg'
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+const scryptAsync = promisify(scrypt)
+const KEY_LENGTH = 64
 
-if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  console.error(
-    'Faltam NEXT_PUBLIC_SUPABASE_URL e/ou SUPABASE_SERVICE_ROLE_KEY. Rode com --env-file=.env.local.'
-  )
+// Duplicado de src/lib/auth/password.ts — esse arquivo é TypeScript e não roda em
+// `node` puro sem build step; ~15 linhas estáveis, mais simples que adicionar
+// tsx/ts-node como dependência só pra isso.
+async function hashPassword(password) {
+  const salt = randomBytes(16).toString('hex')
+  const derivedKey = await scryptAsync(password, salt, KEY_LENGTH)
+  return `${salt}:${derivedKey.toString('hex')}`
+}
+
+const DATABASE_URL = process.env.DATABASE_URL
+if (!DATABASE_URL) {
+  console.error('Falta DATABASE_URL. Rode com --env-file=.env.local.')
   process.exit(1)
 }
 
@@ -38,36 +46,30 @@ if (!email) {
 const explicitPassword = process.env.SEED_ADMIN_PASSWORD
 const password = explicitPassword ?? randomBytes(12).toString('base64url')
 
-const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-  auth: { autoRefreshToken: false, persistSession: false },
-})
+const client = new pg.Client({ connectionString: DATABASE_URL })
 
 async function main() {
-  const { data: created, error: createError } = await supabase.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  })
+  await client.connect()
 
-  // Já existe: só garante a role, não mexe na senha de quem já tinha conta.
-  const alreadyExisted = createError?.message?.includes('already been registered') ?? false
-  if (createError && !alreadyExisted) {
-    throw createError
-  }
-
-  const userId =
-    created?.user?.id ?? (await supabase.auth.admin.listUsers()).data.users.find((u) => u.email === email)?.id
+  const { rows: existing } = await client.query('select id from users where email = $1', [email])
+  const alreadyExisted = existing.length > 0
+  let userId = existing[0]?.id
 
   if (!userId) {
-    console.error(`Não foi possível resolver o user_id de ${email}`)
-    process.exit(1)
+    const passwordHash = await hashPassword(password)
+    const { rows } = await client.query(
+      'insert into users (email, password_hash) values ($1, $2) returning id',
+      [email, passwordHash]
+    )
+    userId = rows[0].id
   }
 
-  const { error: profileError } = await supabase
-    .from('user_profiles')
-    .upsert({ user_id: userId, role: 'super_admin', academia_id: null })
-
-  if (profileError) throw profileError
+  // Já existe: só garante a role, não mexe na senha de quem já tinha conta.
+  await client.query(
+    `insert into user_profiles (user_id, role, academia_id) values ($1, 'super_admin', null)
+     on conflict (user_id) do update set role = 'super_admin', academia_id = null`,
+    [userId]
+  )
 
   console.log(`✓ super_admin: ${email}`)
 
@@ -80,7 +82,9 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(err)
-  process.exit(1)
-})
+main()
+  .catch((err) => {
+    console.error(err)
+    process.exitCode = 1
+  })
+  .finally(() => client.end())

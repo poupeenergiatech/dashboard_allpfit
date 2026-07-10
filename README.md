@@ -3,20 +3,21 @@
 Painel de monitoramento em tempo real das operações de aquisição de clientes da Alle Energia
 nas unidades Allp Fit. Ver plano completo em [`docs/Sprints_Dashboard_Performance.pdf`](./docs/Sprints_Dashboard_Performance.pdf).
 
-**Stack:** Next.js 14 (App Router) · Supabase (Postgres + Auth + Realtime) · Tailwind CSS ·
-Recharts · EasyPanel (Docker)
+**Stack:** Next.js 14 (App Router) · Postgres próprio (auth, dados, sem RLS) · Supabase
+(reservado a um `GET` somente-leitura futuro) · Tailwind CSS · Recharts · EasyPanel (Docker)
 
 ## Rodando localmente
 
 ```bash
 npm install
-cp .env.example .env.local   # preencha com as credenciais reais do Supabase
+cp .env.example .env.local   # preencha DATABASE_URL e (opcional) as demais variáveis
+node --env-file=.env.local scripts/migrate.mjs   # aplica o schema — ver db/README.md
 npm run dev
 ```
 
 Abra [http://localhost:3000](http://localhost:3000). Sem sessão válida, qualquer rota redireciona
-para `/login`. Com o banco migrado (ver [`supabase/README.md`](./supabase/README.md)) mas sem
-nenhum usuário ainda, crie o primeiro login de Super Admin com:
+para `/login`. Com o schema aplicado mas sem nenhum usuário ainda, crie o primeiro login de
+Super Admin com:
 
 ```bash
 SEED_ADMIN_EMAIL=voce@dominio.com node --env-file=.env.local scripts/seed-admin.mjs
@@ -28,9 +29,9 @@ Sem `SEED_ADMIN_PASSWORD`, uma senha é gerada e impressa uma única vez no term
 
 | Variável | Onde encontrar |
 | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Project Settings → API, no painel do Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Project Settings → API |
-| `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API (uso restrito a server-side) |
+| `DATABASE_URL` | Connection string do Postgres próprio — auth e dados do dashboard |
+| `NEXT_PUBLIC_SUPABASE_URL` | Project Settings → API, no painel do Supabase (uso somente-leitura futuro) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Project Settings → API (uso somente-leitura futuro) |
 | `AGREGADOR_API_URL` / `AGREGADOR_API_KEY` | Fornecido pela equipe do agregador de números WhatsApp (opcional — sem elas, `/api/agregador` só faz no-op) |
 | `CRON_SECRET` | Você define — protege `GET /api/relatorio` (envio de saída do relatório diário) |
 | `AGREGADOR_WEBHOOK_SECRET` | Você define — protege `POST /api/webhooks/agregador` (entrada de contatos do agregador) |
@@ -53,17 +54,25 @@ Sem `SEED_ADMIN_PASSWORD`, uma senha é gerada e impressa uma única vez no term
       Dockerfile criado e validado, documentação de acesso — ver `docs/SPRINT5_NOTES.md`
       para o que ainda depende de você: usuários reais, dados históricos e deploy)
 
+Depois da Sprint 5, o Supabase (Auth + Postgres + Realtime) foi substituído por um Postgres
+próprio — RLS virou autorização em código, Realtime virou polling. Ver
+[`docs/POSTGRES_MIGRATION_NOTES.md`](./docs/POSTGRES_MIGRATION_NOTES.md).
+
 ## Deploy
 
 Dockerfile na raiz, com `output: "standalone"` configurado no Next. Passo a passo completo
 pro EasyPanel em [`docs/DEPLOY.md`](./docs/DEPLOY.md).
 
-## Banco de dados (Supabase)
+## Banco de dados (Postgres próprio)
 
-Migrations, policies de RLS e script de seed estão em [`supabase/`](./supabase/README.md).
-Nada disso roda sozinho — precisa ser aplicado manualmente no projeto Supabase real (SQL
-Editor ou `supabase db push`) assim que as credenciais estiverem disponíveis. Checklist de
-teste de RLS por role em [`docs/SPRINT2_RLS_TESTING.md`](./docs/SPRINT2_RLS_TESTING.md).
+Migrations e seed manual estão em [`db/`](./db/README.md). Sem RLS — autorização por
+role/academia é responsabilidade do código (`src/lib/auth/profile.ts`). Aplicar com
+`node --env-file=.env.local scripts/migrate.mjs`, idempotente. Ver
+[`docs/POSTGRES_MIGRATION_NOTES.md`](./docs/POSTGRES_MIGRATION_NOTES.md) para o histórico e
+as decisões da migração que substituiu o Supabase Auth/Postgres/Realtime.
+
+O Supabase (`supabase-js`) segue no projeto só para um `GET` somente-leitura reservado a uso
+futuro (`src/lib/supabase/readonly.ts`) — nenhuma feature usa isso ainda.
 
 ## Documentação de acesso e uso
 
@@ -82,6 +91,7 @@ src/
       treinadas/           # toggle de academias treinadas
       usuarios/             # gestão de usuários (Super Admin)
     api/agregador/     # route handler que sincroniza contatos do dia do agregador
+    api/webhooks/agregador/  # entrada: agregador empurra contatos novos pro dashboard
     login/              # login público (Server Action)
     auth/logout/         # route handler de logout
   components/
@@ -89,13 +99,16 @@ src/
     dashboard/               # cards do funil, tabelas, formulários, grids de toggle
     ui/                       # toast, skeletons, error boundary — compartilhados
   lib/
-    supabase/                 # clients browser/server/admin + helper de middleware + profile
-    dashboard/                 # tipos, cálculo de período, queries do funil/performance/módulos
-  middleware.ts                # protege rotas autenticadas via Supabase Auth
-supabase/
-  migrations/            # schema + RLS + view de performance, numeradas e idempotentes
+    auth/                     # sessão em cookie, hash de senha, profile/scopeAcademiaId
+    db/                        # pool de conexão pg (singleton)
+    supabase/                   # client somente-leitura (readonly.ts) — uso futuro
+    dashboard/                   # tipos, cálculo de período, queries do funil/performance/módulos
+  middleware.ts                 # Edge — só checa presença do cookie de sessão
+db/
+  migrations/            # schema consolidado (users/sessions + tabelas do dashboard), sem RLS
   seed/academias.sql      # seed manual das 31 unidades (preencher antes de rodar)
 scripts/
-  seed-admin.mjs          # cria/promove o primeiro Super Admin via Admin API
-  create-test-users.mjs   # cria 1 usuário de teste por role via Admin API
+  migrate.mjs              # aplica db/migrations/ em ordem, idempotente
+  seed-admin.mjs           # cria/promove o primeiro Super Admin
+  create-test-users.mjs    # cria 1 usuário de teste por role
 ```

@@ -1,12 +1,16 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { canManageUsers, getCurrentUserProfile, type UserRole } from '@/lib/supabase/profile'
+import { pool } from '@/lib/db/pool'
+import { generateRandomPassword, hashPassword } from '@/lib/auth/password'
+import { canManageUsers, getCurrentUserProfile, type UserRole } from '@/lib/auth/profile'
 
 const VALID_ROLES: UserRole[] = ['super_admin', 'gestor', 'coordenador', 'visualizador']
 
-export async function inviteUser(formData: FormData) {
+// Sem serviço de email próprio, o convite por email do Supabase Auth vira "criar
+// usuário com senha gerada": a action retorna a senha uma única vez pro Super Admin
+// repassar (mesmo padrão de scripts/seed-admin.mjs).
+export async function createUser(formData: FormData): Promise<{ password: string }> {
   const profile = await getCurrentUserProfile()
   if (!profile || !canManageUsers(profile.role)) {
     throw new Error('Apenas Super Admin pode gerenciar usuários.')
@@ -25,19 +29,40 @@ export async function inviteUser(formData: FormData) {
     throw new Error('Coordenador e Visualizador precisam de uma academia vinculada.')
   }
 
-  const supabaseAdmin = createAdminClient()
+  const password = generateRandomPassword()
+  const passwordHash = await hashPassword(password)
 
-  // Envia um email de convite via Supabase Auth — requer que o projeto tenha o envio
-  // de email configurado (funciona out-of-the-box no plano padrão, com rate limit).
-  const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email)
-  if (error) throw error
+  const client = await pool.connect()
+  try {
+    await client.query('begin')
 
-  const { error: profileError } = await supabaseAdmin.from('user_profiles').upsert({
-    user_id: data.user.id,
-    role,
-    academia_id: needsAcademia ? academiaId : null,
-  })
-  if (profileError) throw profileError
+    let userId: string
+    try {
+      const { rows } = await client.query<{ id: string }>(
+        'insert into users (email, password_hash) values ($1, $2) returning id',
+        [email, passwordHash]
+      )
+      userId = rows[0].id
+    } catch (err) {
+      if ((err as { code?: string }).code === '23505') {
+        throw new Error('Já existe um usuário com este email.')
+      }
+      throw err
+    }
+
+    await client.query(
+      'insert into user_profiles (user_id, role, academia_id) values ($1, $2, $3)',
+      [userId, role, needsAcademia ? academiaId : null]
+    )
+
+    await client.query('commit')
+  } catch (err) {
+    await client.query('rollback')
+    throw err
+  } finally {
+    client.release()
+  }
 
   revalidatePath('/usuarios')
+  return { password }
 }

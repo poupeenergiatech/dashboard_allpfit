@@ -1,8 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { canManageTraining, getCurrentUserProfile } from '@/lib/supabase/profile'
+import { pool } from '@/lib/db/pool'
+import { canManageTraining, getCurrentUserProfile } from '@/lib/auth/profile'
 
 export async function setTrained(academiaId: string, treinada: boolean) {
   const profile = await getCurrentUserProfile()
@@ -10,14 +10,12 @@ export async function setTrained(academiaId: string, treinada: boolean) {
     throw new Error('Apenas Super Admin e Gestor podem alterar o status de treinamento.')
   }
 
-  const supabase = createClient()
-  // Reforçado pela policy trained_academias_write (S4-10) — mesmo que o check acima
-  // fosse contornado, um coordenador teria 0 linhas afetadas aqui.
-  const { error } = await supabase
-    .from('trained_academias')
-    .upsert({ academia_id: academiaId, treinada, updated_at: new Date().toISOString() })
-
-  if (error) throw error
+  await pool.query(
+    `insert into trained_academias (academia_id, treinada, updated_at)
+     values ($1, $2, now())
+     on conflict (academia_id) do update set treinada = excluded.treinada, updated_at = now()`,
+    [academiaId, treinada]
+  )
 
   revalidatePath('/treinadas')
 }

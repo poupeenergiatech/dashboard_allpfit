@@ -9,24 +9,32 @@ que o ambiente onde estou não tem o Docker disponível para buildar a imagem de
 1. Criar um novo serviço do tipo "App" apontando para este repositório (branch `main` ou a
    que você usar para produção).
 2. EasyPanel deve detectar o `Dockerfile` automaticamente. Porta interna do container: `3000`.
-3. Configurar as variáveis de ambiente do serviço (mesmas do `.env.example`):
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
+3. Provisionar o Postgres próprio (serviço de banco do próprio EasyPanel, ou qualquer
+   Postgres gerenciado) e anotar a connection string.
+4. Configurar as variáveis de ambiente do serviço (mesmas do `.env.example`):
+   - `DATABASE_URL` (Postgres próprio — auth, academias, contacts, conversions etc.)
+   - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` (mantidas só pro client
+     somente-leitura futuro, `src/lib/supabase/readonly.ts` — não são mais usadas para
+     auth nem dados do dashboard)
    - `AGREGADOR_API_URL` / `AGREGADOR_API_KEY` (se já tiver, só usado pelo modo pull antigo)
    - `CRON_SECRET` (protege `/api/relatorio` — gere um valor aleatório qualquer)
    - `AGREGADOR_WEBHOOK_SECRET` (protege `POST /api/webhooks/agregador` — gere outro valor
      aleatório, diferente do `CRON_SECRET`, e configure o mesmo valor no painel do agregador)
 
-   **Atenção:** as duas primeiras (`NEXT_PUBLIC_*`) precisam estar disponíveis em **build
-   time**, não só em runtime — elas ficam embutidas no bundle JS que vai pro navegador. Se o
-   EasyPanel só injeta env vars em runtime, configure-as também como build args do serviço
-   (ou rode `docker build --build-arg` apontando pra elas, ajustando o Dockerfile pra
-   declarar `ARG`/`ENV` correspondentes).
-4. Reservar/configurar a porta e o domínio do serviço, com SSL (Let's Encrypt automático do
+   **Atenção:** `NEXT_PUBLIC_*` precisam estar disponíveis em **build time**, não só em
+   runtime — elas ficam embutidas no bundle JS que vai pro navegador. Se o EasyPanel só
+   injeta env vars em runtime, configure-as também como build args do serviço (ou rode
+   `docker build --build-arg` apontando pra elas, ajustando o Dockerfile pra declarar
+   `ARG`/`ENV` correspondentes).
+5. Antes do primeiro deploy (ou logo depois, com acesso ao `DATABASE_URL` de produção),
+   aplicar o schema e criar o primeiro Super Admin — ver "Rodando localmente" no
+   [`README.md`](../README.md), mesmos comandos (`scripts/migrate.mjs`, depois
+   `scripts/seed-admin.mjs`), só que apontando pro `DATABASE_URL` de produção. Sem isso, o
+   primeiro deploy fica sem nenhum usuário capaz de logar.
+6. Reservar/configurar a porta e o domínio do serviço, com SSL (Let's Encrypt automático do
    EasyPanel, se disponível).
-5. Deploy. Testar a URL pública: deve redirecionar pra `/login` sem sessão.
-6. Configurar CI/CD: push na branch de produção → deploy automático (GitHub + EasyPanel,
+7. Deploy. Testar a URL pública: deve redirecionar pra `/login` sem sessão.
+8. Configurar CI/CD: push na branch de produção → deploy automático (GitHub + EasyPanel,
    conforme o documento de sprints).
 
 ## Cron do relatório diário (`/api/relatorio`)
@@ -64,7 +72,7 @@ não tem "modo sem checagem" como o `/api/relatorio`.
 - [ ] URL pública acessível com SSL ativo
 - [ ] `/login` carrega e autentica com um usuário real
 - [ ] Rotas protegidas redirecionam sem sessão
-- [ ] Funil carrega dados reais e atualiza via Realtime
+- [ ] Funil carrega dados reais e atualiza sozinho (polling a cada ~10s, indicador "AO VIVO")
 - [ ] `/api/agregador` consegue alcançar a API do agregador (sem bloqueio de rede/firewall
       entre o EasyPanel e o agregador)
 - [ ] `/api/relatorio?data=YYYY-MM-DD` (com o header `Authorization`) retorna `sent: true`

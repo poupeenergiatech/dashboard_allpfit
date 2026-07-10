@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { pool } from '@/lib/db/pool'
+import { seesAllAcademias, type UserProfile } from '@/lib/auth/profile'
 
 export type AcademiaPerformance = {
   academiaId: string
@@ -7,19 +8,25 @@ export type AcademiaPerformance = {
   totalConversoes: number
 }
 
-// Server-only (usa o client de sessão via cookies). Lê da view
-// `academia_performance` (supabase/migrations/0010) — já vem agregada e com RLS
-// aplicada (security_invoker), então cada role só recebe as linhas que pode ver.
-export async function fetchAcademiaPerformance(): Promise<AcademiaPerformance[]> {
-  const supabase = createClient()
-  const { data, error } = await supabase
-    .from('academia_performance')
-    .select('academia_id, nome, total_contatos, total_conversoes')
-    .order('nome')
+// Lê da view `academia_performance` (db/migrations/0001_init.sql) — já vem agregada.
+// Sem RLS, o escopo por academia (coordenador/visualizador só a própria) é aplicado
+// aqui via WHERE, no lugar do antigo security_invoker.
+export async function fetchAcademiaPerformance(profile: UserProfile): Promise<AcademiaPerformance[]> {
+  const scopedAcademiaId = seesAllAcademias(profile.role) ? null : profile.academiaId
 
-  if (error) throw error
+  const { rows } = await pool.query<{
+    academia_id: string
+    nome: string
+    total_contatos: number
+    total_conversoes: number
+  }>(
+    scopedAcademiaId
+      ? 'select academia_id, nome, total_contatos, total_conversoes from academia_performance where academia_id = $1 order by nome'
+      : 'select academia_id, nome, total_contatos, total_conversoes from academia_performance order by nome',
+    scopedAcademiaId ? [scopedAcademiaId] : []
+  )
 
-  return (data ?? []).map((row) => ({
+  return rows.map((row) => ({
     academiaId: row.academia_id,
     nome: row.nome,
     totalContatos: row.total_contatos,

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { pool } from '@/lib/db/pool'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,15 +35,11 @@ export async function GET() {
     }
 
     const contatosDoDia: AgregadorContato[] = await response.json()
-    const supabaseAdmin = createAdminClient()
 
-    const { data: academias, error: academiasError } = await supabaseAdmin
-      .from('academias')
-      .select('id, numero_telefone')
-
-    if (academiasError) throw academiasError
-
-    const academiaIdByPhone = new Map((academias ?? []).map((a) => [a.numero_telefone, a.id]))
+    const { rows: academias } = await pool.query<{ id: string; numero_telefone: string | null }>(
+      'select id, numero_telefone from academias'
+    )
+    const academiaIdByPhone = new Map(academias.map((a) => [a.numero_telefone, a.id]))
 
     const rows = contatosDoDia
       .map((c) => ({
@@ -56,15 +52,30 @@ export async function GET() {
       .filter((row): row is typeof row & { academia_id: string } => row.academia_id !== null)
 
     if (rows.length > 0) {
-      const { error: upsertError } = await supabaseAdmin.from('contacts').upsert(rows, { onConflict: 'id' })
-      if (upsertError) throw upsertError
+      const values: unknown[] = []
+      const placeholders = rows.map((row, i) => {
+        const base = i * 5
+        values.push(row.id, row.nome, row.telefone, row.academia_id, row.created_at)
+        return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5})`
+      })
+
+      await pool.query(
+        `insert into contacts (id, nome, telefone, academia_id, created_at)
+         values ${placeholders.join(', ')}
+         on conflict (id) do update set
+           nome = excluded.nome,
+           telefone = excluded.telefone,
+           academia_id = excluded.academia_id,
+           created_at = excluded.created_at`,
+        values
+      )
     }
 
     return NextResponse.json({ synced: rows.length })
   } catch (err) {
     // Risco documentado: "Endpoint do agregador fora do ar" — não derruba o
-    // dashboard, só reporta a falha. O Realtime continua funcionando com o
-    // que já está no Supabase (fallback para o último valor salvo).
+    // dashboard, só reporta a falha. O funil continua funcionando com o que já
+    // está no Postgres (fallback para o último valor salvo).
     return NextResponse.json(
       { synced: 0, error: err instanceof Error ? err.message : 'Falha ao sincronizar agregador' },
       { status: 200 }

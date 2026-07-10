@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { parseDateTimeBR } from '@/lib/dashboard/date-br'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { pool } from '@/lib/db/pool'
 
 export const dynamic = 'force-dynamic'
 
@@ -57,16 +57,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '"por_academia" é obrigatório e deve ser uma lista.' }, { status: 400 })
   }
 
-  const supabaseAdmin = createAdminClient()
-  const { data: academias, error: academiasError } = await supabaseAdmin
-    .from('academias')
-    .select('id, numero_telefone')
-
-  if (academiasError) {
-    return NextResponse.json({ error: academiasError.message }, { status: 500 })
-  }
-
-  const academiaIdByPhone = new Map((academias ?? []).map((a) => [a.numero_telefone, a.id]))
+  const { rows: academias } = await pool.query<{ id: string; numero_telefone: string | null }>(
+    'select id, numero_telefone from academias'
+  )
+  const academiaIdByPhone = new Map(academias.map((a) => [a.numero_telefone, a.id]))
 
   const rows: ContactRow[] = []
   const academiasNaoEncontradas: string[] = []
@@ -104,12 +98,26 @@ export async function POST(request: NextRequest) {
   }
 
   if (rows.length > 0) {
-    const { error: upsertError } = await supabaseAdmin
-      .from('contacts')
-      .upsert(rows, { onConflict: 'academia_id,telefone,created_at' })
+    const values: unknown[] = []
+    const placeholders = rows.map((row, i) => {
+      const base = i * 4
+      values.push(row.nome, row.telefone, row.academia_id, row.created_at)
+      return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4})`
+    })
 
-    if (upsertError) {
-      return NextResponse.json({ error: upsertError.message }, { status: 500 })
+    try {
+      await pool.query(
+        `insert into contacts (nome, telefone, academia_id, created_at)
+         values ${placeholders.join(', ')}
+         on conflict (academia_id, telefone, created_at) do update set
+           nome = excluded.nome`,
+        values
+      )
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : 'Falha ao gravar contatos.' },
+        { status: 500 }
+      )
     }
   }
 

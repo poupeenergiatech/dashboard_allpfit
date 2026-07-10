@@ -1,8 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
-import { canWrite, getCurrentUserProfile } from '@/lib/supabase/profile'
+import { pool } from '@/lib/db/pool'
+import { canWrite, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 
 // Chamada diretamente do client (MarkSignedButton) para poder mostrar toast de
 // sucesso/erro — revalidatePath() ainda dispara o refetch do Server Component
@@ -13,13 +13,22 @@ export async function markAsSigned(id: string) {
     throw new Error('Sem permissão para marcar como assinado.')
   }
 
-  const supabase = createClient()
-  const { error } = await supabase
-    .from('pending_signatures')
-    .update({ assinado: true, assinado_em: new Date().toISOString() })
-    .eq('id', id)
+  // Sem RLS, essa é a barreira de verdade pra impedir um coordenador de marcar
+  // registros de outra academia. Antes, um UPDATE bloqueado pela policy simplesmente
+  // afetava 0 linhas — aqui isso vira um erro explícito em vez de sucesso silencioso.
+  const scopedAcademiaId = seesAllAcademias(profile.role) ? null : profile.academiaId
 
-  if (error) throw error
+  const { rowCount } = await pool.query(
+    `update pending_signatures
+     set assinado = true, assinado_em = now()
+     where id = $1
+       and ($2::uuid is null or academia_id = $2)`,
+    [id, scopedAcademiaId]
+  )
+
+  if (rowCount === 0) {
+    throw new Error('Registro não encontrado ou sem permissão para esta academia.')
+  }
 
   revalidatePath('/pendentes')
 }

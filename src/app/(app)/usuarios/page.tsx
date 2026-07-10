@@ -1,8 +1,7 @@
 import { InviteUserForm } from '@/components/dashboard/invite-user-form'
 import { UsersTable, type UserRow } from '@/components/dashboard/users-table'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
-import { canManageUsers, getCurrentUserProfile } from '@/lib/supabase/profile'
+import { pool } from '@/lib/db/pool'
+import { canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
 
 export default async function UsuariosPage() {
   const profile = await getCurrentUserProfile().catch(() => null)
@@ -15,25 +14,25 @@ export default async function UsuariosPage() {
     )
   }
 
-  const supabaseAdmin = createAdminClient()
-  const [{ data: authUsers }, { data: profiles }, { data: academias }] = await Promise.all([
-    supabaseAdmin.auth.admin.listUsers(),
-    supabaseAdmin.from('user_profiles').select('user_id, role, academia_id'),
-    createClient().from('academias').select('id, nome').eq('ativo', true).order('nome'),
+  const [{ rows: users }, { rows: academias }] = await Promise.all([
+    pool.query<{ id: string; email: string; role: string | null; academia_nome: string | null }>(
+      `select u.id, u.email, p.role, a.nome as academia_nome
+       from users u
+       left join user_profiles p on p.user_id = u.id
+       left join academias a on a.id = p.academia_id
+       order by u.email`
+    ),
+    pool.query<{ id: string; nome: string }>(
+      'select id, nome from academias where ativo = true order by nome'
+    ),
   ])
 
-  const academiaNameById = new Map((academias ?? []).map((a) => [a.id, a.nome]))
-  const profileByUserId = new Map((profiles ?? []).map((p) => [p.user_id, p]))
-
-  const users: UserRow[] = (authUsers?.users ?? []).map((u) => {
-    const p = profileByUserId.get(u.id)
-    return {
-      id: u.id,
-      email: u.email ?? '—',
-      role: p?.role ?? null,
-      academiaNome: p?.academia_id ? academiaNameById.get(p.academia_id) ?? null : null,
-    }
-  })
+  const userRows: UserRow[] = users.map((u) => ({
+    id: u.id,
+    email: u.email,
+    role: u.role,
+    academiaNome: u.academia_nome,
+  }))
 
   return (
     <div className="space-y-6">
@@ -42,11 +41,11 @@ export default async function UsuariosPage() {
         <p className="page-subtitle">Gestão de acesso — restrito a Super Admin.</p>
       </div>
 
-      <UsersTable users={users} />
+      <UsersTable users={userRows} />
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900">Convidar usuário</h3>
-        <InviteUserForm academias={academias ?? []} />
+        <h3 className="mb-3 text-sm font-semibold text-slate-900">Criar usuário</h3>
+        <InviteUserForm academias={academias} />
       </div>
     </div>
   )

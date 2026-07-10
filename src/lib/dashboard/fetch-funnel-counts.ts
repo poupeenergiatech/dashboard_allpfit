@@ -1,50 +1,42 @@
-import { createClient } from '@/lib/supabase/client'
+'use server'
+
+import { pool } from '@/lib/db/pool'
+import { getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
 import { periodRange } from './period'
 import type { FunnelCounts, Period } from './types'
 
-// PREMISSA A VALIDAR: assume que `contacts` e `conversions` (tabelas já existentes,
-// segundo o documento de sprints) têm uma coluna `created_at` timestamptz — é o padrão
-// do Supabase, mas como o schema real dessas tabelas não foi inspecionado, ajuste o nome
-// da coluna aqui se for diferente (ex.: `data`, `timestamp`, `inserted_at`).
-const CONTACTS_DATE_COLUMN = 'created_at'
-const CONVERSIONS_DATE_COLUMN = 'created_at'
-
+// Chamada como Server Action direto do hook client (use-funnel-data.ts) — roda em
+// Node.js runtime, então pode falar com o Postgres. requestedAcademiaId vem do filtro
+// escolhido no client, mas é sempre resolvido de novo aqui via scopeAcademiaId: sem
+// RLS, essa é a única barreira real contra um coordenador pedindo dados de outra
+// academia manipulando o valor no client.
 export async function fetchFunnelCounts(
-  academiaId: string | null,
+  requestedAcademiaId: string | null,
   period: Period
 ): Promise<FunnelCounts> {
-  const supabase = createClient()
+  const profile = await getCurrentUserProfile()
+  if (!profile) throw new Error('Sem sessão válida.')
+
+  const academiaId = scopeAcademiaId(profile, requestedAcademiaId)
   const { from, fromDate } = periodRange(period)
 
-  let contactsQuery = supabase
-    .from('contacts')
-    .select('id', { count: 'exact', head: true })
-    .gte(CONTACTS_DATE_COLUMN, from)
-
-  let conversionsQuery = supabase
-    .from('conversions')
-    .select('id', { count: 'exact', head: true })
-    .gte(CONVERSIONS_DATE_COLUMN, from)
-
-  let manualDataQuery = supabase
-    .from('manual_data')
-    .select('academia_id, data, total_alunos, total_scans')
-    .gte('data', fromDate)
-
-  if (academiaId) {
-    contactsQuery = contactsQuery.eq('academia_id', academiaId)
-    conversionsQuery = conversionsQuery.eq('academia_id', academiaId)
-    manualDataQuery = manualDataQuery.eq('academia_id', academiaId)
-  }
-
-  const [{ count: totalContatos, error: contactsError }, { count: totalConversoes, error: conversionsError }, {
-    data: manualRows,
-    error: manualError,
-  }] = await Promise.all([contactsQuery, conversionsQuery, manualDataQuery])
-
-  if (contactsError) throw contactsError
-  if (conversionsError) throw conversionsError
-  if (manualError) throw manualError
+  const [{ rows: contactsRows }, { rows: conversionsRows }, { rows: manualRows }] = await Promise.all([
+    pool.query<{ count: number }>(
+      `select count(*) as count from contacts
+       where created_at >= $1 and ($2::uuid is null or academia_id = $2)`,
+      [from, academiaId]
+    ),
+    pool.query<{ count: number }>(
+      `select count(*) as count from conversions
+       where created_at >= $1 and ($2::uuid is null or academia_id = $2)`,
+      [from, academiaId]
+    ),
+    pool.query<{ academia_id: string; data: string; total_alunos: number; total_scans: number }>(
+      `select academia_id, data, total_alunos, total_scans from manual_data
+       where data >= $1 and ($2::uuid is null or academia_id = $2)`,
+      [fromDate, academiaId]
+    ),
+  ])
 
   // total_alunos é um snapshot (não é aditivo): pega o valor mais recente dentro do
   // período, por academia, e soma entre academias quando o filtro é "todas".
@@ -52,7 +44,7 @@ export async function fetchFunnelCounts(
   const latestAlunosByAcademia = new Map<string, { data: string; total_alunos: number }>()
   let totalScans = 0
 
-  for (const row of manualRows ?? []) {
+  for (const row of manualRows) {
     totalScans += row.total_scans ?? 0
     const prev = latestAlunosByAcademia.get(row.academia_id)
     if (!prev || row.data > prev.data) {
@@ -68,7 +60,7 @@ export async function fetchFunnelCounts(
   return {
     totalAlunos,
     totalScans,
-    totalContatos: totalContatos ?? 0,
-    totalConversoes: totalConversoes ?? 0,
+    totalContatos: contactsRows[0]?.count ?? 0,
+    totalConversoes: conversionsRows[0]?.count ?? 0,
   }
 }

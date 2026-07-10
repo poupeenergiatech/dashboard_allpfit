@@ -1,18 +1,16 @@
 import { AcademiaTable } from '@/components/dashboard/academia-table'
 import { ManualDataForm } from '@/components/dashboard/manual-data-form'
 import { fetchAcademiaPerformance } from '@/lib/dashboard/fetch-academia-performance'
-import { createClient } from '@/lib/supabase/server'
-import { canWrite, getCurrentUserProfile, seesAllAcademias } from '@/lib/supabase/profile'
+import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
+import { canWrite, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 
 export default async function PerformancePage() {
   const profile = await getCurrentUserProfile().catch(() => null)
 
-  const [rows, academiasResult] = await Promise.all([
-    fetchAcademiaPerformance(),
-    createClient().from('academias').select('id, nome').eq('ativo', true).order('nome'),
+  const [rows, academias] = await Promise.all([
+    profile ? fetchAcademiaPerformance(profile) : Promise.resolve([]),
+    fetchActiveAcademias(profile),
   ])
-
-  const academias = academiasResult.data ?? []
 
   return (
     <div className="space-y-6">

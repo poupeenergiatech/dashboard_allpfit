@@ -14,8 +14,8 @@ export default function PreviewUsuariosPage() {
       <UsersTable users={MOCK_USERS} />
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900">Convidar usuário</h3>
-        <InviteUserForm academias={MOCK_ACADEMIAS} onInvite={mockInvite} />
+        <h3 className="mb-3 text-sm font-semibold text-slate-900">Criar usuário</h3>
+        <InviteUserForm academias={MOCK_ACADEMIAS} onCreate={mockInvite} />
       </div>
     </div>
   )

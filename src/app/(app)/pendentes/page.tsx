@@ -1,10 +1,10 @@
 import { PendentesList } from '@/components/dashboard/pendentes-list'
 import { fetchPendingSignatures } from '@/lib/dashboard/fetch-pendentes'
-import { canWrite, getCurrentUserProfile } from '@/lib/supabase/profile'
+import { canWrite, getCurrentUserProfile } from '@/lib/auth/profile'
 
 export default async function PendentesPage() {
   const profile = await getCurrentUserProfile().catch(() => null)
-  const rows = await fetchPendingSignatures()
+  const rows = profile ? await fetchPendingSignatures(profile) : []
 
   return (
     <div className="space-y-4">

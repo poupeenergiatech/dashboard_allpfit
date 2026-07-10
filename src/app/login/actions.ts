@@ -1,29 +1,35 @@
 'use server'
 
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { pool } from '@/lib/db/pool'
+import { verifyPassword } from '@/lib/auth/password'
+import { createSession } from '@/lib/auth/session'
 
 export async function login(formData: FormData) {
-  const supabase = createClient()
-
   const email = String(formData.get('email') ?? '')
   const password = String(formData.get('password') ?? '')
 
-  // signInWithPassword só retorna { error } para falhas de auth (credenciais
-  // inválidas etc). Falhas de rede/DNS ao contatar o Supabase lançam uma
-  // exceção de verdade — sem o try/catch isso derrubava a página com um erro
-  // não tratado em vez de mostrar uma mensagem amigável.
-  let failed = false
+  // Falha de credenciais e falha de rede/banco levam à mesma mensagem genérica —
+  // evita entregar detalhe de infraestrutura numa tela de login.
+  let userId: string | null = null
   try {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    failed = Boolean(error)
+    const { rows } = await pool.query<{ id: string; password_hash: string }>(
+      'select id, password_hash from users where email = $1',
+      [email]
+    )
+    const user = rows[0]
+    if (user && (await verifyPassword(password, user.password_hash))) {
+      userId = user.id
+    }
   } catch {
-    failed = true
+    userId = null
   }
 
-  if (failed) {
+  if (!userId) {
     redirect(`/login?error=${encodeURIComponent('Não foi possível entrar. Verifique suas credenciais ou tente novamente.')}`)
   }
+
+  await createSession(userId)
 
   redirect('/')
 }

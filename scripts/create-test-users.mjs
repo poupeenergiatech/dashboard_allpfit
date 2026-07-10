@@ -1,30 +1,33 @@
 // Sprint 2 — S2-14: cria um usuário de teste para cada role (super_admin, gestor,
 // coordenador, visualizador) e o respectivo user_profiles.
 //
-// Requer as tabelas já migradas e pelo menos uma academia cadastrada
-// (rode supabase/seed/academias.sql antes).
+// Requer o schema já migrado e pelo menos uma academia cadastrada
+// (rode db/seed/academias.sql antes).
 //
 // Uso:
 //   node --env-file=.env.local scripts/create-test-users.mjs
 //
-// Necessário no .env.local: NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY
-// (a service role key nunca deve rodar no browser — só aqui, em script local).
+// Necessário no .env.local: DATABASE_URL
 
-import { createClient } from '@supabase/supabase-js'
+import { randomBytes, scrypt } from 'node:crypto'
+import { promisify } from 'node:util'
+import pg from 'pg'
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+const scryptAsync = promisify(scrypt)
+const KEY_LENGTH = 64
 
-if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  console.error(
-    'Faltam NEXT_PUBLIC_SUPABASE_URL e/ou SUPABASE_SERVICE_ROLE_KEY. Rode com --env-file=.env.local.'
-  )
-  process.exit(1)
+// Duplicado de src/lib/auth/password.ts — ver nota em scripts/seed-admin.mjs.
+async function hashPassword(password) {
+  const salt = randomBytes(16).toString('hex')
+  const derivedKey = await scryptAsync(password, salt, KEY_LENGTH)
+  return `${salt}:${derivedKey.toString('hex')}`
 }
 
-const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-  auth: { autoRefreshToken: false, persistSession: false },
-})
+const DATABASE_URL = process.env.DATABASE_URL
+if (!DATABASE_URL) {
+  console.error('Falta DATABASE_URL. Rode com --env-file=.env.local.')
+  process.exit(1)
+}
 
 const TEST_PASSWORD = 'TesteAllpFit#2026'
 
@@ -35,17 +38,15 @@ const USERS = [
   { role: 'visualizador', email: 'teste.visualizador@allpfit.dev', scoped: true },
 ]
 
-async function main() {
-  const { data: academias, error: academiasError } = await supabase
-    .from('academias')
-    .select('id, nome')
-    .order('nome')
-    .limit(1)
+const client = new pg.Client({ connectionString: DATABASE_URL })
 
-  if (academiasError) throw academiasError
-  if (!academias?.length) {
+async function main() {
+  await client.connect()
+
+  const { rows: academias } = await client.query('select id, nome from academias order by nome limit 1')
+  if (!academias.length) {
     console.error(
-      'Nenhuma academia encontrada. Rode supabase/seed/academias.sql antes de criar os usuários de teste.'
+      'Nenhuma academia encontrada. Rode db/seed/academias.sql antes de criar os usuários de teste.'
     )
     process.exit(1)
   }
@@ -53,33 +54,25 @@ async function main() {
   const testAcademiaId = academias[0].id
   console.log(`Usuários "coordenador" e "visualizador" de teste serão vinculados a: ${academias[0].nome}`)
 
+  const passwordHash = await hashPassword(TEST_PASSWORD)
+
   for (const user of USERS) {
-    const { data: created, error: createError } = await supabase.auth.admin.createUser({
-      email: user.email,
-      password: TEST_PASSWORD,
-      email_confirm: true,
-    })
-
-    if (createError && !createError.message.includes('already been registered')) {
-      throw createError
-    }
-
-    const userId =
-      created?.user?.id ??
-      (await supabase.auth.admin.listUsers()).data.users.find((u) => u.email === user.email)?.id
+    const { rows: existing } = await client.query('select id from users where email = $1', [user.email])
+    let userId = existing[0]?.id
 
     if (!userId) {
-      console.error(`Não foi possível resolver o user_id de ${user.email}`)
-      continue
+      const { rows } = await client.query(
+        'insert into users (email, password_hash) values ($1, $2) returning id',
+        [user.email, passwordHash]
+      )
+      userId = rows[0].id
     }
 
-    const { error: profileError } = await supabase.from('user_profiles').upsert({
-      user_id: userId,
-      role: user.role,
-      academia_id: user.scoped ? testAcademiaId : null,
-    })
-
-    if (profileError) throw profileError
+    await client.query(
+      `insert into user_profiles (user_id, role, academia_id) values ($1, $2, $3)
+       on conflict (user_id) do update set role = $2, academia_id = $3`,
+      [userId, user.role, user.scoped ? testAcademiaId : null]
+    )
 
     console.log(`✓ ${user.role.padEnd(12)} ${user.email}`)
   }
@@ -88,7 +81,9 @@ async function main() {
   console.log('Apague esses usuários antes de ir para produção (Sprint 5, S5-10).')
 }
 
-main().catch((err) => {
-  console.error(err)
-  process.exit(1)
-})
+main()
+  .catch((err) => {
+    console.error(err)
+    process.exitCode = 1
+  })
+  .finally(() => client.end())

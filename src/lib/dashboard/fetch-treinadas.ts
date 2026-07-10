@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { pool } from '@/lib/db/pool'
+import { seesAllAcademias, type UserProfile } from '@/lib/auth/profile'
 
 export type TreinadaStatus = {
   academiaId: string
@@ -6,22 +7,22 @@ export type TreinadaStatus = {
   treinada: boolean
 }
 
-export async function fetchTreinadas(): Promise<TreinadaStatus[]> {
-  const supabase = createClient()
-  const [{ data: academias, error: academiasError }, { data: trained, error: trainedError }] =
-    await Promise.all([
-      supabase.from('academias').select('id, nome').eq('ativo', true).order('nome'),
-      supabase.from('trained_academias').select('academia_id, treinada'),
-    ])
+export async function fetchTreinadas(profile: UserProfile): Promise<TreinadaStatus[]> {
+  const scopedAcademiaId = seesAllAcademias(profile.role) ? null : profile.academiaId
 
-  if (academiasError) throw academiasError
-  if (trainedError) throw trainedError
+  const { rows } = await pool.query<{ academia_id: string; nome: string; treinada: boolean | null }>(
+    `select a.id as academia_id, a.nome, t.treinada
+     from academias a
+     left join trained_academias t on t.academia_id = a.id
+     where a.ativo = true
+       and ($1::uuid is null or a.id = $1)
+     order by a.nome`,
+    [scopedAcademiaId]
+  )
 
-  const trainedByAcademia = new Map((trained ?? []).map((t) => [t.academia_id, t.treinada]))
-
-  return (academias ?? []).map((a) => ({
-    academiaId: a.id,
-    nome: a.nome,
-    treinada: trainedByAcademia.get(a.id) ?? false,
+  return rows.map((row) => ({
+    academiaId: row.academia_id,
+    nome: row.nome,
+    treinada: row.treinada ?? false,
   }))
 }

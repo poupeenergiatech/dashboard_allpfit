@@ -1,6 +1,6 @@
 import { FunnelDashboard } from '@/components/dashboard/funnel-dashboard'
-import { createClient } from '@/lib/supabase/server'
-import { getCurrentUserProfile, seesAllAcademias } from '@/lib/supabase/profile'
+import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
+import { getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 
 export default async function DashboardHomePage() {
   const profile = await getCurrentUserProfile().catch((err: unknown) => {
@@ -15,16 +15,11 @@ export default async function DashboardHomePage() {
     )
   }
 
-  const supabase = createClient()
-  const { data: academias } = await supabase
-    .from('academias')
-    .select('id, nome')
-    .eq('ativo', true)
-    .order('nome')
+  const academias = await fetchActiveAcademias(profile)
 
   return (
     <FunnelDashboard
-      academias={academias ?? []}
+      academias={academias}
       initialAcademiaId={seesAllAcademias(profile.role) ? null : profile.academiaId}
     />
   )

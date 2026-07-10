@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/admin'
+import { pool } from '@/lib/db/pool'
 import type { ReportPayload } from './build-report-payload'
 
 export type SendReportResult = { sent: boolean; status?: number; error?: string }
@@ -7,12 +7,11 @@ export type SendReportResult = { sent: boolean; status?: number; error?: string 
 // POST. Não derruba o chamador em caso de falha — sempre retorna um resultado descritivo,
 // no mesmo espírito de /api/agregador (falha externa não deve quebrar o resto do sistema).
 export async function sendReportWebhook(payload: ReportPayload): Promise<SendReportResult> {
-  const supabase = createAdminClient()
-  const { data, error } = await supabase.from('report_settings').select('webhook_url').eq('id', 1).maybeSingle()
+  const { rows } = await pool.query<{ webhook_url: string | null }>(
+    'select webhook_url from report_settings where id = 1'
+  )
 
-  if (error) throw error
-
-  const webhookUrl = data?.webhook_url
+  const webhookUrl = rows[0]?.webhook_url
   if (!webhookUrl) {
     return { sent: false, error: 'Nenhuma URL de webhook configurada em Configurações.' }
   }

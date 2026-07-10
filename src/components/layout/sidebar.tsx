@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import type { UserRole } from '@/lib/supabase/profile'
+import type { UserRole } from '@/lib/auth/profile'
 
 const NAV_ITEMS: { label: string; href: string; roles?: UserRole[]; icon: IconName }[] = [
   { label: 'Funil / Dashboard', href: '', icon: 'chart' },

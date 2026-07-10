@@ -1,10 +1,10 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { pool } from '@/lib/db/pool'
 import { buildReportPayload } from '@/lib/dashboard/build-report-payload'
 import { sendReportWebhook } from '@/lib/dashboard/send-report-webhook'
-import { createClient } from '@/lib/supabase/server'
-import { canManageUsers, getCurrentUserProfile } from '@/lib/supabase/profile'
+import { canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
 
 function assertSuperAdmin(role: string | undefined) {
   if (role !== 'super_admin') {
@@ -32,14 +32,10 @@ export async function saveReportWebhookUrl(formData: FormData) {
     }
   }
 
-  const supabase = createClient()
-  // RLS (report_settings_write, migration 0012) é a barreira de verdade: só super_admin
-  // consegue escrever aqui mesmo que o check acima seja contornado.
-  const { error } = await supabase
-    .from('report_settings')
-    .upsert({ id: 1, webhook_url: url || null, updated_at: new Date().toISOString() })
-
-  if (error) throw error
+  // Sem RLS, o check de canManageUsers acima é a barreira de verdade pra essa tabela.
+  await pool.query('update report_settings set webhook_url = $1, updated_at = now() where id = 1', [
+    url || null,
+  ])
 
   revalidatePath('/configuracoes')
 }

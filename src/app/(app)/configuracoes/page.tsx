@@ -1,6 +1,6 @@
 import { ReportWebhookForm } from '@/components/dashboard/report-webhook-form'
 import { fetchReportWebhookUrl } from '@/lib/dashboard/fetch-report-config'
-import { canManageUsers, getCurrentUserProfile } from '@/lib/supabase/profile'
+import { canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
 
 export default async function ConfiguracoesPage() {
   const profile = await getCurrentUserProfile().catch(() => null)

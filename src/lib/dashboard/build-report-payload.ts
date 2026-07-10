@@ -1,5 +1,5 @@
 import { formatDateBR, formatDateTimeBR } from './date-br'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { pool } from '@/lib/db/pool'
 
 export type ReportContact = {
   nome: string
@@ -22,30 +22,26 @@ export type ReportPayload = {
 }
 
 // Monta o relatório de novos contatos de um dia específico, agrupado por academia — payload
-// enviado pelo webhook configurado em /configuracoes (ver /api/relatorio). Usa o client admin
-// porque roda fora de uma sessão de usuário (chamado por um cron externo).
+// enviado pelo webhook configurado em /configuracoes (ver /api/relatorio). Roda fora de uma
+// sessão de usuário (chamado por um cron externo), sem checagem de role.
 export async function buildReportPayload(reportDate: Date): Promise<ReportPayload> {
-  const supabase = createAdminClient()
-
   const dayStart = new Date(reportDate)
   dayStart.setHours(0, 0, 0, 0)
   const dayEnd = new Date(dayStart)
   dayEnd.setDate(dayEnd.getDate() + 1)
 
-  const [{ data: academias, error: academiasError }, { data: contacts, error: contactsError }] = await Promise.all([
-    supabase.from('academias').select('id, nome, numero_telefone').eq('ativo', true).order('nome'),
-    supabase
-      .from('contacts')
-      .select('nome, telefone, academia_id, created_at')
-      .gte('created_at', dayStart.toISOString())
-      .lt('created_at', dayEnd.toISOString()),
+  const [{ rows: academias }, { rows: contacts }] = await Promise.all([
+    pool.query<{ id: string; nome: string; numero_telefone: string | null }>(
+      'select id, nome, numero_telefone from academias where ativo = true order by nome'
+    ),
+    pool.query<{ nome: string; telefone: string | null; academia_id: string | null; created_at: string }>(
+      'select nome, telefone, academia_id, created_at from contacts where created_at >= $1 and created_at < $2',
+      [dayStart.toISOString(), dayEnd.toISOString()]
+    ),
   ])
 
-  if (academiasError) throw academiasError
-  if (contactsError) throw contactsError
-
   const contactsByAcademia = new Map<string, typeof contacts>()
-  for (const contact of contacts ?? []) {
+  for (const contact of contacts) {
     if (!contact.academia_id) continue
     const list = contactsByAcademia.get(contact.academia_id) ?? []
     list.push(contact)
