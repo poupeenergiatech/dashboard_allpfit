@@ -3,6 +3,7 @@ import { SyncAlleDocumentosButton } from '@/components/dashboard/sync-alle-docum
 import { SyncHistoryTable } from '@/components/dashboard/sync-history-table'
 import { fetchAllAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchReportWebhookUrl } from '@/lib/dashboard/fetch-report-config'
+import { fetchAutoSyncEnabled } from '@/lib/dashboard/fetch-sync-settings'
 import { fetchSyncHistory } from '@/lib/dashboard/fetch-sync-history'
 import { canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
 
@@ -17,10 +18,11 @@ export default async function ConfiguracoesPage() {
     )
   }
 
-  const [webhookUrl, academias, syncHistory] = await Promise.all([
+  const [webhookUrl, academias, syncHistory, autoSyncEnabled] = await Promise.all([
     fetchReportWebhookUrl(),
     fetchAllAcademias(),
     fetchSyncHistory(),
+    fetchAutoSyncEnabled(),
   ])
 
   return (
@@ -31,7 +33,10 @@ export default async function ConfiguracoesPage() {
       </div>
 
       <ReportWebhookForm initialUrl={webhookUrl} />
-      <SyncAlleDocumentosButton academias={academias.map((a) => ({ id: a.id, nome: a.nome }))} />
+      <SyncAlleDocumentosButton
+        academias={academias.map((a) => ({ id: a.id, nome: a.nome }))}
+        autoSyncEnabled={autoSyncEnabled}
+      />
 
       <div>
         <h3 className="mb-3 text-sm font-semibold text-slate-900">Histórico de sincronizações</h3>

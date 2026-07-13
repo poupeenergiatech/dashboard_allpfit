@@ -1,6 +1,7 @@
 'use client'
 
 import { FilterBar } from './filter-bar'
+import { FunnelDailyHistoryTable } from './funnel-daily-history-table'
 import { FunnelGrid } from './funnel-grid'
 import { FunnelStagesChart } from './funnel-stages-chart'
 import { FunnelTrendChart } from './funnel-trend-chart'
@@ -16,8 +17,9 @@ export function FunnelDashboard({
   academias: Academia[]
   initialAcademiaId: string | null
 }) {
-  const { academiaId, setAcademiaId, period, setPeriod } = useAcademiaFilter(initialAcademiaId)
-  const { counts, loading, error, lastUpdatedAt } = useFunnelData(academiaId, period)
+  const { academiaId, setAcademiaId, period, setPeriod, customRange, setCustomRange } =
+    useAcademiaFilter(initialAcademiaId)
+  const { counts, loading, error, lastUpdatedAt } = useFunnelData(academiaId, period, customRange)
 
   return (
     <div className="space-y-5">
@@ -35,6 +37,8 @@ export function FunnelDashboard({
         onAcademiaChange={setAcademiaId}
         period={period}
         onPeriodChange={setPeriod}
+        customRange={customRange}
+        onCustomRangeChange={setCustomRange}
       />
 
       {error && (
@@ -62,6 +66,10 @@ export function FunnelDashboard({
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <FunnelStagesChart counts={counts} />
               <FunnelTrendChart series={counts.series} />
+            </div>
+            <div>
+              <h3 className="mb-3 text-sm font-semibold text-slate-900">Histórico diário</h3>
+              <FunnelDailyHistoryTable series={counts.series} />
             </div>
           </>
         )

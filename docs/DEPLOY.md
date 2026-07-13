@@ -59,14 +59,28 @@ O endpoint aceita `?data=YYYY-MM-DD` pra reprocessar um dia específico manualme
 destino do relatório (pra onde o POST é enviado) é configurada pelo Super Admin em
 `/configuracoes`, não por variável de ambiente.
 
-## Cron do sync Alle Documentos (`/api/sync-alle-documentos`)
+## Sync automático diário do Alle Documentos
 
-Mesmo esquema do cron do relatório acima — sem esse disparador externo, a única forma de
-sincronizar conversões do Alle Documentos é clicando o botão manual em `/configuracoes`.
-`GET https://SEU_DOMINIO/api/sync-alle-documentos`, header `Authorization: Bearer
-$CRON_SECRET` (mesmo secret do `/api/relatorio`, não precisa de um novo). Sugestão de
-horário: uma vez por dia, fora do horário do relatório. Toda execução — manual ou por esse
-cron — fica registrada em "Histórico de sincronizações" em `/configuracoes`.
+Duas formas de automatizar, independentes uma da outra:
+
+**Opção A — scheduler embutido (recomendado, não precisa de infra externa).** Em
+`/configuracoes`, o toggle "Sincronização automática diária" liga um scheduler que roda
+dentro do próprio processo do servidor (`src/lib/dashboard/sync-scheduler.ts`, ligado em
+`src/instrumentation.ts` quando o servidor sobe — exige
+`experimental.instrumentationHook: true`, já configurado em `next.config.mjs`). A cada 15
+min ele checa se já rodou automaticamente hoje (pela última linha `automatico` em
+`alle_documentos_sync_log`); se não, dispara. Funciona porque o container roda um processo
+Node de vida longa (não é serverless) — reinícios do container não perdem o agendamento,
+só fazem o scheduler se auto-corrigir na próxima checagem. Nenhuma env var nem cron externo
+necessário; só o toggle.
+
+**Opção B — cron externo (`/api/sync-alle-documentos`).** Mesmo esquema do cron do
+relatório acima. `GET https://SEU_DOMINIO/api/sync-alle-documentos`, header `Authorization:
+Bearer $CRON_SECRET` (mesmo secret do `/api/relatorio`, não precisa de um novo). Útil como
+alternativa/backup se preferir não depender do scheduler embutido.
+
+Toda execução — manual, pelo scheduler embutido, ou por esse cron — fica registrada em
+"Histórico de sincronizações" em `/configuracoes`, com a origem (Manual/Automático).
 
 ## Webhook de entrada do agregador (`POST /api/webhooks/agregador`)
 
@@ -94,8 +108,9 @@ não tem "modo sem checagem" como o `/api/relatorio`.
 - [ ] `/api/relatorio?data=YYYY-MM-DD` (com o header `Authorization`) retorna `sent: true`
       depois de configurar uma URL de teste em `/configuracoes`
 - [ ] Cron externo do relatório diário configurado (ver seção acima)
-- [ ] Cron externo do sync Alle Documentos configurado (ver seção acima) — confirme com uma
-      linha nova em "Histórico de sincronizações" em `/configuracoes` depois da primeira execução
+- [ ] Sync automático do Alle Documentos ativado — toggle em `/configuracoes` (opção A) ou
+      cron externo (opção B, ver seção acima) — confirme com uma linha "Automático" nova em
+      "Histórico de sincronizações" depois da primeira execução
 - [ ] `POST /api/webhooks/agregador` configurado no painel do agregador e testado com um
       envio real (conferir `academias_nao_encontradas` na resposta)
 

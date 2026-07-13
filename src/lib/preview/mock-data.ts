@@ -26,6 +26,8 @@ const MOCK_FUNNEL_SERIES: DailyFunnelPoint[] = Array.from({ length: 14 }, (_, i)
   date.setDate(date.getDate() + i)
   return {
     date: date.toISOString().slice(0, 10),
+    totalAlunos: 300 + i * 4,
+    totalScans: 20 + Math.round(8 * Math.sin(i / 3)),
     contatos: 10 + Math.round(6 * Math.sin(i / 2)) + i,
     conversoes: 2 + Math.round(1.5 * Math.sin(i / 2 + 1)) + Math.floor(i / 4),
   }

@@ -1,14 +1,22 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { deleteAcademia, setAcademiaActive, updateAcademia } from '@/app/(app)/academias/actions'
 import { Avatar } from '@/components/ui/avatar'
+import { ListFilterBar } from './list-filter-bar'
 import { useToast } from '@/components/ui/toast'
 import type { AcademiaAdmin } from '@/lib/dashboard/fetch-academias'
 
 type ToggleAction = (academiaId: string, ativo: boolean) => Promise<void>
 type UpdateAction = (academiaId: string, formData: FormData) => Promise<void>
 type DeleteAction = (academiaId: string) => Promise<void>
+type StatusFilter = 'todas' | 'ativas' | 'inativas'
+
+const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: 'todas', label: 'Todas' },
+  { value: 'ativas', label: 'Ativas' },
+  { value: 'inativas', label: 'Inativas' },
+]
 
 export function AcademiasTable({
   academias,
@@ -22,44 +30,71 @@ export function AcademiasTable({
   onDelete?: DeleteAction
 }) {
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState<StatusFilter>('todas')
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    return academias.filter((a) => {
+      if (status === 'ativas' && !a.ativo) return false
+      if (status === 'inativas' && a.ativo) return false
+      if (term && !a.nome.toLowerCase().includes(term)) return false
+      return true
+    })
+  }, [academias, search, status])
 
   if (academias.length === 0) {
     return <div className="card-dashed text-sm text-slate-500">Nenhuma academia cadastrada ainda.</div>
   }
 
   return (
-    <div className="card overflow-x-auto">
-      <table className="w-full min-w-[720px] text-sm">
-        <thead>
-          <tr className="border-b border-slate-100 bg-slate-50/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-            <th className="px-4 py-3">Unidade</th>
-            <th className="px-4 py-3">Número WhatsApp</th>
-            <th className="px-4 py-3">Ativa</th>
-            <th className="px-4 py-3">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {academias.map((a) =>
-            editingId === a.id ? (
-              <AcademiaEditRow
-                key={a.id}
-                academia={a}
-                onUpdate={onUpdate}
-                onCancel={() => setEditingId(null)}
-                onSaved={() => setEditingId(null)}
-              />
-            ) : (
-              <AcademiaRow
-                key={a.id}
-                academia={a}
-                onToggleActive={onToggleActive}
-                onDelete={onDelete}
-                onEdit={() => setEditingId(a.id)}
-              />
-            )
-          )}
-        </tbody>
-      </table>
+    <div className="space-y-3">
+      <ListFilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por nome…"
+        statusOptions={STATUS_OPTIONS}
+        status={status}
+        onStatusChange={setStatus}
+      />
+
+      {filtered.length === 0 ? (
+        <div className="card-dashed text-sm text-slate-500">Nenhuma academia encontrada pra esse filtro.</div>
+      ) : (
+        <div className="card overflow-x-auto">
+          <table className="w-full min-w-[720px] text-sm">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-4 py-3">Unidade</th>
+                <th className="px-4 py-3">Número WhatsApp</th>
+                <th className="px-4 py-3">Ativa</th>
+                <th className="px-4 py-3">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((a) =>
+                editingId === a.id ? (
+                  <AcademiaEditRow
+                    key={a.id}
+                    academia={a}
+                    onUpdate={onUpdate}
+                    onCancel={() => setEditingId(null)}
+                    onSaved={() => setEditingId(null)}
+                  />
+                ) : (
+                  <AcademiaRow
+                    key={a.id}
+                    academia={a}
+                    onToggleActive={onToggleActive}
+                    onDelete={onDelete}
+                    onEdit={() => setEditingId(a.id)}
+                  />
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

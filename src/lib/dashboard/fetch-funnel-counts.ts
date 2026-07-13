@@ -2,8 +2,8 @@
 
 import { pool } from '@/lib/db/pool'
 import { getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
-import { DAYS_BY_PERIOD, periodRange } from './period'
-import type { DailyFunnelPoint, FunnelCounts, Period } from './types'
+import { periodRange } from './period'
+import type { DailyFunnelPoint, DateRange, FunnelCounts, Period } from './types'
 
 // Todos os dias do período, mesmo os sem nenhum registro — sem isso o gráfico de
 // tendência teria buracos em vez de mostrar "zero" no dia. Calculado em JS (fuso do
@@ -28,13 +28,14 @@ function keyOf(academiaId: string, day: string): string {
 // academia manipulando o valor no client.
 export async function fetchFunnelCounts(
   requestedAcademiaId: string | null,
-  period: Period
+  period: Period,
+  customRange?: DateRange | null
 ): Promise<FunnelCounts> {
   const profile = await getCurrentUserProfile()
   if (!profile) throw new Error('Sem sessão válida.')
 
   const academiaId = scopeAcademiaId(profile, requestedAcademiaId)
-  const { from, fromDate } = periodRange(period)
+  const { from, toExclusive, fromDate, toDate, days } = periodRange(period, customRange ?? undefined)
 
   const [{ rows: manualRows }, { rows: contatosPorDia }, { rows: conversoesPorDia }] = await Promise.all([
     pool.query<{
@@ -47,20 +48,20 @@ export async function fetchFunnelCounts(
     }>(
       `select academia_id, data, total_alunos, total_scans, contatos_ajuste, conversoes_ajuste
        from manual_data
-       where data >= $1 and ($2::uuid is null or academia_id = $2)`,
-      [fromDate, academiaId]
+       where data >= $1 and data <= $3 and ($2::uuid is null or academia_id = $2)`,
+      [fromDate, academiaId, toDate]
     ),
     pool.query<{ academia_id: string; day: string; count: number }>(
       `select academia_id, date_trunc('day', created_at)::date as day, count(*) as count from contacts
-       where created_at >= $1 and ($2::uuid is null or academia_id = $2)
+       where created_at >= $1 and created_at < $3 and ($2::uuid is null or academia_id = $2)
        group by academia_id, day`,
-      [from, academiaId]
+      [from, academiaId, toExclusive]
     ),
     pool.query<{ academia_id: string; day: string; count: number }>(
       `select academia_id, date_trunc('day', created_at)::date as day, count(*) as count from conversions
-       where created_at >= $1 and ($2::uuid is null or academia_id = $2)
+       where created_at >= $1 and created_at < $3 and ($2::uuid is null or academia_id = $2)
        group by academia_id, day`,
-      [from, academiaId]
+      [from, academiaId, toExclusive]
     ),
   ])
 
@@ -70,8 +71,17 @@ export async function fetchFunnelCounts(
   const latestAlunosByAcademia = new Map<string, { data: string; total_alunos: number }>()
   let totalScans = 0
 
+  // Por dia (pro histórico diário): soma bruta do que foi lançado naquele dia
+  // específico, entre as academias no escopo — não é "forward-filled" como o
+  // totalAlunos acima, é literalmente o que consta em manual_data pra aquele dia.
+  const alunosPorDia = new Map<string, number>()
+  const scansPorDia = new Map<string, number>()
+
   for (const row of manualRows) {
     totalScans += row.total_scans ?? 0
+    alunosPorDia.set(row.data, (alunosPorDia.get(row.data) ?? 0) + (row.total_alunos ?? 0))
+    scansPorDia.set(row.data, (scansPorDia.get(row.data) ?? 0) + (row.total_scans ?? 0))
+
     const prev = latestAlunosByAcademia.get(row.academia_id)
     if (!prev || row.data > prev.data) {
       latestAlunosByAcademia.set(row.academia_id, row)
@@ -115,8 +125,10 @@ export async function fetchFunnelCounts(
     conversoesPorDiaEfetivo.set(day, (conversoesPorDiaEfetivo.get(day) ?? 0) + value)
   }
 
-  const series: DailyFunnelPoint[] = enumerateDays(fromDate, DAYS_BY_PERIOD[period]).map((date) => ({
+  const series: DailyFunnelPoint[] = enumerateDays(fromDate, days).map((date) => ({
     date,
+    totalAlunos: alunosPorDia.get(date) ?? 0,
+    totalScans: scansPorDia.get(date) ?? 0,
     contatos: contatosPorDiaEfetivo.get(date) ?? 0,
     conversoes: conversoesPorDiaEfetivo.get(date) ?? 0,
   }))

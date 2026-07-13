@@ -1,12 +1,20 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { setTrained } from '@/app/(app)/treinadas/actions'
 import { Avatar } from '@/components/ui/avatar'
+import { ListFilterBar } from './list-filter-bar'
 import { useToast } from '@/components/ui/toast'
 import type { TreinadaStatus } from '@/lib/dashboard/fetch-treinadas'
 
 type ToggleAction = (academiaId: string, treinada: boolean) => Promise<void>
+type StatusFilter = 'todas' | 'treinadas' | 'pendentes'
+
+const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: 'todas', label: 'Todas' },
+  { value: 'treinadas', label: 'Treinadas' },
+  { value: 'pendentes', label: 'Pendentes' },
+]
 
 export function TreinadasGrid({
   rows,
@@ -17,6 +25,19 @@ export function TreinadasGrid({
   canEdit: boolean
   onToggle?: ToggleAction
 }) {
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState<StatusFilter>('todas')
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    return rows.filter((row) => {
+      if (status === 'treinadas' && !row.treinada) return false
+      if (status === 'pendentes' && row.treinada) return false
+      if (term && !row.nome.toLowerCase().includes(term)) return false
+      return true
+    })
+  }, [rows, search, status])
+
   if (rows.length === 0) {
     return (
       <div className="card-dashed text-sm text-slate-500">
@@ -26,10 +47,25 @@ export function TreinadasGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {rows.map((row) => (
-        <TreinadaCard key={row.academiaId} row={row} canEdit={canEdit} onToggle={onToggle} />
-      ))}
+    <div className="space-y-3">
+      <ListFilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por nome…"
+        statusOptions={STATUS_OPTIONS}
+        status={status}
+        onStatusChange={setStatus}
+      />
+
+      {filtered.length === 0 ? (
+        <div className="card-dashed text-sm text-slate-500">Nenhuma academia encontrada pra esse filtro.</div>
+      ) : (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((row) => (
+            <TreinadaCard key={row.academiaId} row={row} canEdit={canEdit} onToggle={onToggle} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

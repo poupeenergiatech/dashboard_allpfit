@@ -1,4 +1,10 @@
-export type Period = 'hoje' | '7dias' | '30dias'
+export type Period = 'hoje' | '7dias' | '30dias' | 'personalizado'
+
+// yyyy-mm-dd, inclusive nos dois lados — só usado quando period === 'personalizado'.
+export type DateRange = {
+  from: string
+  to: string
+}
 
 export type Academia = {
   id: string
@@ -7,6 +13,8 @@ export type Academia = {
 
 export type DailyFunnelPoint = {
   date: string
+  totalAlunos: number
+  totalScans: number
   contatos: number
   conversoes: number
 }

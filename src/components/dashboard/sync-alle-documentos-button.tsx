@@ -3,16 +3,19 @@
 import { useState, useTransition } from 'react'
 import { createAcademiaAlias } from '@/app/(app)/academias/actions'
 import { syncAlleDocumentosConvertidos, type SyncAlleDocumentosResult } from '@/app/(app)/configuracoes/actions'
+import { AutoSyncToggle } from './auto-sync-toggle'
 import { useToast } from '@/components/ui/toast'
 
 type CreateAliasAction = (academiaId: string, aliasNome: string) => Promise<void>
 
 export function SyncAlleDocumentosButton({
   academias,
+  autoSyncEnabled,
   onSync = syncAlleDocumentosConvertidos,
   onCreateAlias = createAcademiaAlias,
 }: {
   academias: { id: string; nome: string }[]
+  autoSyncEnabled: boolean
   onSync?: () => Promise<SyncAlleDocumentosResult>
   onCreateAlias?: CreateAliasAction
 }) {
@@ -51,6 +54,8 @@ export function SyncAlleDocumentosButton({
       <button type="button" onClick={handleClick} disabled={pending} className="btn-secondary">
         {pending ? 'Buscando…' : 'Buscar convertidos agora'}
       </button>
+
+      <AutoSyncToggle initialEnabled={autoSyncEnabled} />
 
       {result && (
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">

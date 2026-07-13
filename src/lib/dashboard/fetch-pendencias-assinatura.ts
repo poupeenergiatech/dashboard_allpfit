@@ -1,5 +1,5 @@
 import { pool } from '@/lib/db/pool'
-import { seesAllAcademias, type UserProfile } from '@/lib/auth/profile'
+import { scopeAcademiaId, type UserProfile } from '@/lib/auth/profile'
 
 export type PendenciaPorAcademia = {
   academiaId: string
@@ -11,8 +11,15 @@ export type PendenciaPorAcademia = {
 // Última quantidade lançada por academia (não soma pelo período — é um snapshot
 // de backlog atual, não um contador de eventos do dia). Academia sem nenhum
 // lançamento ainda entra com quantidade 0 e data null.
-export async function fetchPendenciasPorAcademia(profile: UserProfile): Promise<PendenciaPorAcademia[]> {
-  const scopedAcademiaId = seesAllAcademias(profile.role) ? null : profile.academiaId
+//
+// requestedAcademiaId vem do filtro de academia da tela (?academia=, ver page.tsx) —
+// scopeAcademiaId ignora o valor pedido pra quem só enxerga a própria academia, então
+// um coordenador não consegue ver outra unidade manipulando a URL.
+export async function fetchPendenciasPorAcademia(
+  profile: UserProfile,
+  requestedAcademiaId?: string | null
+): Promise<PendenciaPorAcademia[]> {
+  const scopedAcademiaId = scopeAcademiaId(profile, requestedAcademiaId ?? null)
 
   const { rows } = await pool.query<{
     academia_id: string
@@ -46,10 +53,14 @@ export type PendenciaTrendPoint = {
 
 const TREND_DAYS = 30
 
-// Soma diária (todas as academias no escopo) dos últimos 30 dias, zero-preenchida
-// nos dias sem lançamento — pra visualizar a evolução do backlog total no tempo.
-export async function fetchPendenciasTrend(profile: UserProfile): Promise<PendenciaTrendPoint[]> {
-  const scopedAcademiaId = seesAllAcademias(profile.role) ? null : profile.academiaId
+// Soma diária (todas as academias no escopo, ou só a filtrada) dos últimos 30 dias,
+// zero-preenchida nos dias sem lançamento — pra visualizar a evolução do backlog no
+// tempo.
+export async function fetchPendenciasTrend(
+  profile: UserProfile,
+  requestedAcademiaId?: string | null
+): Promise<PendenciaTrendPoint[]> {
+  const scopedAcademiaId = scopeAcademiaId(profile, requestedAcademiaId ?? null)
 
   const from = new Date()
   from.setDate(from.getDate() - (TREND_DAYS - 1))
@@ -83,8 +94,11 @@ export type PendenciaEntry = {
 
 const HISTORY_LIMIT = 90
 
-export async function fetchPendenciasHistory(profile: UserProfile): Promise<PendenciaEntry[]> {
-  const scopedAcademiaId = seesAllAcademias(profile.role) ? null : profile.academiaId
+export async function fetchPendenciasHistory(
+  profile: UserProfile,
+  requestedAcademiaId?: string | null
+): Promise<PendenciaEntry[]> {
+  const scopedAcademiaId = scopeAcademiaId(profile, requestedAcademiaId ?? null)
 
   const { rows } = await pool.query<{
     id: string

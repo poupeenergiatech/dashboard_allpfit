@@ -2,20 +2,28 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { fetchFunnelCounts } from './fetch-funnel-counts'
-import type { FunnelCounts, Period } from './types'
+import type { DateRange, FunnelCounts, Period } from './types'
 
 const FUNNEL_POLL_MS = 10_000
 const AGREGADOR_POLL_MS = 30_000
 
-export function useFunnelData(academiaId: string | null, period: Period) {
+export function useFunnelData(academiaId: string | null, period: Period, customRange: DateRange | null) {
   const [counts, setCounts] = useState<FunnelCounts | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null)
 
+  // Personalizado com data inicial/final incompletas (usuário ainda editando o
+  // input) não deve disparar fetch nem sobrescrever o erro anterior com um genérico.
+  const rangeIncomplete = period === 'personalizado' && (!customRange?.from || !customRange?.to)
+
   const reload = useCallback(async () => {
+    if (rangeIncomplete) {
+      setLoading(false)
+      return
+    }
     try {
-      const next = await fetchFunnelCounts(academiaId, period)
+      const next = await fetchFunnelCounts(academiaId, period, customRange)
       setCounts(next)
       setLastUpdatedAt(new Date())
       setError(null)
@@ -24,9 +32,10 @@ export function useFunnelData(academiaId: string | null, period: Period) {
     } finally {
       setLoading(false)
     }
-  }, [academiaId, period])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [academiaId, period, customRange?.from, customRange?.to, rangeIncomplete])
 
-  // Refetch sempre que academia ou período mudam.
+  // Refetch sempre que academia, período ou o range personalizado mudam.
   useEffect(() => {
     setLoading(true)
     reload()

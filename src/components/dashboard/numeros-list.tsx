@@ -1,7 +1,37 @@
+'use client'
+
+import { useMemo, useState } from 'react'
 import { Avatar } from '@/components/ui/avatar'
+import { ListFilterBar } from './list-filter-bar'
 import type { NumeroGroup } from '@/lib/dashboard/fetch-numeros'
 
+type StatusFilter = 'todos' | 'online' | 'offline'
+
+const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'online', label: 'Online' },
+  { value: 'offline', label: 'Offline' },
+]
+
+function matchesSearch(group: NumeroGroup, term: string): boolean {
+  if (group.numeroTelefone?.toLowerCase().includes(term)) return true
+  return group.unidades.some((u) => u.nome.toLowerCase().includes(term))
+}
+
 export function NumerosList({ rows }: { rows: NumeroGroup[] }) {
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState<StatusFilter>('todos')
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    return rows.filter((group) => {
+      if (status === 'online' && !group.ativo) return false
+      if (status === 'offline' && group.ativo) return false
+      if (term && !matchesSearch(group, term)) return false
+      return true
+    })
+  }, [rows, search, status])
+
   if (rows.length === 0) {
     return (
       <div className="card-dashed text-sm text-slate-500">
@@ -12,9 +42,22 @@ export function NumerosList({ rows }: { rows: NumeroGroup[] }) {
 
   return (
     <div className="space-y-3">
-      {rows.map((group) => (
-        <NumeroGroupCard key={group.numeroTelefone ?? group.unidades[0].academiaId} group={group} />
-      ))}
+      <ListFilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Buscar por número ou unidade…"
+        statusOptions={STATUS_OPTIONS}
+        status={status}
+        onStatusChange={setStatus}
+      />
+
+      {filtered.length === 0 ? (
+        <div className="card-dashed text-sm text-slate-500">Nenhum número encontrado pra esse filtro.</div>
+      ) : (
+        filtered.map((group) => (
+          <NumeroGroupCard key={group.numeroTelefone ?? group.unidades[0].academiaId} group={group} />
+        ))
+      )}
     </div>
   )
 }

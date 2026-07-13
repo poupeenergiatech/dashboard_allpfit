@@ -1,5 +1,7 @@
 import { pool } from '@/lib/db/pool'
-import { seesAllAcademias, type UserProfile } from '@/lib/auth/profile'
+import { scopeAcademiaId, type UserProfile } from '@/lib/auth/profile'
+import { periodRange } from './period'
+import type { DateRange, Period } from './types'
 
 export type AcademiaPerformance = {
   academiaId: string
@@ -8,17 +10,28 @@ export type AcademiaPerformance = {
   totalConversoes: number
 }
 
+export type PerformancePeriod = Period | 'todos'
+
 function keyOf(academiaId: string, day: string): string {
   return `${academiaId}|${day}`
 }
 
-// Totais acumulados (sem filtro de período) por academia. Não usa mais a view
-// `academia_performance` (db/migrations/0001_init.sql) — ela não sabe de
-// contatos_ajuste/conversoes_ajuste (migration 0002), então deixaria de refletir
-// correções manuais. Mesmo merge de fetch-funnel-counts.ts (ajuste substitui a
-// contagem automática por academia+dia), só que somando todo o histórico.
-export async function fetchAcademiaPerformance(profile: UserProfile): Promise<AcademiaPerformance[]> {
-  const scopedAcademiaId = seesAllAcademias(profile.role) ? null : profile.academiaId
+// Totais por academia — por padrão (period 'todos') soma o histórico inteiro, sem
+// filtro de data, igual ao comportamento original desta tela; os outros valores de
+// period (ver PerformancePeriod) escopam pro intervalo escolhido no filtro da tela.
+// Não usa mais a view `academia_performance` (db/migrations/0001_init.sql) — ela não
+// sabe de contatos_ajuste/conversoes_ajuste (migration 0002), então deixaria de
+// refletir correções manuais. Mesmo merge de fetch-funnel-counts.ts (ajuste substitui
+// a contagem automática por academia+dia), só que somando o período pedido.
+export async function fetchAcademiaPerformance(
+  profile: UserProfile,
+  period: PerformancePeriod = 'todos',
+  customRange?: DateRange | null,
+  requestedAcademiaId?: string | null
+): Promise<AcademiaPerformance[]> {
+  const scopedAcademiaId = scopeAcademiaId(profile, requestedAcademiaId ?? null)
+
+  const range = period === 'todos' ? null : periodRange(period, customRange ?? undefined)
 
   const [{ rows: academias }, { rows: contatosPorDia }, { rows: conversoesPorDia }, { rows: ajustes }] =
     await Promise.all([
@@ -31,14 +44,18 @@ export async function fetchAcademiaPerformance(profile: UserProfile): Promise<Ac
       pool.query<{ academia_id: string; day: string; count: number }>(
         `select academia_id, date_trunc('day', created_at)::date as day, count(*) as count from contacts
          where ($1::uuid is null or academia_id = $1)
+           and ($2::timestamptz is null or created_at >= $2)
+           and ($3::timestamptz is null or created_at < $3)
          group by academia_id, day`,
-        [scopedAcademiaId]
+        [scopedAcademiaId, range?.from ?? null, range?.toExclusive ?? null]
       ),
       pool.query<{ academia_id: string; day: string; count: number }>(
         `select academia_id, date_trunc('day', created_at)::date as day, count(*) as count from conversions
          where ($1::uuid is null or academia_id = $1)
+           and ($2::timestamptz is null or created_at >= $2)
+           and ($3::timestamptz is null or created_at < $3)
          group by academia_id, day`,
-        [scopedAcademiaId]
+        [scopedAcademiaId, range?.from ?? null, range?.toExclusive ?? null]
       ),
       pool.query<{
         academia_id: string
@@ -48,8 +65,10 @@ export async function fetchAcademiaPerformance(profile: UserProfile): Promise<Ac
       }>(
         `select academia_id, data, contatos_ajuste, conversoes_ajuste from manual_data
          where (contatos_ajuste is not null or conversoes_ajuste is not null)
-           and ($1::uuid is null or academia_id = $1)`,
-        [scopedAcademiaId]
+           and ($1::uuid is null or academia_id = $1)
+           and ($2::date is null or data >= $2)
+           and ($3::date is null or data <= $3)`,
+        [scopedAcademiaId, range?.fromDate ?? null, range?.toDate ?? null]
       ),
     ])
 
