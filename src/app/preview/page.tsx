@@ -6,8 +6,10 @@ import { FunnelGrid } from '@/components/dashboard/funnel-grid'
 import { FunnelStagesChart } from '@/components/dashboard/funnel-stages-chart'
 import { FunnelTrendChart } from '@/components/dashboard/funnel-trend-chart'
 import { LiveIndicator } from '@/components/dashboard/live-indicator'
+import { ManualDataSection } from '@/components/dashboard/manual-data-section'
 import { useAcademiaFilter } from '@/lib/dashboard/use-academia-filter'
-import { MOCK_ACADEMIAS, MOCK_FUNNEL_COUNTS } from '@/lib/preview/mock-data'
+import { MOCK_ACADEMIAS, MOCK_FUNNEL_COUNTS, MOCK_MANUAL_DATA_HISTORY } from '@/lib/preview/mock-data'
+import { mockSave } from '@/lib/preview/mock-actions'
 
 export default function PreviewFunnelPage() {
   const { academiaId, setAcademiaId, period, setPeriod, customRange, setCustomRange } = useAcademiaFilter(null)
@@ -42,6 +44,16 @@ export default function PreviewFunnelPage() {
       <div>
         <h3 className="mb-3 text-sm font-semibold text-slate-900">Histórico diário</h3>
         <FunnelDailyHistoryTable series={MOCK_FUNNEL_COUNTS.series} />
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900">Dados manuais</h3>
+        <ManualDataSection
+          academias={MOCK_ACADEMIAS}
+          fixedAcademiaId={null}
+          history={MOCK_MANUAL_DATA_HISTORY}
+          onSave={mockSave}
+        />
       </div>
     </div>
   )

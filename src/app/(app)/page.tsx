@@ -1,6 +1,7 @@
 import { FunnelDashboard } from '@/components/dashboard/funnel-dashboard'
+import { canWrite, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
-import { getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
+import { fetchManualDataHistory } from '@/lib/dashboard/fetch-manual-data-history'
 
 export default async function DashboardHomePage() {
   const profile = await getCurrentUserProfile().catch((err: unknown) => {
@@ -15,12 +16,20 @@ export default async function DashboardHomePage() {
     )
   }
 
-  const academias = await fetchActiveAcademias(profile)
+  const canEdit = canWrite(profile.role)
+  const fixedAcademiaId = seesAllAcademias(profile.role) ? null : profile.academiaId
+
+  const [academias, history] = await Promise.all([
+    fetchActiveAcademias(profile),
+    canEdit ? fetchManualDataHistory(profile) : Promise.resolve([]),
+  ])
 
   return (
     <FunnelDashboard
       academias={academias}
-      initialAcademiaId={seesAllAcademias(profile.role) ? null : profile.academiaId}
+      initialAcademiaId={fixedAcademiaId}
+      canEdit={canEdit}
+      manualDataHistory={history}
     />
   )
 }

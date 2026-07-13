@@ -6,16 +6,22 @@ import { FunnelGrid } from './funnel-grid'
 import { FunnelStagesChart } from './funnel-stages-chart'
 import { FunnelTrendChart } from './funnel-trend-chart'
 import { LiveIndicator } from './live-indicator'
+import { ManualDataSection } from './manual-data-section'
 import { useAcademiaFilter } from '@/lib/dashboard/use-academia-filter'
 import { useFunnelData } from '@/lib/dashboard/use-funnel-data'
 import type { Academia } from '@/lib/dashboard/types'
+import type { ManualDataEntry } from '@/lib/dashboard/fetch-manual-data-history'
 
 export function FunnelDashboard({
   academias,
   initialAcademiaId,
+  canEdit,
+  manualDataHistory,
 }: {
   academias: Academia[]
   initialAcademiaId: string | null
+  canEdit: boolean
+  manualDataHistory: ManualDataEntry[]
 }) {
   const { academiaId, setAcademiaId, period, setPeriod, customRange, setCustomRange } =
     useAcademiaFilter(initialAcademiaId)
@@ -79,6 +85,17 @@ export function FunnelDashboard({
             </div>
           </>
         )
+      )}
+
+      {canEdit && (
+        <div>
+          <h3 className="mb-3 text-sm font-semibold text-slate-900">Dados manuais</h3>
+          <ManualDataSection
+            academias={academias}
+            fixedAcademiaId={initialAcademiaId}
+            history={manualDataHistory}
+          />
+        </div>
       )}
     </div>
   )

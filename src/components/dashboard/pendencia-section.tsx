@@ -24,6 +24,7 @@ export function PendenciaSection({
       <PendenciaForm
         academias={academias}
         fixedAcademiaId={fixedAcademiaId}
+        history={history}
         editing={editing}
         onCancelEdit={() => setEditing(null)}
         {...(onSave ? { onSave } : {})}
