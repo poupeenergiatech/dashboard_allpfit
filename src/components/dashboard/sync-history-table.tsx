@@ -39,7 +39,7 @@ function Pills<T extends string>({
           type="button"
           onClick={() => onChange(opt.value)}
           className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold transition ${
-            value === opt.value ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            value === opt.value ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
           }`}
         >
           {opt.label}
@@ -100,7 +100,7 @@ export function SyncHistoryTable({ entries }: { entries: SyncLogEntry[] }) {
                   <td className="px-4 py-3">
                     <span
                       className={`badge ${
-                        entry.triggeredBy === 'manual' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-600'
+                        entry.triggeredBy === 'manual' ? 'bg-brand-50 text-brand-700' : 'bg-slate-100 text-slate-600'
                       }`}
                     >
                       {entry.triggeredBy === 'manual' ? 'Manual' : 'Automático'}

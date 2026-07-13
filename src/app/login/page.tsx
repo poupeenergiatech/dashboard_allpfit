@@ -8,14 +8,13 @@ export default function LoginPage({
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-4">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-32 left-1/2 h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-gradient-to-br from-blue-200/50 via-blue-100/40 to-transparent blur-3xl" />
+        <div className="absolute -top-32 left-1/2 h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-gradient-to-br from-brand-200/50 via-accent-100/40 to-transparent blur-3xl" />
       </div>
 
       <div className="w-full max-w-sm animate-fade-up">
         <div className="mb-8 flex flex-col items-center gap-3">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 text-lg font-bold text-white shadow-lg shadow-blue-600/30">
-            A
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element -- asset local pequeno e fixo, sem next/image em nenhum outro lugar do app */}
+          <img src="/logo.png" alt="Allp Fit" className="h-14 w-14" />
           <div className="text-center">
             <h1 className="text-xl font-bold text-slate-900">Allp Fit</h1>
             <p className="text-sm text-slate-500">Dashboard de Performance</p>

@@ -43,7 +43,7 @@ export function AcademiaTable({ rows }: { rows: AcademiaPerformance[] }) {
                   <div className="flex items-center gap-2">
                     <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
+                        className="h-full rounded-full bg-gradient-to-r from-brand-500 to-accent-500"
                         style={{ width: `${Math.min(rate, 100)}%` }}
                       />
                     </div>

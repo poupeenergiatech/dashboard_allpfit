@@ -37,7 +37,7 @@ export function ListFilterBar<TStatus extends string>({
               onClick={() => onStatusChange(opt.value)}
               className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold transition ${
                 status === opt.value
-                  ? 'bg-white text-blue-700 shadow-sm'
+                  ? 'bg-white text-brand-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >

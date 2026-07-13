@@ -72,7 +72,7 @@ function NumeroGroupCard({ group }: { group: NumeroGroup }) {
           <span className="font-medium tabular-nums text-slate-900">
             {group.numeroTelefone ?? 'Número não configurado'}
           </span>
-          <span className="badge bg-blue-50 text-blue-700">
+          <span className="badge bg-brand-50 text-brand-700">
             {unidadeCount} {unidadeCount === 1 ? 'unidade' : 'unidades'}
           </span>
           <span

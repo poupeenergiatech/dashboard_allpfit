@@ -36,7 +36,7 @@ export function PendenciaHistoryTable({
                 <button
                   type="button"
                   onClick={() => onEdit(entry)}
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                  className="text-xs font-semibold text-brand-600 hover:text-brand-700"
                 >
                   Editar
                 </button>

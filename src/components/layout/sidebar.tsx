@@ -81,9 +81,8 @@ function NavIcon({ name, className }: { name: IconName; className?: string }) {
 function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2.5">
-      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-sm font-bold text-white shadow-sm shadow-blue-600/30">
-        A
-      </span>
+      {/* eslint-disable-next-line @next/next/no-img-element -- asset local pequeno e fixo, sem next/image em nenhum outro lugar do app */}
+      <img src="/logo.png" alt="" className="h-9 w-9 shrink-0" />
       <span className="leading-tight">
         <span className="block text-[15px] font-bold text-slate-900">Allp Fit</span>
         <span className="block text-[11px] font-medium text-slate-400">Performance</span>
@@ -117,17 +116,17 @@ export function Sidebar({ role, basePath = '' }: { role: UserRole | null; basePa
               href={href}
               onClick={onNavigate}
               className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                active ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                active ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
               <NavIcon
                 name={item.icon}
                 className={`h-[18px] w-[18px] shrink-0 transition ${
-                  active ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-500'
+                  active ? 'text-brand-600' : 'text-slate-400 group-hover:text-slate-500'
                 }`}
               />
               <span className="truncate">{item.label}</span>
-              {active && <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />}
+              {active && <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-brand-600" />}
             </Link>
           )
         })}

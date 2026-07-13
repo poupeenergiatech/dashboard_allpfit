@@ -63,7 +63,7 @@ export function FilterBar({
               onClick={() => onPeriodChange(p.value)}
               className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold transition ${
                 period === p.value
-                  ? 'bg-white text-blue-700 shadow-sm'
+                  ? 'bg-white text-brand-700 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
