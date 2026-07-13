@@ -13,7 +13,12 @@ export async function mockSave() {
 
 export async function mockInvite() {
   await new Promise((resolve) => setTimeout(resolve, 300))
-  return { password: 'preview-senha-fake' }
+  return { password: 'preview-senha-fake', generated: true }
+}
+
+export async function mockResetPassword() {
+  await new Promise((resolve) => setTimeout(resolve, 300))
+  return { password: 'preview-senha-fake', generated: true }
 }
 
 export async function mockConfirm() {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { createUser } from '@/app/(app)/usuarios/actions'
+import { createUser, type PasswordResult } from '@/app/(app)/usuarios/actions'
 import { useToast } from '@/components/ui/toast'
 import type { Academia } from '@/lib/dashboard/types'
 
@@ -12,16 +12,21 @@ const ROLES: { value: string; label: string }[] = [
   { value: 'visualizador', label: 'Visualizador' },
 ]
 
+function randomPassword(): string {
+  return crypto.randomUUID().replace(/-/g, '').slice(0, 12)
+}
+
 export function InviteUserForm({
   academias,
   onCreate = createUser,
 }: {
   academias: Academia[]
-  onCreate?: (formData: FormData) => Promise<{ password: string }>
+  onCreate?: (formData: FormData) => Promise<PasswordResult>
 }) {
   const [role, setRole] = useState('coordenador')
+  const [password, setPassword] = useState('')
   const [pending, startTransition] = useTransition()
-  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null)
+  const [result, setResult] = useState<PasswordResult | null>(null)
   const { showToast } = useToast()
   const needsAcademia = role === 'coordenador' || role === 'visualizador'
 
@@ -32,11 +37,12 @@ export function InviteUserForm({
 
     startTransition(async () => {
       try {
-        const { password } = await onCreate(formData)
-        setGeneratedPassword(password)
+        const next = await onCreate(formData)
+        setResult(next)
         showToast('Usuário criado.')
         form.reset()
         setRole('coordenador')
+        setPassword('')
       } catch (err) {
         showToast(err instanceof Error ? err.message : 'Erro ao criar usuário.', 'error')
       }
@@ -45,17 +51,15 @@ export function InviteUserForm({
 
   return (
     <div className="space-y-4">
-      {generatedPassword && (
+      {result && (
         <div className="card border border-emerald-100 bg-emerald-50/70 p-4 text-sm text-emerald-900">
           <p className="font-semibold">Usuário criado — compartilhe a senha agora.</p>
           <p className="mt-1">
-            Senha gerada:{' '}
-            <code className="rounded bg-white/70 px-1.5 py-0.5 font-mono text-emerald-900">
-              {generatedPassword}
-            </code>
+            Senha{result.generated ? ' gerada' : ''}:{' '}
+            <code className="rounded bg-white/70 px-1.5 py-0.5 font-mono text-emerald-900">{result.password}</code>
           </p>
           <p className="mt-1 text-emerald-700">
-            Ela não fica salva em nenhum lugar — se perder, será preciso criar outro usuário.
+            Ela não fica salva em nenhum lugar — se perder, será preciso redefinir a senha desse usuário.
           </p>
         </div>
       )}
@@ -101,7 +105,28 @@ export function InviteUserForm({
           </select>
         </div>
 
-        <div className="flex items-end lg:col-span-4">
+        <div className="lg:col-span-2">
+          <label className="field-label" htmlFor="password">
+            Senha (opcional)
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="password"
+              name="password"
+              type="text"
+              minLength={8}
+              placeholder="deixe em branco pra gerar uma senha aleatória"
+              className="input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button type="button" onClick={() => setPassword(randomPassword())} className="btn-secondary shrink-0">
+              Gerar
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-end lg:col-span-2">
           <button type="submit" disabled={pending} className="btn-primary">
             {pending ? 'Criando…' : 'Criar usuário'}
           </button>

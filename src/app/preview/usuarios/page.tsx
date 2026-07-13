@@ -1,7 +1,7 @@
 import { InviteUserForm } from '@/components/dashboard/invite-user-form'
 import { UsersTable } from '@/components/dashboard/users-table'
 import { MOCK_ACADEMIAS, MOCK_USERS } from '@/lib/preview/mock-data'
-import { mockInvite } from '@/lib/preview/mock-actions'
+import { mockInvite, mockResetPassword } from '@/lib/preview/mock-actions'
 
 export default function PreviewUsuariosPage() {
   return (
@@ -11,7 +11,7 @@ export default function PreviewUsuariosPage() {
         <p className="page-subtitle">Gestão de acesso — restrito a Super Admin.</p>
       </div>
 
-      <UsersTable users={MOCK_USERS} />
+      <UsersTable users={MOCK_USERS} onResetPassword={mockResetPassword} />
 
       <div>
         <h3 className="mb-3 text-sm font-semibold text-slate-900">Criar usuário</h3>
