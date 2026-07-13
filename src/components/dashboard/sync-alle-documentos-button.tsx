@@ -1,16 +1,24 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { createAcademiaAlias } from '@/app/(app)/academias/actions'
 import { syncAlleDocumentosConvertidos, type SyncAlleDocumentosResult } from '@/app/(app)/configuracoes/actions'
 import { useToast } from '@/components/ui/toast'
 
+type CreateAliasAction = (academiaId: string, aliasNome: string) => Promise<void>
+
 export function SyncAlleDocumentosButton({
+  academias,
   onSync = syncAlleDocumentosConvertidos,
+  onCreateAlias = createAcademiaAlias,
 }: {
+  academias: { id: string; nome: string }[]
   onSync?: () => Promise<SyncAlleDocumentosResult>
+  onCreateAlias?: CreateAliasAction
 }) {
   const [pending, startTransition] = useTransition()
   const [result, setResult] = useState<SyncAlleDocumentosResult | null>(null)
+  const [linked, setLinked] = useState<Set<string>>(new Set())
   const { showToast } = useToast()
 
   function handleClick() {
@@ -18,12 +26,15 @@ export function SyncAlleDocumentosButton({
       try {
         const next = await onSync()
         setResult(next)
+        setLinked(new Set())
         showToast(`Sincronizado: ${next.inseridas} nova(s) conversão(ões).`)
       } catch (err) {
         showToast(err instanceof Error ? err.message : 'Erro ao sincronizar conversões.', 'error')
       }
     })
   }
+
+  const pendentes = result?.naoEncontradas.filter((nome) => !linked.has(nome)) ?? []
 
   return (
     <div className="card space-y-4 p-5">
@@ -49,14 +60,84 @@ export function SyncAlleDocumentosButton({
             nova(s), <span className="font-semibold text-slate-500">{result.jaExistentes}</span> já sincronizada(s)
             antes.
           </p>
-          {result.naoEncontradas.length > 0 && (
-            <p className="mt-2 text-amber-700">
-              Unidade não encontrada em <code className="rounded bg-white/70 px-1 py-0.5">academias</code> pra:{' '}
-              {result.naoEncontradas.join(', ')}
-            </p>
+
+          {pendentes.length > 0 && (
+            <div className="mt-3 space-y-2">
+              <p className="text-amber-700">
+                Unidade não encontrada em <code className="rounded bg-white/70 px-1 py-0.5">academias</code> —
+                vincule a uma unidade cadastrada pra resolver na próxima sincronização:
+              </p>
+              <div className="space-y-1.5">
+                {pendentes.map((nome) => (
+                  <NaoEncontradaRow
+                    key={nome}
+                    nome={nome}
+                    academias={academias}
+                    onLinked={() => setLinked((prev) => new Set(prev).add(nome))}
+                    onCreateAlias={onCreateAlias}
+                  />
+                ))}
+              </div>
+            </div>
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+function NaoEncontradaRow({
+  nome,
+  academias,
+  onLinked,
+  onCreateAlias,
+}: {
+  nome: string
+  academias: { id: string; nome: string }[]
+  onLinked: () => void
+  onCreateAlias: CreateAliasAction
+}) {
+  const [academiaId, setAcademiaId] = useState('')
+  const [pending, startTransition] = useTransition()
+  const { showToast } = useToast()
+
+  function handleLink() {
+    if (!academiaId || pending) return
+    startTransition(async () => {
+      try {
+        await onCreateAlias(academiaId, nome)
+        showToast(`"${nome}" vinculado.`)
+        onLinked()
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'Erro ao vincular.', 'error')
+      }
+    })
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white/70 px-3 py-2">
+      <span className="min-w-0 flex-1 truncate text-slate-800">{nome}</span>
+      <select
+        value={academiaId}
+        onChange={(e) => setAcademiaId(e.target.value)}
+        disabled={pending}
+        className="input h-8 max-w-[220px] py-0 text-xs"
+      >
+        <option value="">Vincular a…</option>
+        {academias.map((a) => (
+          <option key={a.id} value={a.id}>
+            {a.nome}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        disabled={!academiaId || pending}
+        onClick={handleLink}
+        className="btn-secondary h-8 px-3 py-0 text-xs disabled:opacity-50"
+      >
+        {pending ? 'Vinculando…' : 'Vincular'}
+      </button>
     </div>
   )
 }

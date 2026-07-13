@@ -59,6 +59,15 @@ O endpoint aceita `?data=YYYY-MM-DD` pra reprocessar um dia específico manualme
 destino do relatório (pra onde o POST é enviado) é configurada pelo Super Admin em
 `/configuracoes`, não por variável de ambiente.
 
+## Cron do sync Alle Documentos (`/api/sync-alle-documentos`)
+
+Mesmo esquema do cron do relatório acima — sem esse disparador externo, a única forma de
+sincronizar conversões do Alle Documentos é clicando o botão manual em `/configuracoes`.
+`GET https://SEU_DOMINIO/api/sync-alle-documentos`, header `Authorization: Bearer
+$CRON_SECRET` (mesmo secret do `/api/relatorio`, não precisa de um novo). Sugestão de
+horário: uma vez por dia, fora do horário do relatório. Toda execução — manual ou por esse
+cron — fica registrada em "Histórico de sincronizações" em `/configuracoes`.
+
 ## Webhook de entrada do agregador (`POST /api/webhooks/agregador`)
 
 Direção oposta ao cron acima: aqui é o **agregador** que chama o dashboard, não o contrário.
@@ -85,6 +94,8 @@ não tem "modo sem checagem" como o `/api/relatorio`.
 - [ ] `/api/relatorio?data=YYYY-MM-DD` (com o header `Authorization`) retorna `sent: true`
       depois de configurar uma URL de teste em `/configuracoes`
 - [ ] Cron externo do relatório diário configurado (ver seção acima)
+- [ ] Cron externo do sync Alle Documentos configurado (ver seção acima) — confirme com uma
+      linha nova em "Histórico de sincronizações" em `/configuracoes` depois da primeira execução
 - [ ] `POST /api/webhooks/agregador` configurado no painel do agregador e testado com um
       envio real (conferir `academias_nao_encontradas` na resposta)
 

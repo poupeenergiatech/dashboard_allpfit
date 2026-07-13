@@ -1,38 +1,63 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { setAcademiaActive } from '@/app/(app)/academias/actions'
+import { deleteAcademia, setAcademiaActive, updateAcademia } from '@/app/(app)/academias/actions'
 import { Avatar } from '@/components/ui/avatar'
 import { useToast } from '@/components/ui/toast'
 import type { AcademiaAdmin } from '@/lib/dashboard/fetch-academias'
 
 type ToggleAction = (academiaId: string, ativo: boolean) => Promise<void>
+type UpdateAction = (academiaId: string, formData: FormData) => Promise<void>
+type DeleteAction = (academiaId: string) => Promise<void>
 
 export function AcademiasTable({
   academias,
   onToggleActive = setAcademiaActive,
+  onUpdate = updateAcademia,
+  onDelete = deleteAcademia,
 }: {
   academias: AcademiaAdmin[]
   onToggleActive?: ToggleAction
+  onUpdate?: UpdateAction
+  onDelete?: DeleteAction
 }) {
+  const [editingId, setEditingId] = useState<string | null>(null)
+
   if (academias.length === 0) {
     return <div className="card-dashed text-sm text-slate-500">Nenhuma academia cadastrada ainda.</div>
   }
 
   return (
     <div className="card overflow-x-auto">
-      <table className="w-full min-w-[560px] text-sm">
+      <table className="w-full min-w-[720px] text-sm">
         <thead>
           <tr className="border-b border-slate-100 bg-slate-50/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
             <th className="px-4 py-3">Unidade</th>
             <th className="px-4 py-3">Número WhatsApp</th>
             <th className="px-4 py-3">Ativa</th>
+            <th className="px-4 py-3">Ações</th>
           </tr>
         </thead>
         <tbody>
-          {academias.map((a) => (
-            <AcademiaRow key={a.id} academia={a} onToggleActive={onToggleActive} />
-          ))}
+          {academias.map((a) =>
+            editingId === a.id ? (
+              <AcademiaEditRow
+                key={a.id}
+                academia={a}
+                onUpdate={onUpdate}
+                onCancel={() => setEditingId(null)}
+                onSaved={() => setEditingId(null)}
+              />
+            ) : (
+              <AcademiaRow
+                key={a.id}
+                academia={a}
+                onToggleActive={onToggleActive}
+                onDelete={onDelete}
+                onEdit={() => setEditingId(a.id)}
+              />
+            )
+          )}
         </tbody>
       </table>
     </div>
@@ -42,12 +67,17 @@ export function AcademiasTable({
 function AcademiaRow({
   academia,
   onToggleActive,
+  onDelete,
+  onEdit,
 }: {
   academia: AcademiaAdmin
   onToggleActive: ToggleAction
+  onDelete: DeleteAction
+  onEdit: () => void
 }) {
   const [ativo, setAtivo] = useState(academia.ativo)
   const [pending, startTransition] = useTransition()
+  const [deleting, startDeleteTransition] = useTransition()
   const { showToast } = useToast()
 
   function toggle() {
@@ -61,6 +91,21 @@ function AcademiaRow({
       } catch (err) {
         setAtivo(!next)
         showToast(err instanceof Error ? err.message : 'Erro ao atualizar.', 'error')
+      }
+    })
+  }
+
+  function handleDelete() {
+    if (deleting) return
+    if (!window.confirm(`Excluir "${academia.nome}" definitivamente? Essa ação não pode ser desfeita.`)) {
+      return
+    }
+    startDeleteTransition(async () => {
+      try {
+        await onDelete(academia.id)
+        showToast(`${academia.nome} excluída.`)
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'Erro ao excluir.', 'error')
       }
     })
   }
@@ -91,6 +136,93 @@ function AcademiaRow({
             }`}
           />
         </button>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-3 text-xs font-medium">
+          <button type="button" onClick={onEdit} className="text-slate-600 hover:text-slate-900">
+            Editar
+          </button>
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={handleDelete}
+            className="text-rose-600 hover:text-rose-800 disabled:opacity-50"
+          >
+            {deleting ? 'Excluindo…' : 'Excluir'}
+          </button>
+        </div>
+      </td>
+    </tr>
+  )
+}
+
+function AcademiaEditRow({
+  academia,
+  onUpdate,
+  onCancel,
+  onSaved,
+}: {
+  academia: AcademiaAdmin
+  onUpdate: UpdateAction
+  onCancel: () => void
+  onSaved: () => void
+}) {
+  const [pending, startTransition] = useTransition()
+  const { showToast } = useToast()
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+
+    startTransition(async () => {
+      try {
+        await onUpdate(academia.id, formData)
+        showToast('Academia atualizada.')
+        onSaved()
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'Erro ao atualizar academia.', 'error')
+      }
+    })
+  }
+
+  return (
+    <tr className="border-b border-slate-50 bg-slate-50/70 last:border-0">
+      <td className="px-4 py-3" colSpan={4}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1">
+            <label className="field-label" htmlFor={`nome-${academia.id}`}>
+              Nome da unidade
+            </label>
+            <input
+              id={`nome-${academia.id}`}
+              name="nome"
+              type="text"
+              required
+              defaultValue={academia.nome}
+              className="input"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="field-label" htmlFor={`numero-${academia.id}`}>
+              Número de WhatsApp
+            </label>
+            <input
+              id={`numero-${academia.id}`}
+              name="numero_telefone"
+              type="text"
+              defaultValue={academia.numeroTelefone ?? ''}
+              className="input"
+            />
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button type="submit" disabled={pending} className="btn-primary">
+              {pending ? 'Salvando…' : 'Salvar'}
+            </button>
+            <button type="button" onClick={onCancel} className="btn-secondary">
+              Cancelar
+            </button>
+          </div>
+        </form>
       </td>
     </tr>
   )

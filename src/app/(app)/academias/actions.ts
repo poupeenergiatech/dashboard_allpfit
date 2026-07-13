@@ -27,9 +27,10 @@ export async function createAcademia(formData: FormData) {
   revalidatePath('/')
 }
 
-// Sem delete: desativar preserva o histórico (contacts/conversions/manual_data já
-// lançados continuam apontando pra essa academia) e some dela dos dropdowns/abas —
-// fetchActiveAcademias só lista `ativo = true`.
+// Desativar preserva o histórico (contacts/conversions/manual_data já lançados
+// continuam apontando pra essa academia) e some dela dos dropdowns/abas —
+// fetchActiveAcademias só lista `ativo = true`. Preferível a excluir sempre que a
+// unidade já tiver movimento.
 export async function setAcademiaActive(academiaId: string, ativo: boolean) {
   const profile = await getCurrentUserProfile()
   if (!profile || !canManageUsers(profile.role)) {
@@ -40,6 +41,99 @@ export async function setAcademiaActive(academiaId: string, ativo: boolean) {
 
   revalidatePath('/academias')
   revalidatePath('/')
+}
+
+export async function updateAcademia(academiaId: string, formData: FormData) {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canManageUsers(profile.role)) {
+    throw new Error('Apenas Super Admin pode editar academias.')
+  }
+
+  const nome = String(formData.get('nome') ?? '').trim()
+  const numeroTelefone = String(formData.get('numero_telefone') ?? '').trim()
+
+  if (!nome) {
+    throw new Error('Nome é obrigatório.')
+  }
+
+  await pool.query('update academias set nome = $1, numero_telefone = $2 where id = $3', [
+    nome,
+    numeroTelefone || null,
+    academiaId,
+  ])
+
+  revalidatePath('/academias')
+  revalidatePath('/')
+}
+
+function isForeignKeyViolation(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && 'code' in err && (err as { code?: string }).code === '23503'
+}
+
+// Exclusão de verdade — só pra academia cadastrada por engano (duplicata, teste),
+// sem nenhum histórico ainda. Qualquer referência existente (contacts, conversions,
+// manual_data, user_profiles...) bloqueia via FK; nesse caso orientamos a desativar
+// em vez de excluir, que é o caminho que preserva o histórico.
+export async function deleteAcademia(academiaId: string) {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canManageUsers(profile.role)) {
+    throw new Error('Apenas Super Admin pode excluir academias.')
+  }
+
+  try {
+    const { rowCount } = await pool.query('delete from academias where id = $1', [academiaId])
+    if (rowCount === 0) {
+      throw new Error('Academia não encontrada.')
+    }
+  } catch (err) {
+    if (isForeignKeyViolation(err)) {
+      throw new Error(
+        'Essa academia já tem histórico vinculado (contatos, conversões, lançamentos...) e não pode ser excluída. Desative em vez de excluir.'
+      )
+    }
+    throw err
+  }
+
+  revalidatePath('/academias')
+  revalidatePath('/')
+}
+
+// Nome alternativo vindo de um sistema externo (hoje só Alle Documentos) que não
+// bate com academias.nome mesmo normalizado — ex.: "João Pessoa" sem sufixo de
+// estado enquanto a academia está cadastrada como "João Pessoa - PB". Usado pra
+// resolver os itens de `naoEncontradas` do sync sem precisar renomear a academia.
+export async function createAcademiaAlias(academiaId: string, aliasNome: string) {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canManageUsers(profile.role)) {
+    throw new Error('Apenas Super Admin pode vincular nomes alternativos.')
+  }
+
+  const nome = aliasNome.trim()
+  if (!nome) {
+    throw new Error('Nome é obrigatório.')
+  }
+
+  await pool.query(
+    `insert into academia_aliases (academia_id, alias_nome)
+     values ($1, $2)
+     on conflict (lower(trim(alias_nome))) do update set academia_id = excluded.academia_id`,
+    [academiaId, nome]
+  )
+
+  revalidatePath('/academias')
+  revalidatePath('/configuracoes')
+}
+
+export async function deleteAcademiaAlias(aliasId: string) {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canManageUsers(profile.role)) {
+    throw new Error('Apenas Super Admin pode remover nomes alternativos.')
+  }
+
+  await pool.query('delete from academia_aliases where id = $1', [aliasId])
+
+  revalidatePath('/academias')
+  revalidatePath('/configuracoes')
 }
 
 export type ImportAcademiasResult = { criadas: number; atualizadas: number; ignoradas: number }

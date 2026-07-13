@@ -2,7 +2,11 @@
 // importar isso fora de src/app/preview/.
 import type { Academia, DailyFunnelPoint, FunnelCounts } from '@/lib/dashboard/types'
 import type { AcademiaPerformance } from '@/lib/dashboard/fetch-academia-performance'
-import type { PendingSignature } from '@/lib/dashboard/fetch-pendentes'
+import type {
+  PendenciaEntry,
+  PendenciaPorAcademia,
+  PendenciaTrendPoint,
+} from '@/lib/dashboard/fetch-pendencias-assinatura'
 import type { NumeroGroup } from '@/lib/dashboard/fetch-numeros'
 import type { TreinadaStatus } from '@/lib/dashboard/fetch-treinadas'
 import type { ManualDataEntry } from '@/lib/dashboard/fetch-manual-data-history'
@@ -67,10 +71,37 @@ export const MOCK_MANUAL_DATA_HISTORY: ManualDataEntry[] = [
   },
 ]
 
-export const MOCK_PENDENTES: PendingSignature[] = [
-  { id: 'p1', nome: 'Carla Souza', academiaNome: MOCK_ACADEMIAS[0].nome, dataContato: '2026-07-05' },
-  { id: 'p2', nome: 'Bruno Alves', academiaNome: MOCK_ACADEMIAS[1].nome, dataContato: '2026-07-06' },
-  { id: 'p3', nome: 'Fernanda Lima', academiaNome: MOCK_ACADEMIAS[2].nome, dataContato: '2026-07-07' },
+export const MOCK_PENDENCIAS_POR_ACADEMIA: PendenciaPorAcademia[] = MOCK_ACADEMIAS.map((a, i) => ({
+  academiaId: a.id,
+  nome: a.nome,
+  quantidade: 18 - i * 3,
+  data: '2026-07-12',
+}))
+
+export const MOCK_PENDENCIAS_TREND: PendenciaTrendPoint[] = Array.from({ length: 30 }, (_, i) => {
+  const date = new Date('2026-06-13T00:00:00')
+  date.setDate(date.getDate() + i)
+  return {
+    date: date.toISOString().slice(0, 10),
+    quantidade: 40 + Math.round(10 * Math.sin(i / 4)) + Math.floor(i / 3),
+  }
+})
+
+export const MOCK_PENDENCIAS_HISTORY: PendenciaEntry[] = [
+  {
+    id: 'pa1',
+    academiaId: MOCK_ACADEMIAS[0].id,
+    academiaNome: MOCK_ACADEMIAS[0].nome,
+    data: '2026-07-12',
+    quantidade: 18,
+  },
+  {
+    id: 'pa2',
+    academiaId: MOCK_ACADEMIAS[1].id,
+    academiaNome: MOCK_ACADEMIAS[1].nome,
+    data: '2026-07-11',
+    quantidade: 15,
+  },
 ]
 
 // Duas unidades (Pinheiros e Moema) compartilhando o mesmo número, pra ilustrar o

@@ -1,6 +1,9 @@
 import { ReportWebhookForm } from '@/components/dashboard/report-webhook-form'
 import { SyncAlleDocumentosButton } from '@/components/dashboard/sync-alle-documentos-button'
+import { SyncHistoryTable } from '@/components/dashboard/sync-history-table'
+import { fetchAllAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchReportWebhookUrl } from '@/lib/dashboard/fetch-report-config'
+import { fetchSyncHistory } from '@/lib/dashboard/fetch-sync-history'
 import { canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
 
 export default async function ConfiguracoesPage() {
@@ -14,7 +17,11 @@ export default async function ConfiguracoesPage() {
     )
   }
 
-  const webhookUrl = await fetchReportWebhookUrl()
+  const [webhookUrl, academias, syncHistory] = await Promise.all([
+    fetchReportWebhookUrl(),
+    fetchAllAcademias(),
+    fetchSyncHistory(),
+  ])
 
   return (
     <div className="space-y-6">
@@ -24,7 +31,12 @@ export default async function ConfiguracoesPage() {
       </div>
 
       <ReportWebhookForm initialUrl={webhookUrl} />
-      <SyncAlleDocumentosButton />
+      <SyncAlleDocumentosButton academias={academias.map((a) => ({ id: a.id, nome: a.nome }))} />
+
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900">Histórico de sincronizações</h3>
+        <SyncHistoryTable entries={syncHistory} />
+      </div>
     </div>
   )
 }

@@ -1,7 +1,8 @@
+import { AcademiaAliasesSection } from '@/components/dashboard/academia-aliases-section'
 import { AcademiasTable } from '@/components/dashboard/academias-table'
 import { CreateAcademiaForm } from '@/components/dashboard/create-academia-form'
 import { ImportAcademiasForm } from '@/components/dashboard/import-academias-form'
-import { fetchAllAcademias } from '@/lib/dashboard/fetch-academias'
+import { fetchAcademiaAliases, fetchAllAcademias } from '@/lib/dashboard/fetch-academias'
 import { canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
 
 export default async function AcademiasPage() {
@@ -15,7 +16,7 @@ export default async function AcademiasPage() {
     )
   }
 
-  const academias = await fetchAllAcademias()
+  const [academias, aliases] = await Promise.all([fetchAllAcademias(), fetchAcademiaAliases()])
 
   return (
     <div className="space-y-6">
@@ -35,6 +36,8 @@ export default async function AcademiasPage() {
         <h3 className="mb-3 text-sm font-semibold text-slate-900">Importar em lote (CSV)</h3>
         <ImportAcademiasForm />
       </div>
+
+      <AcademiaAliasesSection aliases={aliases} />
     </div>
   )
 }

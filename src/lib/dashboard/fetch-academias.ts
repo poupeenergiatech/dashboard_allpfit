@@ -45,3 +45,29 @@ export async function fetchActiveAcademias(profile?: UserProfile | null): Promis
 
   return rows
 }
+
+export type AcademiaAlias = {
+  id: string
+  aliasNome: string
+  academiaId: string
+  academiaNome: string
+}
+
+// Nomes alternativos cadastrados manualmente pra resolver unidades que o sync do
+// Alle Documentos não conseguiu casar por nome — ver syncAlleDocumentosConvertidos
+// em app/(app)/configuracoes/actions.ts.
+export async function fetchAcademiaAliases(): Promise<AcademiaAlias[]> {
+  const { rows } = await pool.query<{ id: string; alias_nome: string; academia_id: string; nome: string }>(
+    `select aa.id, aa.alias_nome, aa.academia_id, a.nome
+     from academia_aliases aa
+     join academias a on a.id = aa.academia_id
+     order by aa.alias_nome`
+  )
+
+  return rows.map((row) => ({
+    id: row.id,
+    aliasNome: row.alias_nome,
+    academiaId: row.academia_id,
+    academiaNome: row.nome,
+  }))
+}
