@@ -1,12 +1,13 @@
 import { AnimatedNumber } from './animated-number'
 
-export type FunnelAccent = 'blue' | 'violet' | 'emerald' | 'amber'
+export type FunnelAccent = 'blue' | 'violet' | 'emerald' | 'amber' | 'rose'
 
 const ACCENT_STYLES: Record<FunnelAccent, { icon: string; ring: string }> = {
   blue: { icon: 'bg-blue-50 text-blue-600', ring: 'group-hover:ring-blue-100' },
   violet: { icon: 'bg-violet-50 text-violet-600', ring: 'group-hover:ring-violet-100' },
   emerald: { icon: 'bg-emerald-50 text-emerald-600', ring: 'group-hover:ring-emerald-100' },
   amber: { icon: 'bg-amber-50 text-amber-600', ring: 'group-hover:ring-amber-100' },
+  rose: { icon: 'bg-rose-50 text-rose-600', ring: 'group-hover:ring-rose-100' },
 }
 
 export function FunnelCard({

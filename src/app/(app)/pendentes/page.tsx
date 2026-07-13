@@ -1,6 +1,7 @@
 import { AcademiaFilterLinks } from '@/components/dashboard/academia-filter-links'
 import { PendenciaSection } from '@/components/dashboard/pendencia-section'
 import { PendenciasPorAcademiaChart } from '@/components/dashboard/pendencias-por-academia-chart'
+import { PendenciasTotalCard } from '@/components/dashboard/pendencias-total-card'
 import { PendenciasTrendChart } from '@/components/dashboard/pendencias-trend-chart'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import {
@@ -33,6 +34,8 @@ export default async function PendentesPage({
       </div>
 
       <AcademiaFilterLinks basePath="/pendentes" academias={academias} academiaId={requestedAcademiaId} />
+
+      <PendenciasTotalCard rows={porAcademia} />
 
       <PendenciasPorAcademiaChart rows={porAcademia} />
       <PendenciasTrendChart series={trend} />
