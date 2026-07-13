@@ -27,28 +27,33 @@ export function FilterBar({
   onCustomRangeChange: (range: DateRange) => void
 }) {
   // Coordenador/visualizador só têm 1 academia visível (RLS já cuida disso) —
-  // nesse caso não faz sentido mostrar a aba "Todas".
-  const showAllTab = academias.length > 1
+  // nesse caso não faz sentido mostrar "Todas" nem um seletor (não há o que trocar).
+  const showAcademiaPicker = academias.length > 1
 
   return (
     <div className="card flex flex-col gap-3 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
-          {showAllTab && (
-            <FilterTab active={academiaId === null} onClick={() => onAcademiaChange(null)}>
-              Todas
-            </FilterTab>
-          )}
-          {academias.map((academia) => (
-            <FilterTab
-              key={academia.id}
-              active={academiaId === academia.id}
-              onClick={() => onAcademiaChange(academia.id)}
-            >
-              {academia.nome}
-            </FilterTab>
-          ))}
-        </div>
+        {academias.length === 1 ? (
+          <p className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-600">
+            {academias[0].nome}
+          </p>
+        ) : showAcademiaPicker ? (
+          // Select em vez de pills: com muitas academias, uma linha de pills quebra
+          // em várias linhas e fica poluída — um dropdown escala pra qualquer
+          // quantidade sem crescer visualmente.
+          <select
+            value={academiaId ?? ''}
+            onChange={(e) => onAcademiaChange(e.target.value || null)}
+            className="select w-full sm:w-64"
+          >
+            <option value="">Todas as academias</option>
+            {academias.map((academia) => (
+              <option key={academia.id} value={academia.id}>
+                {academia.nome}
+              </option>
+            ))}
+          </select>
+        ) : null}
 
         <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
           {PERIODS.map((p) => (
@@ -93,29 +98,5 @@ export function FilterBar({
         </div>
       )}
     </div>
-  )
-}
-
-function FilterTab({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-        active
-          ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/25'
-          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-      }`}
-    >
-      {children}
-    </button>
   )
 }

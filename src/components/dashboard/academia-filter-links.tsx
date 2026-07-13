@@ -1,9 +1,13 @@
-import Link from 'next/link'
+'use client'
+
+import { useRouter } from 'next/navigation'
 import type { Academia } from '@/lib/dashboard/types'
 
-// Filtro de academia via navegação simples (Server Component, sem JS no client) —
-// pra páginas sem polling que só precisam re-renderizar com o novo `searchParams`,
-// diferente da FilterBar client-side usada em / (que tem estado local + live polling).
+// Filtro de academia via navegação (searchParams) em vez de estado no client — a
+// página em si continua um Server Component que re-busca os dados com o novo
+// `academiaId`; aqui só o <select> precisa de 'use client' pra chamar router.push.
+// Dropdown em vez de uma linha de pills: com muitas academias, pills quebram em
+// várias linhas e ficam poluídas — um select escala pra qualquer quantidade.
 export function AcademiaFilterLinks({
   basePath,
   academias,
@@ -17,6 +21,8 @@ export function AcademiaFilterLinks({
   paramName?: string
   extraParams?: Record<string, string>
 }) {
+  const router = useRouter()
+
   // Coordenador/visualizador só têm 1 academia visível — nesse caso não faz
   // sentido mostrar o filtro (mesma regra da FilterBar).
   if (academias.length <= 1) return null
@@ -29,30 +35,19 @@ export function AcademiaFilterLinks({
   }
 
   return (
-    <div className="card flex flex-wrap gap-2 p-4">
-      <FilterTab href={hrefFor(null)} active={academiaId === null}>
-        Todas
-      </FilterTab>
-      {academias.map((academia) => (
-        <FilterTab key={academia.id} href={hrefFor(academia.id)} active={academiaId === academia.id}>
-          {academia.nome}
-        </FilterTab>
-      ))}
+    <div className="card p-4">
+      <select
+        value={academiaId ?? ''}
+        onChange={(e) => router.push(hrefFor(e.target.value || null))}
+        className="select w-full sm:w-64"
+      >
+        <option value="">Todas as academias</option>
+        {academias.map((academia) => (
+          <option key={academia.id} value={academia.id}>
+            {academia.nome}
+          </option>
+        ))}
+      </select>
     </div>
-  )
-}
-
-function FilterTab({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
-        active
-          ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/25'
-          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-      }`}
-    >
-      {children}
-    </Link>
   )
 }

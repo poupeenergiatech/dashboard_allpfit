@@ -69,7 +69,13 @@ export function FunnelDashboard({
             </div>
             <div>
               <h3 className="mb-3 text-sm font-semibold text-slate-900">Histórico diário</h3>
-              <FunnelDailyHistoryTable series={counts.series} />
+              {/* key força remontar (e resetar a página) quando o filtro muda — sem
+                  isso, o poll de 10s trocaria a prop `series` e a paginação ficaria
+                  instável enquanto o usuário navega entre páginas. */}
+              <FunnelDailyHistoryTable
+                key={`${academiaId ?? 'todas'}-${period}-${customRange?.from ?? ''}-${customRange?.to ?? ''}`}
+                series={counts.series}
+              />
             </div>
           </>
         )
