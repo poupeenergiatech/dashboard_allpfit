@@ -37,7 +37,8 @@ export function AutoSyncToggle({
       <div>
         <p className="text-sm font-medium text-slate-900">Sincronização automática diária</p>
         <p className="mt-0.5 text-xs text-slate-500">
-          Roda sozinha uma vez por dia, sem precisar clicar em &quot;Buscar convertidos agora&quot;.
+          Roda sozinha por volta de meia-noite (horário de Brasília), sem precisar clicar em &quot;Buscar convertidos
+          agora&quot;.
         </p>
       </div>
       <button

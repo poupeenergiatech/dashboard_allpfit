@@ -68,11 +68,15 @@ Duas formas de automatizar, independentes uma da outra:
 dentro do próprio processo do servidor (`src/lib/dashboard/sync-scheduler.ts`, ligado em
 `src/instrumentation.ts` quando o servidor sobe — exige
 `experimental.instrumentationHook: true`, já configurado em `next.config.mjs`). A cada 15
-min ele checa se já rodou automaticamente hoje (pela última linha `automatico` em
-`alle_documentos_sync_log`); se não, dispara. Funciona porque o container roda um processo
-Node de vida longa (não é serverless) — reinícios do container não perdem o agendamento,
-só fazem o scheduler se auto-corrigir na próxima checagem. Nenhuma env var nem cron externo
-necessário; só o toggle.
+min ele checa se está na janela da meia-noite (horário de Brasília, `America/Sao_Paulo` —
+calculado explicitamente, não depende do fuso do container) e se ainda não rodou
+automaticamente hoje (pela última linha `automatico` em `alle_documentos_sync_log`); só
+dispara se as duas forem verdade, o que dá até 4 tentativas dentro da hora 0 (00:00, 00:15,
+00:30, 00:45). Se o container estiver fora do ar durante a hora inteira, o sync daquele dia
+fica pra próxima meia-noite — sem perda de dado, porque o sync sempre processa tudo que
+ainda não foi importado (dedup por `alle_documento_id`), não só "o dia de hoje". Funciona
+porque o container roda um processo Node de vida longa (não é serverless). Nenhuma env var
+nem cron externo necessário; só o toggle.
 
 **Opção B — cron externo (`/api/sync-alle-documentos`).** Mesmo esquema do cron do
 relatório acima. `GET https://SEU_DOMINIO/api/sync-alle-documentos`, header `Authorization:
