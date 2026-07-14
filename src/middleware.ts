@@ -6,11 +6,11 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // `/api` fica de fora: são rotas de sistema (sync do agregador, webhook de relatório)
-  // chamadas sem sessão de navegador — cada uma cuida da própria autenticação (chave/segredo
-  // próprios). Sem essa exclusão, o middleware redirecionava toda chamada sem cookie de
-  // sessão para /login, inclusive as de um cron externo (bug pré-existente, achado ao
-  // implementar /api/relatorio — /api/agregador tinha o mesmo problema).
+  // `/api` fica de fora: são rotas de sistema (sync do agregador, webhook de entrada de
+  // contatos) chamadas sem sessão de navegador — cada uma cuida da própria autenticação
+  // (chave/segredo próprios). Sem essa exclusão, o middleware redirecionava toda chamada sem
+  // cookie de sessão para /login, inclusive as de um cron externo (bug pré-existente, achado
+  // ao implementar o cron do sync — /api/agregador tinha o mesmo problema).
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],

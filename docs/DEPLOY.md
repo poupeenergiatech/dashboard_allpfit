@@ -17,7 +17,7 @@ que o ambiente onde estou não tem o Docker disponível para buildar a imagem de
      somente-leitura futuro, `src/lib/supabase/readonly.ts` — não são mais usadas para
      auth nem dados do dashboard)
    - `AGREGADOR_API_URL` / `AGREGADOR_API_KEY` (se já tiver, só usado pelo modo pull antigo)
-   - `CRON_SECRET` (protege `/api/relatorio` — gere um valor aleatório qualquer)
+   - `CRON_SECRET` (protege `/api/sync-alle-documentos` — gere um valor aleatório qualquer)
    - `AGREGADOR_WEBHOOK_SECRET` (protege `POST /api/webhooks/agregador` — gere outro valor
      aleatório, diferente do `CRON_SECRET`, e configure o mesmo valor no painel do agregador)
 
@@ -42,23 +42,6 @@ que o ambiente onde estou não tem o Docker disponível para buildar a imagem de
 8. Configurar CI/CD: push na branch de produção → deploy automático (GitHub + EasyPanel,
    conforme o documento de sprints).
 
-## Cron do relatório diário (`/api/relatorio`)
-
-O EasyPanel não roda cron dentro do container por conta própria — é preciso um disparador
-externo batendo em `GET https://SEU_DOMINIO/api/relatorio` uma vez por dia (logo depois da
-meia-noite, já que o relatório é sempre do dia anterior), enviando o header
-`Authorization: Bearer $CRON_SECRET`. Três formas de fazer isso, escolha a mais simples pro
-seu ambiente:
-
-- **Cron Jobs do próprio EasyPanel**, se o plano/versão oferecer essa opção no serviço.
-- **GitHub Actions agendado** (`schedule: cron: '5 0 * * *'`) rodando um `curl` simples — não
-  precisa de infra extra, só um secret do repositório com o `CRON_SECRET`.
-- **crontab de um servidor que você já controla**: `5 0 * * * curl -s -H "Authorization: Bearer $CRON_SECRET" https://SEU_DOMINIO/api/relatorio`
-
-O endpoint aceita `?data=YYYY-MM-DD` pra reprocessar um dia específico manualmente. A URL de
-destino do relatório (pra onde o POST é enviado) é configurada pelo Super Admin em
-`/configuracoes`, não por variável de ambiente.
-
 ## Sync automático diário do Alle Documentos
 
 Duas formas de automatizar, independentes uma da outra:
@@ -78,10 +61,17 @@ ainda não foi importado (dedup por `alle_documento_id`), não só "o dia de hoj
 porque o container roda um processo Node de vida longa (não é serverless). Nenhuma env var
 nem cron externo necessário; só o toggle.
 
-**Opção B — cron externo (`/api/sync-alle-documentos`).** Mesmo esquema do cron do
-relatório acima. `GET https://SEU_DOMINIO/api/sync-alle-documentos`, header `Authorization:
-Bearer $CRON_SECRET` (mesmo secret do `/api/relatorio`, não precisa de um novo). Útil como
-alternativa/backup se preferir não depender do scheduler embutido.
+**Opção B — cron externo (`/api/sync-alle-documentos`).** O EasyPanel não roda cron dentro do
+container por conta própria — é preciso um disparador externo batendo em
+`GET https://SEU_DOMINIO/api/sync-alle-documentos`, header `Authorization: Bearer
+$CRON_SECRET`. Três formas de fazer isso, escolha a mais simples pro seu ambiente:
+
+- **Cron Jobs do próprio EasyPanel**, se o plano/versão oferecer essa opção no serviço.
+- **GitHub Actions agendado** (`schedule: cron: '5 0 * * *'`) rodando um `curl` simples — não
+  precisa de infra extra, só um secret do repositório com o `CRON_SECRET`.
+- **crontab de um servidor que você já controla**: `5 0 * * * curl -s -H "Authorization: Bearer $CRON_SECRET" https://SEU_DOMINIO/api/sync-alle-documentos`
+
+Útil como alternativa/backup se preferir não depender do scheduler embutido.
 
 Toda execução — manual, pelo scheduler embutido, ou por esse cron — fica registrada em
 "Histórico de sincronizações" em `/configuracoes`, com a origem (Manual/Automático).
@@ -97,7 +87,41 @@ Configure no painel/sistema do agregador:
 - **Corpo:** o payload de relatório diário — formato completo em `docs/SPRINT7_NOTES.md`
 
 Sem a env var configurada, o endpoint recusa qualquer chamada (503) — ele grava dados, então
-não tem "modo sem checagem" como o `/api/relatorio`.
+não tem "modo sem checagem" como os endpoints de cron acima. Cada chamada autenticada — sucesso
+ou erro — fica registrada em "Histórico de payloads do agregador" em `/configuracoes`.
+
+## Webhook de entrada de scans de QR code (`POST /api/webhooks/scans`)
+
+Mesmo desenho do webhook do agregador acima, mas alimentado por um RPA que lê os scans
+diários de QR code numa plataforma externa (não é o mesmo sistema do agregador de contatos).
+Configure no RPA:
+
+- **URL:** `https://SEU_DOMINIO/api/webhooks/scans`
+- **Método:** `POST`
+- **Header:** `Authorization: Bearer <SCANS_WEBHOOK_SECRET>` (gere um valor aleatório próprio,
+  diferente do `AGREGADOR_WEBHOOK_SECRET` — segredos separados por integração, pra um vazamento
+  não comprometer as duas)
+- **Corpo:**
+  ```json
+  {
+    "data": "14/07/2026",
+    "gerado_em": "15/07/2026 06:00",
+    "por_academia": [
+      { "academia": "Allp Fit - Natal", "total_scans": 42 },
+      { "academia": "Allp Fit - Recife", "total_scans": 17 }
+    ]
+  }
+  ```
+  `academia` é o nome da unidade, texto livre — casado do mesmo jeito que o webhook do
+  agregador (nome normalizado, com `academia_aliases` como vínculo manual pra nomes que não
+  batem). `total_scans` é o total do dia inteiro, não incremental: reenviar o mesmo dia
+  sobrescreve com o mesmo número em vez de somar — seguro contra retry/reprocessamento do RPA.
+
+Cada chamada grava direto na coluna `total_scans` de `manual_data` (mesma tabela do
+lançamento manual em `/performance`) pro par academia/dia — só essa coluna é tocada; total de
+alunos e os ajustes manuais de contatos/conversões continuam como estavam. Sem a env var
+configurada, recusa qualquer chamada (503), mesmo padrão do webhook do agregador. Histórico
+em "Histórico de payloads de scans" em `/configuracoes`.
 
 ## Checklist de validação pós-deploy
 
@@ -109,9 +133,6 @@ não tem "modo sem checagem" como o `/api/relatorio`.
 - [ ] Funil carrega dados reais e atualiza sozinho (polling a cada ~10s, indicador "AO VIVO")
 - [ ] `/api/agregador` consegue alcançar a API do agregador (sem bloqueio de rede/firewall
       entre o EasyPanel e o agregador)
-- [ ] `/api/relatorio?data=YYYY-MM-DD` (com o header `Authorization`) retorna `sent: true`
-      depois de configurar uma URL de teste em `/configuracoes`
-- [ ] Cron externo do relatório diário configurado (ver seção acima)
 - [ ] Sync automático do Alle Documentos ativado — toggle em `/configuracoes` (opção A) ou
       cron externo (opção B, ver seção acima) — confirme com uma linha "Automático" nova em
       "Histórico de sincronizações" depois da primeira execução

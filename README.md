@@ -33,8 +33,9 @@ Sem `SEED_ADMIN_PASSWORD`, uma senha é gerada e impressa uma única vez no term
 | `NEXT_PUBLIC_SUPABASE_URL` | Project Settings → API, no painel do Supabase (uso somente-leitura futuro) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Project Settings → API (uso somente-leitura futuro) |
 | `AGREGADOR_API_URL` / `AGREGADOR_API_KEY` | Fornecido pela equipe do agregador de números WhatsApp (opcional — sem elas, `/api/agregador` só faz no-op) |
-| `CRON_SECRET` | Você define — protege `GET /api/relatorio` (envio de saída do relatório diário) |
+| `CRON_SECRET` | Você define — protege `GET /api/sync-alle-documentos` (cron externo opcional do sync) |
 | `AGREGADOR_WEBHOOK_SECRET` | Você define — protege `POST /api/webhooks/agregador` (entrada de contatos do agregador) |
+| `SCANS_WEBHOOK_SECRET` | Você define — protege `POST /api/webhooks/scans` (entrada de scans de QR code do RPA) |
 
 ## Status do desenvolvimento (por sprint)
 
