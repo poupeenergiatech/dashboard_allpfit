@@ -1,6 +1,6 @@
 import { pool } from '@/lib/db/pool'
 import { createReadonlyClient } from '@/lib/supabase/readonly'
-import { normalizeNome, normalizeNomeLoose } from '@/lib/dashboard/normalize-nome'
+import { buildAcademiaNomeResolver } from '@/lib/dashboard/resolve-academia-by-nome'
 
 type AlleDocumentoClienteRow = {
   id: number
@@ -80,22 +80,7 @@ async function syncAlleDocumentosConvertidos(): Promise<SyncAlleDocumentosResult
     'select alias_nome, academia_id from academia_aliases'
   )
 
-  const strictMap = new Map(academias.map((a) => [normalizeNome(a.nome), a.id]))
-  for (const alias of aliases) strictMap.set(normalizeNome(alias.alias_nome), alias.academia_id)
-
-  // null marca colisão (duas academias caem na mesma chave sem acento) — nesse caso
-  // não arriscamos escolher uma, cai pra naoEncontradas igual a um nome desconhecido.
-  const looseMap = new Map<string, string | null>()
-  for (const a of academias) {
-    const key = normalizeNomeLoose(a.nome)
-    looseMap.set(key, looseMap.has(key) ? null : a.id)
-  }
-
-  function resolveAcademiaId(unidade: string): string | undefined {
-    const strict = strictMap.get(normalizeNome(unidade))
-    if (strict) return strict
-    return looseMap.get(normalizeNomeLoose(unidade)) ?? undefined
-  }
+  const resolveAcademiaId = buildAcademiaNomeResolver(academias, aliases)
 
   let inseridas = 0
   let jaExistentes = 0

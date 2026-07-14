@@ -1,6 +1,8 @@
+import { AgregadorWebhookLogTable } from '@/components/dashboard/agregador-webhook-log-table'
 import { ReportWebhookForm } from '@/components/dashboard/report-webhook-form'
 import { SyncAlleDocumentosButton } from '@/components/dashboard/sync-alle-documentos-button'
 import { SyncHistoryTable } from '@/components/dashboard/sync-history-table'
+import { fetchAgregadorWebhookLog } from '@/lib/dashboard/fetch-agregador-webhook-log'
 import { fetchAllAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchReportWebhookUrl } from '@/lib/dashboard/fetch-report-config'
 import { fetchAutoSyncEnabled } from '@/lib/dashboard/fetch-sync-settings'
@@ -18,11 +20,12 @@ export default async function ConfiguracoesPage() {
     )
   }
 
-  const [webhookUrl, academias, syncHistory, autoSyncEnabled] = await Promise.all([
+  const [webhookUrl, academias, syncHistory, autoSyncEnabled, agregadorWebhookLog] = await Promise.all([
     fetchReportWebhookUrl(),
     fetchAllAcademias(),
     fetchSyncHistory(),
     fetchAutoSyncEnabled(),
+    fetchAgregadorWebhookLog(),
   ])
 
   return (
@@ -41,6 +44,16 @@ export default async function ConfiguracoesPage() {
       <div>
         <h3 className="mb-3 text-sm font-semibold text-slate-900">Histórico de sincronizações</h3>
         <SyncHistoryTable entries={syncHistory} />
+      </div>
+
+      <div>
+        <h3 className="mb-1 text-sm font-semibold text-slate-900">Histórico de payloads do agregador</h3>
+        <p className="mb-3 text-xs text-slate-500">
+          Chamadas recebidas em <code>/api/webhooks/agregador</code> — payload bruto e como cada bloco
+          &quot;por_academia&quot; foi distribuído (casamento por nome da unidade, com telefone como
+          desempate quando o nome não bate com nada).
+        </p>
+        <AgregadorWebhookLogTable entries={agregadorWebhookLog} />
       </div>
     </div>
   )
