@@ -15,8 +15,14 @@ export default async function UsuariosPage() {
   }
 
   const [{ rows: users }, { rows: academias }] = await Promise.all([
-    pool.query<{ id: string; email: string; role: string | null; academia_nome: string | null }>(
-      `select u.id, u.email, p.role, a.nome as academia_nome
+    pool.query<{
+      id: string
+      email: string
+      role: string | null
+      academia_id: string | null
+      academia_nome: string | null
+    }>(
+      `select u.id, u.email, p.role, p.academia_id, a.nome as academia_nome
        from users u
        left join user_profiles p on p.user_id = u.id
        left join academias a on a.id = p.academia_id
@@ -31,6 +37,7 @@ export default async function UsuariosPage() {
     id: u.id,
     email: u.email,
     role: u.role,
+    academiaId: u.academia_id,
     academiaNome: u.academia_nome,
   }))
 
@@ -41,7 +48,7 @@ export default async function UsuariosPage() {
         <p className="page-subtitle">Gestão de acesso — restrito a Super Admin.</p>
       </div>
 
-      <UsersTable users={userRows} />
+      <UsersTable users={userRows} academias={academias} currentUserId={profile.userId} />
 
       <div>
         <h3 className="mb-3 text-sm font-semibold text-slate-900">Criar usuário</h3>

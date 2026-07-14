@@ -139,8 +139,20 @@ export const MOCK_TREINADAS: TreinadaStatus[] = MOCK_ACADEMIAS.map((a, i) => ({
 }))
 
 export const MOCK_USERS: UserRow[] = [
-  { id: 'u1', email: 'superadmin@allpfit.dev', role: 'super_admin', academiaNome: null },
-  { id: 'u2', email: 'gestor@allpfit.dev', role: 'gestor', academiaNome: null },
-  { id: 'u3', email: 'coordenador.pinheiros@allpfit.dev', role: 'coordenador', academiaNome: MOCK_ACADEMIAS[0].nome },
-  { id: 'u4', email: 'visualizador.moema@allpfit.dev', role: 'visualizador', academiaNome: MOCK_ACADEMIAS[1].nome },
+  { id: 'u1', email: 'superadmin@allpfit.dev', role: 'super_admin', academiaId: null, academiaNome: null },
+  { id: 'u2', email: 'gestor@allpfit.dev', role: 'gestor', academiaId: null, academiaNome: null },
+  {
+    id: 'u3',
+    email: 'coordenador.pinheiros@allpfit.dev',
+    role: 'coordenador',
+    academiaId: MOCK_ACADEMIAS[0].id,
+    academiaNome: MOCK_ACADEMIAS[0].nome,
+  },
+  {
+    id: 'u4',
+    email: 'visualizador.moema@allpfit.dev',
+    role: 'visualizador',
+    academiaId: MOCK_ACADEMIAS[1].id,
+    academiaNome: MOCK_ACADEMIAS[1].nome,
+  },
 ]
