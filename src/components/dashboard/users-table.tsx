@@ -5,20 +5,8 @@ import { resetUserPassword, type PasswordResult } from '@/app/(app)/usuarios/act
 import { Avatar } from '@/components/ui/avatar'
 import { ListFilterBar } from './list-filter-bar'
 import { useToast } from '@/components/ui/toast'
-
-const ROLE_LABEL: Record<string, string> = {
-  super_admin: 'Super Admin',
-  gestor: 'Gestor',
-  coordenador: 'Coordenador',
-  visualizador: 'Visualizador',
-}
-
-const ROLE_BADGE: Record<string, string> = {
-  super_admin: 'bg-violet-50 text-violet-700',
-  gestor: 'bg-blue-50 text-blue-700',
-  coordenador: 'bg-emerald-50 text-emerald-700',
-  visualizador: 'bg-slate-100 text-slate-600',
-}
+import type { UserRole } from '@/lib/auth/profile'
+import { ROLE_BADGE_CLASS, ROLE_LABEL } from '@/lib/dashboard/role-labels'
 
 export type UserRow = {
   id: string
@@ -113,8 +101,8 @@ export function UsersTable({
                     </td>
                     <td className="px-4 py-3">
                       {u.role ? (
-                        <span className={`badge ${ROLE_BADGE[u.role] ?? 'bg-slate-100 text-slate-600'}`}>
-                          {ROLE_LABEL[u.role] ?? u.role}
+                        <span className={`badge ${ROLE_BADGE_CLASS[u.role as UserRole] ?? 'bg-slate-100 text-slate-600'}`}>
+                          {ROLE_LABEL[u.role as UserRole] ?? u.role}
                         </span>
                       ) : (
                         <span className="badge bg-amber-50 text-amber-700">sem perfil</span>

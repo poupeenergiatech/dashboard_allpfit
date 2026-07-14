@@ -1,4 +1,5 @@
 import { getCurrentUserProfile } from '@/lib/auth/profile'
+import { ROLE_BADGE_CLASS, ROLE_LABEL } from '@/lib/dashboard/role-labels'
 import { LogoutButton } from './logout-button'
 
 export async function Topbar() {
@@ -21,6 +22,9 @@ export async function Topbar() {
               {initial}
             </span>
             <span className="max-w-[160px] truncate text-sm text-slate-600">{email}</span>
+            {profile && (
+              <span className={`badge shrink-0 ${ROLE_BADGE_CLASS[profile.role]}`}>{ROLE_LABEL[profile.role]}</span>
+            )}
           </div>
         )}
         <LogoutButton />

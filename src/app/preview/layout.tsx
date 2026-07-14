@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { Sidebar } from '@/components/layout/sidebar'
 import { ToastProvider } from '@/components/ui/toast'
+import { ROLE_BADGE_CLASS, ROLE_LABEL } from '@/lib/dashboard/role-labels'
 
 // Rota de demonstração com dados fictícios — nunca deve existir em produção.
 // A checagem de NODE_ENV no middleware já bloqueia isso antes de chegar aqui;
@@ -37,6 +38,7 @@ export default function PreviewLayout({ children }: { children: React.ReactNode 
                   P
                 </span>
                 <span className="text-sm text-slate-600">preview@allpfit.dev</span>
+                <span className={`badge shrink-0 ${ROLE_BADGE_CLASS.super_admin}`}>{ROLE_LABEL.super_admin}</span>
               </div>
             </div>
           </header>
