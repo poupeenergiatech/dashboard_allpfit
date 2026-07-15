@@ -33,7 +33,7 @@ export function CreateAcademiaForm({ onCreate = createAcademia }: { onCreate?: (
         <input id="nome" name="nome" type="text" required className="input" placeholder="Allp Fit - Unidade Centro" />
       </div>
 
-      <div className="lg:col-span-2">
+      <div>
         <label className="field-label" htmlFor="numero_telefone">
           Número de WhatsApp (agregador)
         </label>
@@ -44,6 +44,13 @@ export function CreateAcademiaForm({ onCreate = createAcademia }: { onCreate?: (
           className="input"
           placeholder="5511999999999"
         />
+      </div>
+
+      <div>
+        <label className="field-label" htmlFor="total_alunos">
+          Total de alunos
+        </label>
+        <input id="total_alunos" name="total_alunos" type="number" min={0} defaultValue={0} className="input" />
       </div>
 
       <div className="flex items-end lg:col-span-4">

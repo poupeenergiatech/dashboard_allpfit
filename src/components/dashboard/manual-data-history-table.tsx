@@ -9,7 +9,7 @@ export function ManualDataHistoryTable({
   onEdit,
 }: {
   entries: ManualDataEntry[]
-  onEdit: (entry: ManualDataEntry) => void
+  onEdit?: (entry: ManualDataEntry) => void
 }) {
   if (entries.length === 0) {
     return (
@@ -24,11 +24,10 @@ export function ManualDataHistoryTable({
           <tr className="border-b border-slate-100 bg-slate-50/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
             <th className="px-4 py-3">Academia</th>
             <th className="px-4 py-3">Data</th>
-            <th className="px-4 py-3 text-right">Alunos</th>
             <th className="px-4 py-3 text-right">Scans</th>
             <th className="px-4 py-3 text-right">Ajuste contatos</th>
             <th className="px-4 py-3 text-right">Ajuste conversões</th>
-            <th className="px-4 py-3" />
+            {onEdit && <th className="px-4 py-3" />}
           </tr>
         </thead>
         <tbody>
@@ -36,7 +35,6 @@ export function ManualDataHistoryTable({
             <tr key={entry.id} className="border-b border-slate-50 transition last:border-0 hover:bg-slate-50/70">
               <td className="px-4 py-3 font-medium text-slate-900">{entry.academiaNome}</td>
               <td className="px-4 py-3 tabular-nums text-slate-600">{formatDate(entry.data)}</td>
-              <td className="px-4 py-3 text-right tabular-nums text-slate-600">{entry.totalAlunos}</td>
               <td className="px-4 py-3 text-right tabular-nums text-slate-600">{entry.totalScans}</td>
               <td className="px-4 py-3 text-right tabular-nums">
                 {entry.contatosAjuste != null ? (
@@ -52,15 +50,17 @@ export function ManualDataHistoryTable({
                   <span className="text-slate-300">—</span>
                 )}
               </td>
-              <td className="px-4 py-3 text-right">
-                <button
-                  type="button"
-                  onClick={() => onEdit(entry)}
-                  className="text-xs font-semibold text-brand-600 hover:text-brand-700"
-                >
-                  Editar
-                </button>
-              </td>
+              {onEdit && (
+                <td className="px-4 py-3 text-right">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(entry)}
+                    className="text-xs font-semibold text-brand-600 hover:text-brand-700"
+                  >
+                    Editar
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

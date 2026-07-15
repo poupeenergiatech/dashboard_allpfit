@@ -13,14 +13,16 @@ export async function createAcademia(formData: FormData) {
 
   const nome = String(formData.get('nome') ?? '').trim()
   const numeroTelefone = String(formData.get('numero_telefone') ?? '').trim()
+  const totalAlunos = Number(formData.get('total_alunos') ?? 0)
 
   if (!nome) {
     throw new Error('Nome é obrigatório.')
   }
 
-  await pool.query('insert into academias (nome, numero_telefone, ativo) values ($1, $2, true)', [
+  await pool.query('insert into academias (nome, numero_telefone, ativo, total_alunos) values ($1, $2, true, $3)', [
     nome,
     numeroTelefone || null,
+    totalAlunos,
   ])
 
   revalidatePath('/academias')
@@ -51,14 +53,16 @@ export async function updateAcademia(academiaId: string, formData: FormData) {
 
   const nome = String(formData.get('nome') ?? '').trim()
   const numeroTelefone = String(formData.get('numero_telefone') ?? '').trim()
+  const totalAlunos = Number(formData.get('total_alunos') ?? 0)
 
   if (!nome) {
     throw new Error('Nome é obrigatório.')
   }
 
-  await pool.query('update academias set nome = $1, numero_telefone = $2 where id = $3', [
+  await pool.query('update academias set nome = $1, numero_telefone = $2, total_alunos = $3 where id = $4', [
     nome,
     numeroTelefone || null,
+    totalAlunos,
     academiaId,
   ])
 

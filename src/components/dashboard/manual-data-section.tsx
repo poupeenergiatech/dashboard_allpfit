@@ -10,29 +10,33 @@ export function ManualDataSection({
   academias,
   fixedAcademiaId,
   history,
+  editable = true,
   onSave,
 }: {
   academias: Academia[]
   fixedAcademiaId: string | null
   history: ManualDataEntry[]
+  editable?: boolean
   onSave?: (formData: FormData) => Promise<void>
 }) {
   const [editing, setEditing] = useState<ManualDataEntry | null>(null)
 
   return (
     <div className="space-y-4">
-      <ManualDataForm
-        academias={academias}
-        fixedAcademiaId={fixedAcademiaId}
-        history={history}
-        editing={editing}
-        onCancelEdit={() => setEditing(null)}
-        {...(onSave ? { onSave } : {})}
-      />
+      {editable && (
+        <ManualDataForm
+          academias={academias}
+          fixedAcademiaId={fixedAcademiaId}
+          history={history}
+          editing={editing}
+          onCancelEdit={() => setEditing(null)}
+          {...(onSave ? { onSave } : {})}
+        />
+      )}
 
       <div>
         <h4 className="mb-3 text-sm font-semibold text-slate-900">Histórico de lançamentos</h4>
-        <ManualDataHistoryTable entries={history} onEdit={setEditing} />
+        <ManualDataHistoryTable entries={history} {...(editable ? { onEdit: setEditing } : {})} />
       </div>
     </div>
   )

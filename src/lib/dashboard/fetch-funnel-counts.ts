@@ -37,61 +37,54 @@ export async function fetchFunnelCounts(
   const academiaId = scopeAcademiaId(profile, requestedAcademiaId)
   const { from, toExclusive, fromDate, toDate, days } = periodRange(period, customRange ?? undefined)
 
-  const [{ rows: manualRows }, { rows: contatosPorDia }, { rows: conversoesPorDia }] = await Promise.all([
-    pool.query<{
-      academia_id: string
-      data: string
-      total_alunos: number
-      total_scans: number
-      contatos_ajuste: number | null
-      conversoes_ajuste: number | null
-    }>(
-      `select academia_id, data, total_alunos, total_scans, contatos_ajuste, conversoes_ajuste
+  const [{ rows: academiaRows }, { rows: manualRows }, { rows: contatosPorDia }, { rows: conversoesPorDia }] =
+    await Promise.all([
+      // total_alunos vem direto do cadastro da academia (não é mais um lançamento
+      // diário em manual_data) — cadastra-se uma vez em /academias e o funil já
+      // reflete em qualquer período, sem precisar relançar o mesmo número todo dia.
+      pool.query<{ total_alunos: number }>(
+        `select total_alunos from academias where ativo = true and ($1::uuid is null or id = $1)`,
+        [academiaId]
+      ),
+      pool.query<{
+        academia_id: string
+        data: string
+        total_scans: number
+        contatos_ajuste: number | null
+        conversoes_ajuste: number | null
+      }>(
+        `select academia_id, data, total_scans, contatos_ajuste, conversoes_ajuste
        from manual_data
        where data >= $1 and data <= $3 and ($2::uuid is null or academia_id = $2)`,
-      [fromDate, academiaId, toDate]
-    ),
-    pool.query<{ academia_id: string; day: string; count: number }>(
-      `select academia_id, date_trunc('day', created_at)::date as day, count(*) as count from contacts
+        [fromDate, academiaId, toDate]
+      ),
+      pool.query<{ academia_id: string; day: string; count: number }>(
+        `select academia_id, date_trunc('day', created_at)::date as day, count(*) as count from contacts
        where created_at >= $1 and created_at < $3 and ($2::uuid is null or academia_id = $2)
        group by academia_id, day`,
-      [from, academiaId, toExclusive]
-    ),
-    pool.query<{ academia_id: string; day: string; count: number }>(
-      `select academia_id, date_trunc('day', created_at)::date as day, count(*) as count from conversions
+        [from, academiaId, toExclusive]
+      ),
+      pool.query<{ academia_id: string; day: string; count: number }>(
+        `select academia_id, date_trunc('day', created_at)::date as day, count(*) as count from conversions
        where created_at >= $1 and created_at < $3 and ($2::uuid is null or academia_id = $2)
        group by academia_id, day`,
-      [from, academiaId, toExclusive]
-    ),
-  ])
+        [from, academiaId, toExclusive]
+      ),
+    ])
 
-  // total_alunos é um snapshot (não é aditivo): pega o valor mais recente dentro do
-  // período, por academia, e soma entre academias quando o filtro é "todas".
+  const totalAlunos = academiaRows.reduce((sum, row) => sum + (row.total_alunos ?? 0), 0)
+
   // total_scans é aditivo: soma direta de todas as linhas do período.
-  const latestAlunosByAcademia = new Map<string, { data: string; total_alunos: number }>()
   let totalScans = 0
 
   // Por dia (pro histórico diário): soma bruta do que foi lançado naquele dia
-  // específico, entre as academias no escopo — não é "forward-filled" como o
-  // totalAlunos acima, é literalmente o que consta em manual_data pra aquele dia.
-  const alunosPorDia = new Map<string, number>()
+  // específico, entre as academias no escopo.
   const scansPorDia = new Map<string, number>()
 
   for (const row of manualRows) {
     totalScans += row.total_scans ?? 0
-    alunosPorDia.set(row.data, (alunosPorDia.get(row.data) ?? 0) + (row.total_alunos ?? 0))
     scansPorDia.set(row.data, (scansPorDia.get(row.data) ?? 0) + (row.total_scans ?? 0))
-
-    const prev = latestAlunosByAcademia.get(row.academia_id)
-    if (!prev || row.data > prev.data) {
-      latestAlunosByAcademia.set(row.academia_id, row)
-    }
   }
-
-  const totalAlunos = [...latestAlunosByAcademia.values()].reduce(
-    (sum, row) => sum + (row.total_alunos ?? 0),
-    0
-  )
 
   // Contatos/conversões: por padrão é a contagem automática (contacts/conversions,
   // por academia+dia); quando existe um ajuste manual pra aquele academia+dia (ver
@@ -125,9 +118,11 @@ export async function fetchFunnelCounts(
     conversoesPorDiaEfetivo.set(day, (conversoesPorDiaEfetivo.get(day) ?? 0) + value)
   }
 
+  // totalAlunos não varia por dia (é o total cadastrado agora, não um lançamento
+  // histórico) — repete o mesmo valor em cada ponto da série.
   const series: DailyFunnelPoint[] = enumerateDays(fromDate, days).map((date) => ({
     date,
-    totalAlunos: alunosPorDia.get(date) ?? 0,
+    totalAlunos,
     totalScans: scansPorDia.get(date) ?? 0,
     contatos: contatosPorDiaEfetivo.get(date) ?? 0,
     conversoes: conversoesPorDiaEfetivo.get(date) ?? 0,

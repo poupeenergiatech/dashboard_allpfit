@@ -1,5 +1,5 @@
 import { FunnelDashboard } from '@/components/dashboard/funnel-dashboard'
-import { canWrite, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
+import { canManageManualData, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchManualDataHistory } from '@/lib/dashboard/fetch-manual-data-history'
 
@@ -16,19 +16,18 @@ export default async function DashboardHomePage() {
     )
   }
 
-  const canEdit = canWrite(profile.role)
+  const canEditManualData = canManageManualData(profile.role)
   const fixedAcademiaId = seesAllAcademias(profile.role) ? null : profile.academiaId
 
-  const [academias, history] = await Promise.all([
-    fetchActiveAcademias(profile),
-    canEdit ? fetchManualDataHistory(profile) : Promise.resolve([]),
-  ])
+  // Dados manuais e histórico agora são visíveis (leitura) pra qualquer role
+  // autenticada — só a edição fica restrita, ver canManageManualData.
+  const [academias, history] = await Promise.all([fetchActiveAcademias(profile), fetchManualDataHistory(profile)])
 
   return (
     <FunnelDashboard
       academias={academias}
       initialAcademiaId={fixedAcademiaId}
-      canEdit={canEdit}
+      canEditManualData={canEditManualData}
       manualDataHistory={history}
     />
   )

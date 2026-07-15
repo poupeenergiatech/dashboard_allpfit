@@ -4,6 +4,7 @@ import type { Academia, DateRange, Period } from '@/lib/dashboard/types'
 
 const PERIODS: { value: Period; label: string }[] = [
   { value: 'hoje', label: 'Hoje' },
+  { value: 'ontem', label: 'Ontem' },
   { value: '7dias', label: '7 dias' },
   { value: '30dias', label: '30 dias' },
   { value: 'personalizado', label: 'Personalizado' },

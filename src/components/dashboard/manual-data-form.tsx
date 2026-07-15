@@ -27,7 +27,6 @@ export function ManualDataForm({
 }) {
   const [academiaId, setAcademiaId] = useState(editing?.academiaId ?? fixedAcademiaId ?? academias[0]?.id ?? '')
   const [data, setData] = useState(editing?.data ?? todayIso())
-  const [totalAlunos, setTotalAlunos] = useState('')
   const [totalScans, setTotalScans] = useState('')
   const [contatosAjuste, setContatosAjuste] = useState('')
   const [conversoesAjuste, setConversoesAjuste] = useState('')
@@ -45,12 +44,10 @@ export function ManualDataForm({
   // lançamento, arriscando sobrescrever com zero sem querer.
   useEffect(() => {
     if (existing) {
-      setTotalAlunos(String(existing.totalAlunos))
       setTotalScans(String(existing.totalScans))
       setContatosAjuste(existing.contatosAjuste != null ? String(existing.contatosAjuste) : '')
       setConversoesAjuste(existing.conversoesAjuste != null ? String(existing.conversoesAjuste) : '')
     } else {
-      setTotalAlunos('')
       setTotalScans('')
       setContatosAjuste('')
       setConversoesAjuste('')
@@ -133,22 +130,6 @@ export function ManualDataForm({
           className="input"
           value={data}
           onChange={(e) => setData(e.target.value)}
-        />
-      </div>
-
-      <div>
-        <label className="field-label" htmlFor="total_alunos">
-          Total de alunos
-        </label>
-        <input
-          id="total_alunos"
-          name="total_alunos"
-          type="number"
-          min={0}
-          required
-          className="input"
-          value={totalAlunos}
-          onChange={(e) => setTotalAlunos(e.target.value)}
         />
       </div>
 

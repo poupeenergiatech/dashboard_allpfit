@@ -67,6 +67,7 @@ export function AcademiasTable({
               <tr className="border-b border-slate-100 bg-slate-50/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 <th className="px-4 py-3">Unidade</th>
                 <th className="px-4 py-3">Número WhatsApp</th>
+                <th className="px-4 py-3 text-right">Total de alunos</th>
                 <th className="px-4 py-3">Ativa</th>
                 <th className="px-4 py-3">Ações</th>
               </tr>
@@ -154,6 +155,7 @@ function AcademiaRow({
         </div>
       </td>
       <td className="px-4 py-3 text-slate-600">{academia.numeroTelefone ?? '—'}</td>
+      <td className="px-4 py-3 text-right tabular-nums text-slate-600">{academia.totalAlunos}</td>
       <td className="px-4 py-3">
         <button
           type="button"
@@ -222,7 +224,7 @@ function AcademiaEditRow({
 
   return (
     <tr className="border-b border-slate-50 bg-slate-50/70 last:border-0">
-      <td className="px-4 py-3" colSpan={4}>
+      <td className="px-4 py-3" colSpan={5}>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1">
             <label className="field-label" htmlFor={`nome-${academia.id}`}>
@@ -246,6 +248,19 @@ function AcademiaEditRow({
               name="numero_telefone"
               type="text"
               defaultValue={academia.numeroTelefone ?? ''}
+              className="input"
+            />
+          </div>
+          <div className="w-32">
+            <label className="field-label" htmlFor={`total-alunos-${academia.id}`}>
+              Total de alunos
+            </label>
+            <input
+              id={`total-alunos-${academia.id}`}
+              name="total_alunos"
+              type="number"
+              min={0}
+              defaultValue={academia.totalAlunos}
               className="input"
             />
           </div>

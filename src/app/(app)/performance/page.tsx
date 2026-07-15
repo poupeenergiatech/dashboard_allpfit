@@ -6,10 +6,10 @@ import { PeriodFilterLinks } from '@/components/dashboard/period-filter-links'
 import { fetchAcademiaPerformance, type PerformancePeriod } from '@/lib/dashboard/fetch-academia-performance'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchManualDataHistory } from '@/lib/dashboard/fetch-manual-data-history'
-import { canWrite, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
+import { canManageManualData, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 import type { DateRange } from '@/lib/dashboard/types'
 
-const VALID_PERIODS: PerformancePeriod[] = ['todos', 'hoje', '7dias', '30dias', 'personalizado']
+const VALID_PERIODS: PerformancePeriod[] = ['todos', 'hoje', 'ontem', '7dias', '30dias', 'personalizado']
 
 function defaultCustomRange(): DateRange {
   const to = new Date()
@@ -39,7 +39,9 @@ export default async function PerformancePage({
   const [rows, academias, history] = await Promise.all([
     profile ? fetchAcademiaPerformance(profile, period, customRange, requestedAcademiaId) : Promise.resolve([]),
     fetchActiveAcademias(profile),
-    profile && canWrite(profile.role) ? fetchManualDataHistory(profile) : Promise.resolve([]),
+    // Dados manuais e histórico agora são visíveis (leitura) pra qualquer role
+    // autenticada — só a edição fica restrita, ver canManageManualData abaixo.
+    profile ? fetchManualDataHistory(profile) : Promise.resolve([]),
   ])
 
   const periodExtraParams: Record<string, string> = requestedAcademiaId ? { academia: requestedAcademiaId } : {}
@@ -73,13 +75,14 @@ export default async function PerformancePage({
 
       <AcademiaTable rows={rows} />
 
-      {profile && canWrite(profile.role) && (
+      {profile && (
         <div>
           <h3 className="mb-3 text-sm font-semibold text-slate-900">Dados manuais</h3>
           <ManualDataSection
             academias={academias}
             fixedAcademiaId={seesAllAcademias(profile.role) ? null : profile.academiaId}
             history={history}
+            editable={canManageManualData(profile.role)}
           />
         </div>
       )}

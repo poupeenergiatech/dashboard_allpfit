@@ -54,6 +54,25 @@ export function periodRange(period: Period, customRange?: DateRange): PeriodRang
     }
   }
 
+  // 'ontem' não cabe no modelo "N dias terminando hoje" do PRESET_DAYS abaixo — é um
+  // único dia, deslocado -1 em vez de terminar em hoje.
+  if (period === 'ontem') {
+    const from = new Date()
+    from.setDate(from.getDate() - 1)
+    from.setHours(0, 0, 0, 0)
+
+    const toExclusive = new Date(from)
+    toExclusive.setDate(toExclusive.getDate() + 1)
+
+    return {
+      from: from.toISOString(),
+      toExclusive: toExclusive.toISOString(),
+      fromDate: toIsoDate(from),
+      toDate: toIsoDate(from),
+      days: 1,
+    }
+  }
+
   const days = PRESET_DAYS[period]
   const from = new Date()
   from.setDate(from.getDate() - (days - 1))

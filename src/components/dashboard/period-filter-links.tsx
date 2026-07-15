@@ -5,6 +5,7 @@ import type { PerformancePeriod } from '@/lib/dashboard/fetch-academia-performan
 const PERIODS: { value: PerformancePeriod; label: string }[] = [
   { value: 'todos', label: 'Todo período' },
   { value: 'hoje', label: 'Hoje' },
+  { value: 'ontem', label: 'Ontem' },
   { value: '7dias', label: '7 dias' },
   { value: '30dias', label: '30 dias' },
   { value: 'personalizado', label: 'Personalizado' },

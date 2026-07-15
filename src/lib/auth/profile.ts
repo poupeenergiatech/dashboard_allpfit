@@ -54,6 +54,15 @@ export function canWrite(role: UserRole): boolean {
   return role !== 'visualizador'
 }
 
+// Dados manuais (scans/ajustes lançados em /performance e /) e o histórico de
+// lançamentos: coordenador passou de "pode editar" pra só visualizar (mesmo escopo de
+// leitura de sempre, restrito à própria academia), e visualizador — que antes não via
+// essa seção — também ganhou acesso de leitura. Só super_admin/gestor continuam
+// podendo lançar/editar.
+export function canManageManualData(role: UserRole): boolean {
+  return role === 'super_admin' || role === 'gestor'
+}
+
 export function canManageTraining(role: UserRole): boolean {
   return role === 'super_admin' || role === 'gestor'
 }

@@ -7,6 +7,7 @@ export type AcademiaAdmin = {
   nome: string
   numeroTelefone: string | null
   ativo: boolean
+  totalAlunos: number
 }
 
 // Todas as academias (ativas e inativas), com os campos administrativos —
@@ -18,13 +19,15 @@ export async function fetchAllAcademias(): Promise<AcademiaAdmin[]> {
     nome: string
     numero_telefone: string | null
     ativo: boolean
-  }>('select id, nome, numero_telefone, ativo from academias order by nome')
+    total_alunos: number
+  }>('select id, nome, numero_telefone, ativo, total_alunos from academias order by nome')
 
   return rows.map((row) => ({
     id: row.id,
     nome: row.nome,
     numeroTelefone: row.numero_telefone,
     ativo: row.ativo,
+    totalAlunos: row.total_alunos,
   }))
 }
 

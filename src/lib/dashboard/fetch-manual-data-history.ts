@@ -6,7 +6,6 @@ export type ManualDataEntry = {
   academiaId: string
   academiaNome: string
   data: string
-  totalAlunos: number
   totalScans: number
   contatosAjuste: number | null
   conversoesAjuste: number | null
@@ -24,12 +23,11 @@ export async function fetchManualDataHistory(profile: UserProfile): Promise<Manu
     academia_id: string
     academia_nome: string
     data: string
-    total_alunos: number
     total_scans: number
     contatos_ajuste: number | null
     conversoes_ajuste: number | null
   }>(
-    `select md.id, md.academia_id, a.nome as academia_nome, md.data, md.total_alunos, md.total_scans,
+    `select md.id, md.academia_id, a.nome as academia_nome, md.data, md.total_scans,
             md.contatos_ajuste, md.conversoes_ajuste
      from manual_data md
      join academias a on a.id = md.academia_id
@@ -44,7 +42,6 @@ export async function fetchManualDataHistory(profile: UserProfile): Promise<Manu
     academiaId: row.academia_id,
     academiaNome: row.academia_nome,
     data: row.data,
-    totalAlunos: row.total_alunos,
     totalScans: row.total_scans,
     contatosAjuste: row.contatos_ajuste,
     conversoesAjuste: row.conversoes_ajuste,
