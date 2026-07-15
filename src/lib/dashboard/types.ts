@@ -1,4 +1,4 @@
-export type Period = 'hoje' | 'ontem' | '7dias' | '30dias' | 'personalizado'
+export type Period = 'hoje' | 'ontem' | '7dias' | '30dias' | '90dias' | '1ano' | 'personalizado'
 
 // yyyy-mm-dd, inclusive nos dois lados — só usado quando period === 'personalizado'.
 export type DateRange = {

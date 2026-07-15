@@ -1,9 +1,11 @@
 import type { DateRange, Period } from './types'
 
-const PRESET_DAYS: Record<'hoje' | '7dias' | '30dias', number> = {
+const PRESET_DAYS: Record<'hoje' | '7dias' | '30dias' | '90dias' | '1ano', number> = {
   hoje: 1,
   '7dias': 7,
   '30dias': 30,
+  '90dias': 90,
+  '1ano': 365,
 }
 
 function toIsoDate(date: Date): string {

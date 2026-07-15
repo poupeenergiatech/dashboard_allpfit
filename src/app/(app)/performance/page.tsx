@@ -9,7 +9,7 @@ import { fetchManualDataHistory } from '@/lib/dashboard/fetch-manual-data-histor
 import { canManageManualData, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 import type { DateRange } from '@/lib/dashboard/types'
 
-const VALID_PERIODS: PerformancePeriod[] = ['todos', 'hoje', 'ontem', '7dias', '30dias', 'personalizado']
+const VALID_PERIODS: PerformancePeriod[] = ['todos', 'hoje', 'ontem', '7dias', '30dias', '90dias', '1ano', 'personalizado']
 
 function defaultCustomRange(): DateRange {
   const to = new Date()

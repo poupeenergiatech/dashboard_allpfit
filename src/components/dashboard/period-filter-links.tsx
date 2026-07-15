@@ -8,6 +8,8 @@ const PERIODS: { value: PerformancePeriod; label: string }[] = [
   { value: 'ontem', label: 'Ontem' },
   { value: '7dias', label: '7 dias' },
   { value: '30dias', label: '30 dias' },
+  { value: '90dias', label: '90 dias' },
+  { value: '1ano', label: '1 ano' },
   { value: 'personalizado', label: 'Personalizado' },
 ]
 
