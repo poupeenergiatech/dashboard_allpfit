@@ -81,7 +81,7 @@ export function UsersTable({
 
   if (users.length === 0) {
     return (
-      <div className="card-dashed text-sm text-slate-500">
+      <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">
         Nenhum usuário cadastrado ainda.
       </div>
     )
@@ -99,13 +99,13 @@ export function UsersTable({
       />
 
       {filtered.length === 0 ? (
-        <div className="card-dashed text-sm text-slate-500">Nenhum usuário encontrado pra esse filtro.</div>
+        <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhum usuário encontrado pra esse filtro.</div>
       ) : (
         <div className="card overflow-x-auto">
           <table className="w-full min-w-[620px] text-sm">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                <th className="px-4 py-3">Email</th>
+              <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <th className="sticky left-0 z-10 border-r border-slate-100 dark:border-slate-800 bg-slate-50/95 dark:bg-slate-800/95 px-4 py-3">Email</th>
                 <th className="px-4 py-3">Role</th>
                 <th className="px-4 py-3">Academia</th>
                 <th className="px-4 py-3">Ações</th>
@@ -136,23 +136,23 @@ export function UsersTable({
                   )
                 }
                 return (
-                  <tr key={u.id} className="border-b border-slate-50 transition last:border-0 hover:bg-slate-50/70">
-                    <td className="px-4 py-3">
+                  <tr key={u.id} className="border-b border-slate-50 dark:border-slate-800/60 transition last:border-0 hover:bg-slate-50/70 dark:hover:bg-slate-800/70">
+                    <td className="sticky left-0 z-10 border-r border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar name={u.email} />
-                        <span className="text-slate-900">{u.email}</span>
+                        <span className="text-slate-900 dark:text-white">{u.email}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       {u.role ? (
-                        <span className={`badge ${ROLE_BADGE_CLASS[u.role as UserRole] ?? 'bg-slate-100 text-slate-600'}`}>
+                        <span className={`badge ${ROLE_BADGE_CLASS[u.role as UserRole] ?? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
                           {ROLE_LABEL[u.role as UserRole] ?? u.role}
                         </span>
                       ) : (
-                        <span className="badge bg-amber-50 text-amber-700">sem perfil</span>
+                        <span className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">sem perfil</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                       {u.academiaNome ?? (u.role === 'super_admin' || u.role === 'gestor' ? 'Todas' : '—')}
                     </td>
                     <td className="px-4 py-3">
@@ -160,14 +160,14 @@ export function UsersTable({
                         <button
                           type="button"
                           onClick={() => setActiveRow({ id: u.id, type: 'edit' })}
-                          className="text-slate-600 hover:text-slate-900"
+                          className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                         >
                           Editar
                         </button>
                         <button
                           type="button"
                           onClick={() => setActiveRow({ id: u.id, type: 'reset' })}
-                          className="text-slate-600 hover:text-slate-900"
+                          className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                         >
                           Redefinir senha
                         </button>
@@ -176,7 +176,7 @@ export function UsersTable({
                             type="button"
                             disabled={deleting}
                             onClick={() => handleDelete(u)}
-                            className="text-rose-600 hover:text-rose-800 disabled:opacity-50"
+                            className="text-rose-600 dark:text-rose-400 hover:text-rose-800 disabled:opacity-50"
                           >
                             Excluir
                           </button>
@@ -228,7 +228,7 @@ function UserEditRow({
   }
 
   return (
-    <tr className="border-b border-slate-50 bg-slate-50/70 last:border-0">
+    <tr className="border-b border-slate-50 dark:border-slate-800/60 bg-slate-50/70 dark:bg-slate-800/70 last:border-0">
       <td className="px-4 py-3" colSpan={4}>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
           <div>
@@ -329,16 +329,16 @@ function ResetPasswordRow({
   }
 
   return (
-    <tr className="border-b border-slate-50 bg-slate-50/70 last:border-0">
+    <tr className="border-b border-slate-50 dark:border-slate-800/60 bg-slate-50/70 dark:bg-slate-800/70 last:border-0">
       <td className="px-4 py-3" colSpan={4}>
         {result ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-emerald-50/70 px-3.5 py-2.5 text-sm text-emerald-900">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-500/10 px-3.5 py-2.5 text-sm text-emerald-900 dark:text-emerald-300">
             <p>
               Nova senha{result.generated ? ' gerada' : ''} de {user.email}:{' '}
-              <code className="rounded bg-white/70 px-1.5 py-0.5 font-mono text-emerald-900">{result.password}</code>{' '}
+              <code className="rounded bg-white/70 dark:bg-slate-900/70 px-1.5 py-0.5 font-mono text-emerald-900 dark:text-emerald-300">{result.password}</code>{' '}
               — não fica salva em nenhum lugar, copie agora.
             </p>
-            <button type="button" onClick={onCancel} className="font-semibold text-emerald-800 underline underline-offset-2">
+            <button type="button" onClick={onCancel} className="font-semibold text-emerald-800 dark:text-emerald-300 underline underline-offset-2">
               Fechar
             </button>
           </div>

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { MobileNavProvider } from '@/components/layout/nav-context'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Topbar } from '@/components/layout/topbar'
 import { ToastProvider } from '@/components/ui/toast'
@@ -20,15 +21,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <ToastProvider>
-      <div className="flex min-h-screen bg-slate-50">
-        <Sidebar role={profile?.role ?? null} />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar />
-          <main className="flex-1 p-4 md:p-8">
-            <div className="mx-auto w-full max-w-6xl animate-fade-up">{children}</div>
-          </main>
+      <MobileNavProvider>
+        <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+          <Sidebar role={profile?.role ?? null} />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <Topbar />
+            <main className="flex-1 p-4 md:p-8">
+              <div className="mx-auto w-full max-w-6xl animate-fade-up">{children}</div>
+            </main>
+          </div>
         </div>
-      </div>
+      </MobileNavProvider>
     </ToastProvider>
   )
 }

@@ -44,7 +44,7 @@ export function AcademiasTable({
   }, [academias, search, status])
 
   if (academias.length === 0) {
-    return <div className="card-dashed text-sm text-slate-500">Nenhuma academia cadastrada ainda.</div>
+    return <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhuma academia cadastrada ainda.</div>
   }
 
   return (
@@ -59,13 +59,13 @@ export function AcademiasTable({
       />
 
       {filtered.length === 0 ? (
-        <div className="card-dashed text-sm text-slate-500">Nenhuma academia encontrada pra esse filtro.</div>
+        <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhuma academia encontrada pra esse filtro.</div>
       ) : (
         <div className="card overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                <th className="px-4 py-3">Unidade</th>
+              <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <th className="sticky left-0 z-10 border-r border-slate-100 dark:border-slate-800 bg-slate-50/95 dark:bg-slate-800/95 px-4 py-3">Unidade</th>
                 <th className="px-4 py-3">Número WhatsApp</th>
                 <th className="px-4 py-3 text-right">Total de alunos</th>
                 <th className="px-4 py-3">Ativa</th>
@@ -147,15 +147,15 @@ function AcademiaRow({
   }
 
   return (
-    <tr className="border-b border-slate-50 transition last:border-0 hover:bg-slate-50/70">
-      <td className="px-4 py-3">
+    <tr className="border-b border-slate-50 dark:border-slate-800/60 transition last:border-0 hover:bg-slate-50/70 dark:hover:bg-slate-800/70">
+      <td className="sticky left-0 z-10 border-r border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3">
         <div className="flex items-center gap-3">
           <Avatar name={academia.nome} />
-          <span className="text-slate-900">{academia.nome}</span>
+          <span className="text-slate-900 dark:text-white">{academia.nome}</span>
         </div>
       </td>
-      <td className="px-4 py-3 text-slate-600">{academia.numeroTelefone ?? '—'}</td>
-      <td className="px-4 py-3 text-right tabular-nums text-slate-600">{academia.totalAlunos}</td>
+      <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{academia.numeroTelefone ?? '—'}</td>
+      <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{academia.totalAlunos}</td>
       <td className="px-4 py-3">
         <button
           type="button"
@@ -164,11 +164,11 @@ function AcademiaRow({
           disabled={pending}
           onClick={toggle}
           className={`relative h-6 w-11 shrink-0 rounded-full transition disabled:opacity-50 ${
-            ativo ? 'bg-emerald-500' : 'bg-slate-200'
+            ativo ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
           }`}
         >
           <span
-            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
+            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white dark:bg-slate-900 shadow transition-all ${
               ativo ? 'left-5' : 'left-0.5'
             }`}
           />
@@ -176,14 +176,14 @@ function AcademiaRow({
       </td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-3 text-xs font-medium">
-          <button type="button" onClick={onEdit} className="text-slate-600 hover:text-slate-900">
+          <button type="button" onClick={onEdit} className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
             Editar
           </button>
           <button
             type="button"
             disabled={deleting}
             onClick={handleDelete}
-            className="text-rose-600 hover:text-rose-800 disabled:opacity-50"
+            className="text-rose-600 dark:text-rose-400 hover:text-rose-800 disabled:opacity-50"
           >
             {deleting ? 'Excluindo…' : 'Excluir'}
           </button>
@@ -223,7 +223,7 @@ function AcademiaEditRow({
   }
 
   return (
-    <tr className="border-b border-slate-50 bg-slate-50/70 last:border-0">
+    <tr className="border-b border-slate-50 dark:border-slate-800/60 bg-slate-50/70 dark:bg-slate-800/70 last:border-0">
       <td className="px-4 py-3" colSpan={5}>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1">

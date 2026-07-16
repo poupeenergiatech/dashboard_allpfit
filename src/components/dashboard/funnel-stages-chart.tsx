@@ -1,12 +1,16 @@
 'use client'
 
 import { Cell, Funnel, FunnelChart, LabelList, ResponsiveContainer, Tooltip } from 'recharts'
+import { useIsDark } from '@/lib/dashboard/use-is-dark'
 import type { FunnelCounts } from '@/lib/dashboard/types'
 
 // Ordinal (uma cor, degradê) — o que importa aqui é a posição no funil, não a
 // identidade de cada etapa. Steps validados com validate_palette.js --ordinal:
-// monótono, e o degrau mais claro ainda contrasta com o fundo (>= 2:1).
+// monótono, e o degrau mais claro ainda contrasta com o fundo (>= 2:1). O degradê
+// claro->escuro do tema claro perderia contraste num card escuro (#1e3a8a quase
+// some no slate-900), por isso o modo escuro usa uma escala mais clara/saturada.
 const STAGE_COLORS = ['#60a5fa', '#3b82f6', '#1d4ed8', '#1e3a8a']
+const STAGE_COLORS_DARK = ['#bfdbfe', '#93c5fd', '#60a5fa', '#3b82f6']
 
 function formatNumber(value: number): string {
   return value.toLocaleString('pt-BR')
@@ -30,14 +34,19 @@ function FunnelTooltip({ active, payload }: { active?: boolean; payload?: { payl
   if (!active || !payload?.length) return null
   const stage = payload[0].payload
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[13px] shadow-sm">
-      <p className="font-medium text-slate-900">{stage.name}</p>
-      <p className="tabular-nums text-slate-600">{formatNumber(stage.value)}</p>
+    <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-[13px] shadow-sm">
+      <p className="font-medium text-slate-900 dark:text-white">{stage.name}</p>
+      <p className="tabular-nums text-slate-600 dark:text-slate-300">{formatNumber(stage.value)}</p>
     </div>
   )
 }
 
 export function FunnelStagesChart({ counts }: { counts: FunnelCounts }) {
+  const isDark = useIsDark()
+  const stageColors = isDark ? STAGE_COLORS_DARK : STAGE_COLORS
+  const labelColor = isDark ? '#cbd5e1' : '#334155'
+  const valueColor = isDark ? '#f8fafc' : '#0f172a'
+
   const raw = [
     { name: 'Alunos totais', value: counts.totalAlunos },
     { name: 'Scans QR', value: counts.totalScans },
@@ -47,7 +56,7 @@ export function FunnelStagesChart({ counts }: { counts: FunnelCounts }) {
 
   if (raw.every((stage) => stage.value === 0)) {
     return (
-      <div className="card flex h-72 items-center justify-center p-5 text-sm text-slate-500">
+      <div className="card flex h-72 items-center justify-center p-5 text-sm text-slate-500 dark:text-slate-400">
         Sem dados no período selecionado.
       </div>
     )
@@ -58,20 +67,20 @@ export function FunnelStagesChart({ counts }: { counts: FunnelCounts }) {
 
   return (
     <div className="card p-5">
-      <p className="mb-1 text-sm font-medium text-slate-500">Funil de conversão</p>
+      <p className="mb-1 text-sm font-medium text-slate-500 dark:text-slate-400">Funil de conversão</p>
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <FunnelChart margin={{ top: 4, right: 88, left: 64, bottom: 4 }}>
             <Tooltip content={<FunnelTooltip />} />
             <Funnel dataKey="weight" data={stages} isAnimationActive={false}>
               {stages.map((stage, index) => (
-                <Cell key={stage.name} fill={STAGE_COLORS[index]} />
+                <Cell key={stage.name} fill={stageColors[index]} />
               ))}
               <LabelList
                 position="right"
                 dataKey="name"
                 stroke="none"
-                fill="#334155"
+                fill={labelColor}
                 fontSize={13}
                 fontWeight={500}
               />
@@ -79,7 +88,7 @@ export function FunnelStagesChart({ counts }: { counts: FunnelCounts }) {
                 position="left"
                 dataKey="value"
                 stroke="none"
-                fill="#0f172a"
+                fill={valueColor}
                 fontSize={13}
                 fontWeight={600}
                 formatter={(value) => formatNumber(Number(value))}

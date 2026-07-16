@@ -35,7 +35,7 @@ export function ManualDataSection({
       )}
 
       <div>
-        <h4 className="mb-3 text-sm font-semibold text-slate-900">Histórico de lançamentos</h4>
+        <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Histórico de lançamentos</h4>
         <ManualDataHistoryTable entries={history} {...(editable ? { onEdit: setEditing } : {})} />
       </div>
     </div>

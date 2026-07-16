@@ -82,7 +82,7 @@ export function ManualDataForm({
   return (
     <form onSubmit={handleSubmit} className="card grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 lg:grid-cols-5">
       {existing && (
-        <div className="rounded-xl bg-amber-50 px-3.5 py-2 text-xs font-medium text-amber-800 lg:col-span-5">
+        <div className="rounded-xl bg-amber-50 dark:bg-amber-500/10 px-3.5 py-2 text-xs font-medium text-amber-800 dark:text-amber-300 lg:col-span-5">
           Já existe um lançamento de {existing.academiaNome} em{' '}
           {new Date(`${existing.data}T00:00:00`).toLocaleDateString('pt-BR')} — os campos abaixo foram preenchidos
           com os valores atuais, editar e salvar vai atualizá-los.
@@ -96,7 +96,7 @@ export function ManualDataForm({
         {fixedAcademiaId ? (
           <>
             <input type="hidden" name="academia_id" value={fixedAcademiaId} />
-            <p className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-600">
+            <p className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3.5 py-2.5 text-sm text-slate-600 dark:text-slate-300">
               {academias.find((a) => a.id === fixedAcademiaId)?.nome ?? '—'}
             </p>
           </>
@@ -187,7 +187,7 @@ export function ManualDataForm({
         />
       </div>
 
-      <p className="text-xs text-slate-400 lg:col-span-5">
+      <p className="text-xs text-slate-400 dark:text-slate-500 lg:col-span-5">
         Contatos e conversões normalmente vêm automáticos do agregador — só preencha o ajuste se precisar corrigir o
         número desse dia específico (ele substitui a contagem automática, não soma).
       </p>

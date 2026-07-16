@@ -39,13 +39,14 @@ export function PeriodFilterLinks({
 
   return (
     <div className="card flex flex-col gap-3 p-4">
-      <div className="flex flex-wrap gap-1 self-start rounded-xl bg-slate-100 p-1">
+      <div className="flex flex-wrap gap-1 self-start rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
         {PERIODS.map((p) => (
           <Link
             key={p.value}
             href={hrefFor(p.value)}
+            aria-current={period === p.value ? 'page' : undefined}
             className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold transition ${
-              period === p.value ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              period === p.value ? 'bg-white dark:bg-slate-900 text-brand-700 dark:text-brand-300 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
             {p.label}
@@ -57,13 +58,13 @@ export function PeriodFilterLinks({
         <form
           action={basePath}
           method="get"
-          className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3"
+          className="flex flex-wrap items-center gap-3 border-t border-slate-100 dark:border-slate-800 pt-3"
         >
           {Object.entries(extraParams).map(([key, value]) => (
             <input key={key} type="hidden" name={key} value={value} />
           ))}
           <input type="hidden" name="period" value="personalizado" />
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
             De
             <input
               type="date"
@@ -73,7 +74,7 @@ export function PeriodFilterLinks({
               className="input h-9 py-1"
             />
           </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
             Até
             <input
               type="date"

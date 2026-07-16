@@ -48,7 +48,7 @@ export function FunnelDashboard({
       />
 
       {error && (
-        <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+        <p className="rounded-xl border border-red-100 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm font-medium text-red-600 dark:text-red-400">
           {error}
         </p>
       )}
@@ -74,7 +74,7 @@ export function FunnelDashboard({
               <FunnelTrendChart series={counts.series} />
             </div>
             <div>
-              <h3 className="mb-3 text-sm font-semibold text-slate-900">Histórico diário</h3>
+              <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Histórico diário</h3>
               {/* key força remontar (e resetar a página) quando o filtro muda — sem
                   isso, o poll de 10s trocaria a prop `series` e a paginação ficaria
                   instável enquanto o usuário navega entre páginas. */}
@@ -88,7 +88,7 @@ export function FunnelDashboard({
       )}
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900">Dados manuais</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Dados manuais</h3>
         <ManualDataSection
           academias={academias}
           fixedAcademiaId={initialAcademiaId}

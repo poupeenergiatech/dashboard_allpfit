@@ -77,7 +77,7 @@ export default async function PerformancePage({
 
       {profile && (
         <div>
-          <h3 className="mb-3 text-sm font-semibold text-slate-900">Dados manuais</h3>
+          <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Dados manuais</h3>
           <ManualDataSection
             academias={academias}
             fixedAcademiaId={seesAllAcademias(profile.role) ? null : profile.academiaId}

@@ -52,13 +52,13 @@ export function InviteUserForm({
   return (
     <div className="space-y-4">
       {result && (
-        <div className="card border border-emerald-100 bg-emerald-50/70 p-4 text-sm text-emerald-900">
+        <div className="card border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50/70 dark:bg-emerald-500/10 p-4 text-sm text-emerald-900 dark:text-emerald-300">
           <p className="font-semibold">Usuário criado — compartilhe a senha agora.</p>
           <p className="mt-1">
             Senha{result.generated ? ' gerada' : ''}:{' '}
-            <code className="rounded bg-white/70 px-1.5 py-0.5 font-mono text-emerald-900">{result.password}</code>
+            <code className="rounded bg-white/70 dark:bg-slate-900/70 px-1.5 py-0.5 font-mono text-emerald-900 dark:text-emerald-300">{result.password}</code>
           </p>
-          <p className="mt-1 text-emerald-700">
+          <p className="mt-1 text-emerald-700 dark:text-emerald-400">
             Ela não fica salva em nenhum lugar — se perder, será preciso redefinir a senha desse usuário.
           </p>
         </div>

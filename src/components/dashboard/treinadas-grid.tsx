@@ -40,7 +40,7 @@ export function TreinadasGrid({
 
   if (rows.length === 0) {
     return (
-      <div className="card-dashed text-sm text-slate-500">
+      <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">
         Nenhuma academia cadastrada ainda.
       </div>
     )
@@ -58,7 +58,7 @@ export function TreinadasGrid({
       />
 
       {filtered.length === 0 ? (
-        <div className="card-dashed text-sm text-slate-500">Nenhuma academia encontrada pra esse filtro.</div>
+        <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhuma academia encontrada pra esse filtro.</div>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((row) => (
@@ -103,7 +103,7 @@ function TreinadaCard({
     <div className="card-interactive flex items-center justify-between p-4">
       <div className="flex min-w-0 items-center gap-3">
         <Avatar name={row.nome} />
-        <span className="truncate text-sm font-medium text-slate-900">{row.nome}</span>
+        <span className="truncate text-sm font-medium text-slate-900 dark:text-white">{row.nome}</span>
       </div>
       <button
         type="button"
@@ -112,11 +112,11 @@ function TreinadaCard({
         disabled={!canEdit || pending}
         onClick={toggle}
         className={`relative h-6 w-11 shrink-0 rounded-full transition disabled:opacity-50 ${
-          treinada ? 'bg-emerald-500' : 'bg-slate-200'
+          treinada ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
         }`}
       >
         <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-white dark:bg-slate-900 shadow transition-all ${
             treinada ? 'left-5' : 'left-0.5'
           }`}
         />

@@ -23,7 +23,7 @@ export default async function ConfiguracoesPage() {
 
   if (!profile || !canManageUsers(profile.role)) {
     return (
-      <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-6 text-sm font-medium text-amber-800">
+      <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 p-6 text-sm font-medium text-amber-800 dark:text-amber-300">
         Acesso restrito ao Super Admin.
       </div>
     )
@@ -76,13 +76,13 @@ export default async function ConfiguracoesPage() {
       />
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900">Histórico de sincronizações</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Histórico de sincronizações</h3>
         <SyncHistoryTable entries={syncHistory} />
       </div>
 
       <div>
-        <h3 className="mb-1 text-sm font-semibold text-slate-900">Histórico de payloads do agregador</h3>
-        <p className="mb-3 text-xs text-slate-500">
+        <h3 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Histórico de payloads do agregador</h3>
+        <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
           Chamadas recebidas em <code>/api/webhooks/agregador</code> — payload bruto e como cada bloco
           &quot;por_academia&quot; foi distribuído (casamento por nome da unidade, com telefone como
           desempate quando o nome não bate com nada).
@@ -91,8 +91,8 @@ export default async function ConfiguracoesPage() {
       </div>
 
       <div>
-        <h3 className="mb-1 text-sm font-semibold text-slate-900">Histórico de payloads de scans</h3>
-        <p className="mb-3 text-xs text-slate-500">
+        <h3 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Histórico de payloads de scans</h3>
+        <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
           Chamadas recebidas em <code>/api/webhooks/scans</code> — payload bruto e como cada academia foi
           casada e gravada em manual_data.
         </p>

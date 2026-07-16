@@ -42,9 +42,9 @@ export function SyncAlleDocumentosButton({
   return (
     <div className="card space-y-4 p-5">
       <div>
-        <p className="text-sm font-semibold text-slate-900">Sincronizar conversões (Alle Documentos)</p>
-        <p className="mt-1 text-xs text-slate-500">
-          Busca no Supabase (tabela <code className="rounded bg-slate-100 px-1 py-0.5">alle_documentos_clientes</code>
+        <p className="text-sm font-semibold text-slate-900 dark:text-white">Sincronizar conversões (Alle Documentos)</p>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Busca no Supabase (tabela <code className="rounded bg-slate-100 dark:bg-slate-800 px-1 py-0.5">alle_documentos_clientes</code>
           ) os clientes com &quot;completo&quot; e &quot;pós-venda&quot; preenchidos e cria a conversão
           correspondente, vinculando pelo nome da unidade. Pode rodar quantas vezes quiser — quem já foi
           sincronizado não duplica.
@@ -58,18 +58,18 @@ export function SyncAlleDocumentosButton({
       <AutoSyncToggle initialEnabled={autoSyncEnabled} />
 
       {result && (
-        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-4 text-sm text-slate-700 dark:text-slate-300">
           <p>
-            <span className="font-semibold text-slate-900">{result.totalConvertidos}</span> convertido(s)
-            encontrado(s) no Supabase — <span className="font-semibold text-emerald-700">{result.inseridas}</span>{' '}
-            nova(s), <span className="font-semibold text-slate-500">{result.jaExistentes}</span> já sincronizada(s)
+            <span className="font-semibold text-slate-900 dark:text-white">{result.totalConvertidos}</span> convertido(s)
+            encontrado(s) no Supabase — <span className="font-semibold text-emerald-700 dark:text-emerald-400">{result.inseridas}</span>{' '}
+            nova(s), <span className="font-semibold text-slate-500 dark:text-slate-400">{result.jaExistentes}</span> já sincronizada(s)
             antes.
           </p>
 
           {pendentes.length > 0 && (
             <div className="mt-3 space-y-2">
-              <p className="text-amber-700">
-                Unidade não encontrada em <code className="rounded bg-white/70 px-1 py-0.5">academias</code> —
+              <p className="text-amber-700 dark:text-amber-400">
+                Unidade não encontrada em <code className="rounded bg-white/70 dark:bg-slate-900/70 px-1 py-0.5">academias</code> —
                 vincule a uma unidade cadastrada pra resolver na próxima sincronização:
               </p>
               <div className="space-y-1.5">
@@ -120,8 +120,8 @@ function NaoEncontradaRow({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white/70 px-3 py-2">
-      <span className="min-w-0 flex-1 truncate text-slate-800">{nome}</span>
+    <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white/70 dark:bg-slate-900/70 px-3 py-2">
+      <span className="min-w-0 flex-1 truncate text-slate-800 dark:text-slate-100">{nome}</span>
       <select
         value={academiaId}
         onChange={(e) => setAcademiaId(e.target.value)}

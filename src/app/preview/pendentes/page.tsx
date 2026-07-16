@@ -24,7 +24,7 @@ export default function PreviewPendentesPage() {
       <PendenciasTrendChart series={MOCK_PENDENCIAS_TREND} />
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900">Lançar pendências</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Lançar pendências</h3>
         <PendenciaSection
           academias={MOCK_ACADEMIAS}
           fixedAcademiaId={null}

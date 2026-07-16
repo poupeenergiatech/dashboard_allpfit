@@ -12,8 +12,8 @@ export const ROLE_LABEL: Record<UserRole, string> = {
 // duas cores de chrome viraram brand/accent, mas essa distinção categórica entre
 // roles foi preservada). Não trocar sem atualizar as duas junto.
 export const ROLE_BADGE_CLASS: Record<UserRole, string> = {
-  super_admin: 'bg-violet-50 text-violet-700',
-  gestor: 'bg-blue-50 text-blue-700',
-  coordenador: 'bg-emerald-50 text-emerald-700',
-  visualizador: 'bg-slate-100 text-slate-600',
+  super_admin: 'bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400',
+  gestor: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
+  coordenador: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
+  visualizador: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
 }

@@ -2,9 +2,9 @@
 
 export function RouteError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
-    <div className="rounded-2xl border border-red-100 bg-red-50/70 p-6 text-sm text-red-700">
+    <div className="rounded-2xl border border-red-100 dark:border-red-500/20 bg-red-50/70 dark:bg-red-500/10 p-6 text-sm text-red-700 dark:text-red-400">
       <div className="flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-600">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
             <path
               strokeLinecap="round"
@@ -14,12 +14,12 @@ export function RouteError({ error, reset }: { error: Error & { digest?: string 
           </svg>
         </span>
         <div>
-          <p className="font-semibold text-red-800">Não foi possível carregar esta página.</p>
-          <p className="mt-1 text-red-600/90">{error.message}</p>
+          <p className="font-semibold text-red-800 dark:text-red-400">Não foi possível carregar esta página.</p>
+          <p className="mt-1 text-red-600/90 dark:text-red-400/90">{error.message}</p>
           <button
             type="button"
             onClick={reset}
-            className="mt-3 rounded-xl border border-red-200 bg-white px-3.5 py-1.5 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-50"
+            className="mt-3 rounded-xl border border-red-200 dark:border-red-500/20 bg-white dark:bg-slate-900 px-3.5 py-1.5 text-sm font-semibold text-red-700 dark:text-red-400 shadow-sm transition hover:bg-red-50 dark:hover:bg-red-500/10"
           >
             Tentar novamente
           </button>

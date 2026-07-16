@@ -8,7 +8,7 @@ export default async function UsuariosPage() {
 
   if (!profile || !canManageUsers(profile.role)) {
     return (
-      <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-6 text-sm font-medium text-amber-800">
+      <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 p-6 text-sm font-medium text-amber-800 dark:text-amber-300">
         Acesso restrito ao Super Admin.
       </div>
     )
@@ -51,7 +51,7 @@ export default async function UsuariosPage() {
       <UsersTable users={userRows} academias={academias} currentUserId={profile.userId} />
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900">Criar usuário</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Criar usuário</h3>
         <InviteUserForm academias={academias} />
       </div>
     </div>

@@ -17,7 +17,7 @@ export default function PreviewPerformancePage() {
       <AcademiaTable rows={MOCK_PERFORMANCE} />
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900">Dados manuais</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Dados manuais</h3>
         <ManualDataSection
           academias={MOCK_ACADEMIAS}
           fixedAcademiaId={null}

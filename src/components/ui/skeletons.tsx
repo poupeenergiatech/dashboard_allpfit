@@ -21,9 +21,9 @@ export function GridSkeleton({ count = 6 }: { count?: number }) {
 export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
     <div className="card overflow-hidden">
-      <div className="h-11 border-b border-slate-100 bg-slate-50/60" />
+      <div className="h-11 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60" />
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 border-b border-slate-50 px-4 py-3.5 last:border-0">
+        <div key={i} className="flex items-center gap-3 border-b border-slate-50 dark:border-slate-800/60 px-4 py-3.5 last:border-0">
           <div className="skeleton h-8 w-8 rounded-full" />
           <div className="skeleton h-4 w-2/3 rounded" />
         </div>
@@ -34,7 +34,7 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
 
 export function ListSkeleton({ rows = 4 }: { rows?: number }) {
   return (
-    <div className="card divide-y divide-slate-50">
+    <div className="card divide-y divide-slate-50 dark:divide-slate-800">
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="flex items-center justify-between px-4 py-3.5">
           <div className="flex items-center gap-3">

@@ -10,7 +10,7 @@ export default async function AcademiasPage() {
 
   if (!profile || !canManageUsers(profile.role)) {
     return (
-      <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-6 text-sm font-medium text-amber-800">
+      <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 p-6 text-sm font-medium text-amber-800 dark:text-amber-300">
         Acesso restrito ao Super Admin.
       </div>
     )
@@ -28,12 +28,12 @@ export default async function AcademiasPage() {
       <AcademiasTable academias={academias} />
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900">Cadastrar academia</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Cadastrar academia</h3>
         <CreateAcademiaForm />
       </div>
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900">Importar em lote (CSV)</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Importar em lote (CSV)</h3>
         <ImportAcademiasForm />
       </div>
 

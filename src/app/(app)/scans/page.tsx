@@ -84,7 +84,7 @@ export default async function ScansPage({
       <ScansRankingTable rows={summary.porAcademia} />
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900">Histórico diário</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Histórico diário</h3>
         <ScansDailyTable series={summary.series} />
       </div>
     </div>

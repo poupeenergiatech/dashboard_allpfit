@@ -39,6 +39,7 @@ export function AcademiaFilterLinks({
       <select
         value={academiaId ?? ''}
         onChange={(e) => router.push(hrefFor(e.target.value || null))}
+        aria-label="Filtrar por academia"
         className="select w-full sm:w-64"
       >
         <option value="">Todas as academias</option>

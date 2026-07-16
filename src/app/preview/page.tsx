@@ -42,12 +42,12 @@ export default function PreviewFunnelPage() {
       </div>
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900">Histórico diário</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Histórico diário</h3>
         <FunnelDailyHistoryTable series={MOCK_FUNNEL_COUNTS.series} />
       </div>
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900">Dados manuais</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Dados manuais</h3>
         <ManualDataSection
           academias={MOCK_ACADEMIAS}
           fixedAcademiaId={null}

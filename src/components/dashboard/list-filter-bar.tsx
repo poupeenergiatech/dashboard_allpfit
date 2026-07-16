@@ -26,19 +26,21 @@ export function ListFilterBar<TStatus extends string>({
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
         placeholder={searchPlaceholder}
+        aria-label={searchPlaceholder}
         className="input sm:max-w-xs"
       />
       {statusOptions.length > 0 && (
-        <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 p-1">
+        <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
           {statusOptions.map((opt) => (
             <button
               key={opt.value}
               type="button"
               onClick={() => onStatusChange(opt.value)}
+              aria-pressed={status === opt.value}
               className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold transition ${
                 status === opt.value
-                  ? 'bg-white text-brand-700 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                  ? 'bg-white dark:bg-slate-900 text-brand-700 dark:text-brand-300 shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
               {opt.label}

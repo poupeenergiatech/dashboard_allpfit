@@ -6,9 +6,9 @@ export default function LoginPage({
   searchParams: { error?: string }
 }) {
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-4">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-4 dark:bg-slate-950">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -top-32 left-1/2 h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-gradient-to-br from-brand-200/50 via-accent-100/40 to-transparent blur-3xl" />
+        <div className="absolute -top-32 left-1/2 h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-gradient-to-br from-brand-200/50 via-accent-100/40 to-transparent blur-3xl dark:from-brand-900/40 dark:via-accent-900/20" />
       </div>
 
       <div className="w-full max-w-sm animate-fade-up">
@@ -16,12 +16,12 @@ export default function LoginPage({
           {/* eslint-disable-next-line @next/next/no-img-element -- asset local pequeno e fixo, sem next/image em nenhum outro lugar do app */}
           <img src="/logo.png" alt="Allp Fit" className="h-14 w-14" />
           <div className="text-center">
-            <h1 className="text-xl font-bold text-slate-900">Allp Fit</h1>
-            <p className="text-sm text-slate-500">Dashboard de Performance</p>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white">Allp Fit</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Dashboard de Performance</p>
           </div>
         </div>
 
-        <div className="card p-8 shadow-xl shadow-slate-900/5">
+        <div className="card p-8 shadow-xl shadow-slate-900/5 dark:shadow-black/20">
           <form action={login} className="space-y-4">
             <div>
               <label htmlFor="email" className="field-label">
@@ -54,7 +54,7 @@ export default function LoginPage({
             </div>
 
             {searchParams.error && (
-              <p className="rounded-xl border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-600">
+              <p className="rounded-xl border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-600 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
                 {searchParams.error}
               </p>
             )}
@@ -65,7 +65,7 @@ export default function LoginPage({
           </form>
         </div>
 
-        <p className="mt-6 text-center text-xs text-slate-400">Allp Fit × Alle Energia</p>
+        <p className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">Allp Fit × Alle Energia</p>
       </div>
     </div>
   )
