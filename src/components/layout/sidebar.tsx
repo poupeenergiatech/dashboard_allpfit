@@ -8,6 +8,7 @@ import type { UserRole } from '@/lib/auth/profile'
 const NAV_ITEMS: { label: string; href: string; roles?: UserRole[]; icon: IconName }[] = [
   { label: 'Funil / Dashboard', href: '', icon: 'chart' },
   { label: 'Performance por Academia', href: '/performance', icon: 'bars' },
+  { label: 'Scans QR', href: '/scans', icon: 'qr' },
   { label: 'Pendentes de Assinatura', href: '/pendentes', icon: 'pen' },
   { label: 'Números (WhatsApp)', href: '/numeros', icon: 'chat' },
   { label: 'Academias Treinadas', href: '/treinadas', icon: 'badge' },
@@ -16,7 +17,7 @@ const NAV_ITEMS: { label: string; href: string; roles?: UserRole[]; icon: IconNa
   { label: 'Configurações', href: '/configuracoes', roles: ['super_admin'], icon: 'settings' },
 ]
 
-type IconName = 'chart' | 'bars' | 'pen' | 'chat' | 'badge' | 'users' | 'settings' | 'building'
+type IconName = 'chart' | 'bars' | 'pen' | 'chat' | 'badge' | 'users' | 'settings' | 'building' | 'qr'
 
 function NavIcon({ name, className }: { name: IconName; className?: string }) {
   const paths: Record<IconName, React.ReactNode> = {
@@ -68,6 +69,13 @@ function NavIcon({ name, className }: { name: IconName; className?: string }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         d="M4 21V6a1 1 0 011-1h6a1 1 0 011 1v15m-8 0h16M12 10h7a1 1 0 011 1v10M8 7v.01M8 10v.01M8 13v.01M8 16v.01"
+      />
+    ),
+    qr: (
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 3h3m-3 3h6v-6h-3"
       />
     ),
   }

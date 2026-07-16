@@ -2,6 +2,7 @@
 // importar isso fora de src/app/preview/.
 import type { Academia, DailyFunnelPoint, FunnelCounts } from '@/lib/dashboard/types'
 import type { AcademiaPerformance } from '@/lib/dashboard/fetch-academia-performance'
+import type { ScansDailyPoint, ScansSummary } from '@/lib/dashboard/fetch-scans'
 import type {
   PendenciaEntry,
   PendenciaPorAcademia,
@@ -21,16 +22,14 @@ export const MOCK_ACADEMIAS: Academia[] = [
   { id: '6', nome: 'Allp Fit - Ipiranga' },
 ]
 
-const MOCK_FUNNEL_SERIES: DailyFunnelPoint[] = Array.from({ length: 14 }, (_, i) => {
-  const date = new Date('2026-06-27T00:00:00')
-  date.setDate(date.getDate() + i)
-  const totalScans = 20 + Math.round(8 * Math.sin(i / 3))
-  // Distribui o total do dia entre as academias mockadas (algumas ficam com 0),
-  // só pra ilustrar o breakdown expansível do histórico diário.
-  const weights = MOCK_ACADEMIAS.map((_, j) => Math.max(0, Math.sin((i + j) / 2) + 0.3))
+// Distribui um total diário entre as academias mockadas (algumas ficam com 0), só
+// pra ilustrar o breakdown expansível do histórico diário — reusado pela série do
+// funil e pela de /scans.
+function distributeScans(totalScans: number, dayIndex: number): { academiaId: string; academiaNome: string; totalScans: number }[] {
+  const weights = MOCK_ACADEMIAS.map((_, j) => Math.max(0, Math.sin((dayIndex + j) / 2) + 0.3))
   const weightSum = weights.reduce((s, w) => s + w, 0) || 1
   let distributed = 0
-  const scansPorAcademia = MOCK_ACADEMIAS.map((a, j) => {
+  return MOCK_ACADEMIAS.map((a, j) => {
     const isLast = j === MOCK_ACADEMIAS.length - 1
     const value = isLast
       ? Math.max(0, totalScans - distributed)
@@ -38,13 +37,19 @@ const MOCK_FUNNEL_SERIES: DailyFunnelPoint[] = Array.from({ length: 14 }, (_, i)
     distributed += value
     return { academiaId: a.id, academiaNome: a.nome, totalScans: value }
   })
+}
+
+const MOCK_FUNNEL_SERIES: DailyFunnelPoint[] = Array.from({ length: 14 }, (_, i) => {
+  const date = new Date('2026-06-27T00:00:00')
+  date.setDate(date.getDate() + i)
+  const totalScans = 20 + Math.round(8 * Math.sin(i / 3))
   return {
     date: date.toISOString().slice(0, 10),
     totalAlunos: 300 + i * 4,
     totalScans,
     contatos: 10 + Math.round(6 * Math.sin(i / 2)) + i,
     conversoes: 2 + Math.round(1.5 * Math.sin(i / 2 + 1)) + Math.floor(i / 4),
-    scansPorAcademia,
+    scansPorAcademia: distributeScans(totalScans, i),
   }
 })
 
@@ -54,6 +59,29 @@ export const MOCK_FUNNEL_COUNTS: FunnelCounts = {
   totalContatos: 214,
   totalConversoes: 47,
   series: MOCK_FUNNEL_SERIES,
+}
+
+// Série própria de /scans (30 dias, mais longa que a do funil) — mesma distribuição
+// fictícia por academia, só que num intervalo maior pra ilustrar a paginação do
+// histórico diário e o gráfico de tendência.
+const MOCK_SCANS_SERIES: ScansDailyPoint[] = Array.from({ length: 30 }, (_, i) => {
+  const date = new Date('2026-06-17T00:00:00')
+  date.setDate(date.getDate() + i)
+  const totalScans = 18 + Math.round(9 * Math.sin(i / 4))
+  return {
+    date: date.toISOString().slice(0, 10),
+    totalScans,
+    porAcademia: distributeScans(totalScans, i),
+  }
+})
+
+export const MOCK_SCANS_SUMMARY: ScansSummary = {
+  totalScans: MOCK_SCANS_SERIES.reduce((s, p) => s + p.totalScans, 0),
+  porAcademia: [...MOCK_ACADEMIAS]
+    .map((a, i) => ({ academiaId: a.id, nome: a.nome, totalScans: 140 - i * 22 }))
+    .sort((a, b) => b.totalScans - a.totalScans),
+  series: MOCK_SCANS_SERIES,
+  days: MOCK_SCANS_SERIES.length,
 }
 
 export const MOCK_PERFORMANCE: AcademiaPerformance[] = MOCK_ACADEMIAS.map((a, i) => ({
