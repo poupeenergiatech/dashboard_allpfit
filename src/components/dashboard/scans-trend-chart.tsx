@@ -16,7 +16,7 @@ export function ScansTrendChart({ series }: { series: ScansDailyPoint[] }) {
   if (series.length < 2) {
     return (
       <div className="card flex h-72 items-center justify-center p-5 text-center text-sm text-slate-500">
-        Selecione um período delimitado (não "Todo período") pra ver a tendência diária.
+        Selecione um período delimitado (não &quot;Todo período&quot;) pra ver a tendência diária.
       </div>
     )
   }
