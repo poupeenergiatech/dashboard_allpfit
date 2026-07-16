@@ -17,6 +17,7 @@ export type DailyFunnelPoint = {
   totalScans: number
   contatos: number
   conversoes: number
+  scansPorAcademia: { academiaId: string; academiaNome: string; totalScans: number }[]
 }
 
 export type FunnelCounts = {

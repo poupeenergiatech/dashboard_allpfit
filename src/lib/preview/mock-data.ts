@@ -24,12 +24,27 @@ export const MOCK_ACADEMIAS: Academia[] = [
 const MOCK_FUNNEL_SERIES: DailyFunnelPoint[] = Array.from({ length: 14 }, (_, i) => {
   const date = new Date('2026-06-27T00:00:00')
   date.setDate(date.getDate() + i)
+  const totalScans = 20 + Math.round(8 * Math.sin(i / 3))
+  // Distribui o total do dia entre as academias mockadas (algumas ficam com 0),
+  // só pra ilustrar o breakdown expansível do histórico diário.
+  const weights = MOCK_ACADEMIAS.map((_, j) => Math.max(0, Math.sin((i + j) / 2) + 0.3))
+  const weightSum = weights.reduce((s, w) => s + w, 0) || 1
+  let distributed = 0
+  const scansPorAcademia = MOCK_ACADEMIAS.map((a, j) => {
+    const isLast = j === MOCK_ACADEMIAS.length - 1
+    const value = isLast
+      ? Math.max(0, totalScans - distributed)
+      : Math.round((weights[j] / weightSum) * totalScans)
+    distributed += value
+    return { academiaId: a.id, academiaNome: a.nome, totalScans: value }
+  })
   return {
     date: date.toISOString().slice(0, 10),
     totalAlunos: 300 + i * 4,
-    totalScans: 20 + Math.round(8 * Math.sin(i / 3)),
+    totalScans,
     contatos: 10 + Math.round(6 * Math.sin(i / 2)) + i,
     conversoes: 2 + Math.round(1.5 * Math.sin(i / 2 + 1)) + Math.floor(i / 4),
+    scansPorAcademia,
   }
 })
 
