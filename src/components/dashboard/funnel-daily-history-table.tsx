@@ -29,7 +29,7 @@ function ChevronIcon({ open }: { open: boolean }) {
 function ScansPorAcademiaRow({ point }: { point: DailyFunnelPoint }) {
   return (
     <tr>
-      <td colSpan={5} className="p-0">
+      <td colSpan={6} className="p-0">
         <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 px-4 py-4">
           <ScansBreakdownTable rows={point.scansPorAcademia} />
         </div>
@@ -69,7 +69,7 @@ export function FunnelDailyHistoryTable({ series }: { series: DailyFunnelPoint[]
           academia.
         </p>
       )}
-      <table className="w-full min-w-[520px] text-sm">
+      <table className="w-full min-w-[620px] text-sm">
         <thead>
           <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             <th className="px-4 py-3">Data</th>
@@ -77,6 +77,7 @@ export function FunnelDailyHistoryTable({ series }: { series: DailyFunnelPoint[]
             <th className="px-4 py-3 text-right">Scans</th>
             <th className="px-4 py-3 text-right">Contatos</th>
             <th className="px-4 py-3 text-right">Conversões</th>
+            <th className="px-4 py-3 text-right">Reprovados</th>
           </tr>
         </thead>
         <tbody>
@@ -110,6 +111,7 @@ export function FunnelDailyHistoryTable({ series }: { series: DailyFunnelPoint[]
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{point.contatos}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{point.conversoes}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{point.reprovados}</td>
                 </tr>
                 {isExpanded && <ScansPorAcademiaRow point={point} />}
               </Fragment>

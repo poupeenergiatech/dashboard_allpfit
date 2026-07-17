@@ -62,8 +62,9 @@ export async function fetchFunnelCounts(
         total_scans: number
         contatos_ajuste: number | null
         conversoes_ajuste: number | null
+        reprovados: number
       }>(
-        `select academia_id, data, total_scans, contatos_ajuste, conversoes_ajuste
+        `select academia_id, data, total_scans, contatos_ajuste, conversoes_ajuste, reprovados
        from manual_data
        where data >= $1 and data <= $3 and ($2::uuid is null or academia_id = $2)`,
         [fromDate, academiaId, toDate]
@@ -85,12 +86,15 @@ export async function fetchFunnelCounts(
   const totalAlunos = academiaRows.reduce((sum, row) => sum + (row.total_alunos ?? 0), 0)
   const academiaNomeById = new Map(academiaNomeRows.map((a) => [a.id, a.nome]))
 
-  // total_scans é aditivo: soma direta de todas as linhas do período.
+  // total_scans é aditivo: soma direta de todas as linhas do período. reprovados
+  // segue o mesmo padrão (sem contagem automática pra "ajustar", ver migration 0011).
   let totalScans = 0
+  let totalReprovados = 0
 
   // Por dia (pro histórico diário): soma bruta do que foi lançado naquele dia
   // específico, entre as academias no escopo.
   const scansPorDia = new Map<string, number>()
+  const reprovadosPorDia = new Map<string, number>()
 
   // Mesma soma, mas mantendo a identidade da academia — pra transparência no
   // histórico (dia X teve Y scans no total, sendo Z em cada unidade), já que o
@@ -100,6 +104,9 @@ export async function fetchFunnelCounts(
   for (const row of manualRows) {
     totalScans += row.total_scans ?? 0
     scansPorDia.set(row.data, (scansPorDia.get(row.data) ?? 0) + (row.total_scans ?? 0))
+
+    totalReprovados += row.reprovados ?? 0
+    reprovadosPorDia.set(row.data, (reprovadosPorDia.get(row.data) ?? 0) + (row.reprovados ?? 0))
 
     const porAcademia = scansPorAcademiaPorDia.get(row.data) ?? new Map<string, number>()
     porAcademia.set(row.academia_id, (porAcademia.get(row.academia_id) ?? 0) + (row.total_scans ?? 0))
@@ -146,6 +153,7 @@ export async function fetchFunnelCounts(
     totalScans: scansPorDia.get(date) ?? 0,
     contatos: contatosPorDiaEfetivo.get(date) ?? 0,
     conversoes: conversoesPorDiaEfetivo.get(date) ?? 0,
+    reprovados: reprovadosPorDia.get(date) ?? 0,
     // Toda academia ativa aparece, mesmo com 0 — é isso que deixa claro quem não
     // reportou scan nenhum naquele dia. Some a isso qualquer academia_id que só
     // aparece em manual_data (ex.: desativada depois do lançamento) — sem isso a
@@ -166,6 +174,7 @@ export async function fetchFunnelCounts(
     totalScans,
     totalContatos,
     totalConversoes,
+    totalReprovados,
     series,
   }
 }

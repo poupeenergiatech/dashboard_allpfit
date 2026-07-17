@@ -49,6 +49,7 @@ const MOCK_FUNNEL_SERIES: DailyFunnelPoint[] = Array.from({ length: 14 }, (_, i)
     totalScans,
     contatos: 10 + Math.round(6 * Math.sin(i / 2)) + i,
     conversoes: 2 + Math.round(1.5 * Math.sin(i / 2 + 1)) + Math.floor(i / 4),
+    reprovados: Math.max(0, Math.round(1 + Math.sin(i / 3))),
     scansPorAcademia: distributeScans(totalScans, i),
   }
 })
@@ -58,6 +59,7 @@ export const MOCK_FUNNEL_COUNTS: FunnelCounts = {
   totalScans: 612,
   totalContatos: 214,
   totalConversoes: 47,
+  totalReprovados: MOCK_FUNNEL_SERIES.reduce((s, p) => s + p.reprovados, 0),
   series: MOCK_FUNNEL_SERIES,
 }
 
@@ -102,6 +104,7 @@ export const MOCK_MANUAL_DATA_HISTORY: ManualDataEntry[] = [
     totalScans: 34,
     contatosAjuste: 12,
     conversoesAjuste: null,
+    reprovados: 2,
   },
   {
     id: 'md2',
@@ -111,6 +114,7 @@ export const MOCK_MANUAL_DATA_HISTORY: ManualDataEntry[] = [
     totalScans: 21,
     contatosAjuste: null,
     conversoesAjuste: null,
+    reprovados: 0,
   },
 ]
 

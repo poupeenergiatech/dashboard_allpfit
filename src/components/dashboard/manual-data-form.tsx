@@ -30,6 +30,7 @@ export function ManualDataForm({
   const [totalScans, setTotalScans] = useState('')
   const [contatosAjuste, setContatosAjuste] = useState('')
   const [conversoesAjuste, setConversoesAjuste] = useState('')
+  const [reprovados, setReprovados] = useState('')
   const [pending, startTransition] = useTransition()
   const { showToast } = useToast()
 
@@ -47,10 +48,12 @@ export function ManualDataForm({
       setTotalScans(String(existing.totalScans))
       setContatosAjuste(existing.contatosAjuste != null ? String(existing.contatosAjuste) : '')
       setConversoesAjuste(existing.conversoesAjuste != null ? String(existing.conversoesAjuste) : '')
+      setReprovados(String(existing.reprovados))
     } else {
       setTotalScans('')
       setContatosAjuste('')
       setConversoesAjuste('')
+      setReprovados('')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [academiaId, data])
@@ -187,9 +190,25 @@ export function ManualDataForm({
         />
       </div>
 
+      <div>
+        <label className="field-label" htmlFor="reprovados">
+          Reprovados / cancelados
+        </label>
+        <input
+          id="reprovados"
+          name="reprovados"
+          type="number"
+          min={0}
+          className="input"
+          value={reprovados}
+          onChange={(e) => setReprovados(e.target.value)}
+        />
+      </div>
+
       <p className="text-xs text-slate-400 dark:text-slate-500 lg:col-span-5">
         Contatos e conversões normalmente vêm automáticos do agregador — só preencha o ajuste se precisar corrigir o
-        número desse dia específico (ele substitui a contagem automática, não soma).
+        número desse dia específico (ele substitui a contagem automática, não soma). Reprovados/cancelados não tem
+        contagem automática — é um número somado ao total, não um ajuste.
       </p>
     </form>
   )

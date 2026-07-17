@@ -9,6 +9,7 @@ export type ManualDataEntry = {
   totalScans: number
   contatosAjuste: number | null
   conversoesAjuste: number | null
+  reprovados: number
 }
 
 const HISTORY_LIMIT = 90
@@ -26,9 +27,10 @@ export async function fetchManualDataHistory(profile: UserProfile): Promise<Manu
     total_scans: number
     contatos_ajuste: number | null
     conversoes_ajuste: number | null
+    reprovados: number
   }>(
     `select md.id, md.academia_id, a.nome as academia_nome, md.data, md.total_scans,
-            md.contatos_ajuste, md.conversoes_ajuste
+            md.contatos_ajuste, md.conversoes_ajuste, md.reprovados
      from manual_data md
      join academias a on a.id = md.academia_id
      where ($1::uuid is null or md.academia_id = $1)
@@ -45,5 +47,6 @@ export async function fetchManualDataHistory(profile: UserProfile): Promise<Manu
     totalScans: row.total_scans,
     contatosAjuste: row.contatos_ajuste,
     conversoesAjuste: row.conversoes_ajuste,
+    reprovados: row.reprovados,
   }))
 }

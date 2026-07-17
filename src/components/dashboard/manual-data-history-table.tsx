@@ -19,12 +19,13 @@ export function ManualDataHistoryTable({
 
   return (
     <div className="card overflow-x-auto">
-      <table className="w-full min-w-[680px] text-sm">
+      <table className="w-full min-w-[780px] text-sm">
         <thead>
           <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             <th className="px-4 py-3">Academia</th>
             <th className="px-4 py-3">Data</th>
             <th className="px-4 py-3 text-right">Scans</th>
+            <th className="px-4 py-3 text-right">Reprovados</th>
             <th className="px-4 py-3 text-right">Ajuste contatos</th>
             <th className="px-4 py-3 text-right">Ajuste conversões</th>
             {onEdit && <th className="px-4 py-3" />}
@@ -36,6 +37,13 @@ export function ManualDataHistoryTable({
               <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{entry.academiaNome}</td>
               <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">{formatDate(entry.data)}</td>
               <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{entry.totalScans}</td>
+              <td className="px-4 py-3 text-right tabular-nums">
+                {entry.reprovados > 0 ? (
+                  <span className="font-semibold text-rose-600 dark:text-rose-400">{entry.reprovados}</span>
+                ) : (
+                  <span className="text-slate-300 dark:text-slate-600">0</span>
+                )}
+              </td>
               <td className="px-4 py-3 text-right tabular-nums">
                 {entry.contatosAjuste != null ? (
                   <span className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">{entry.contatosAjuste}</span>
