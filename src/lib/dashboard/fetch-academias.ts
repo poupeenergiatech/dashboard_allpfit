@@ -8,21 +8,47 @@ export type AcademiaAdmin = {
   numeroTelefone: string | null
   ativo: boolean
   totalAlunos: number
+  totalConversoes: number
   conversoesAjusteTotal: number
 }
 
 // Todas as academias (ativas e inativas), com os campos administrativos —
 // usado só em /academias (Super Admin). fetchActiveAcademias, abaixo, continua
 // sendo a fonte pros dropdowns/abas do resto do app.
+//
+// totalConversoes é o total real computado (histórico inteiro, já considerando
+// correções diárias de manual_data), sem somar conversoes_ajuste_total — serve de
+// referência de "quanto já foi contado automaticamente" antes de mexer no ajuste
+// manual. Mesma lógica de fetch-academia-performance.ts, período 'todos'.
 export async function fetchAllAcademias(): Promise<AcademiaAdmin[]> {
-  const { rows } = await pool.query<{
-    id: string
-    nome: string
-    numero_telefone: string | null
-    ativo: boolean
-    total_alunos: number
-    conversoes_ajuste_total: number
-  }>('select id, nome, numero_telefone, ativo, total_alunos, conversoes_ajuste_total from academias order by nome')
+  const [{ rows }, { rows: conversoesPorDia }, { rows: ajustes }] = await Promise.all([
+    pool.query<{
+      id: string
+      nome: string
+      numero_telefone: string | null
+      ativo: boolean
+      total_alunos: number
+      conversoes_ajuste_total: number
+    }>('select id, nome, numero_telefone, ativo, total_alunos, conversoes_ajuste_total from academias order by nome'),
+    pool.query<{ academia_id: string; day: string; count: number }>(
+      `select academia_id, date_trunc('day', created_at)::date as day, count(*) as count from conversions
+       group by academia_id, day`
+    ),
+    pool.query<{ academia_id: string; data: string; conversoes_ajuste: number | null }>(
+      `select academia_id, data, conversoes_ajuste from manual_data where conversoes_ajuste is not null`
+    ),
+  ])
+
+  const effectiveConversoes = new Map(conversoesPorDia.map((r) => [`${r.academia_id}|${r.day}`, r.count]))
+  for (const row of ajustes) {
+    effectiveConversoes.set(`${row.academia_id}|${row.data}`, row.conversoes_ajuste as number)
+  }
+
+  const totalConversoesByAcademia = new Map<string, number>()
+  for (const [key, value] of effectiveConversoes) {
+    const id = key.split('|')[0]
+    totalConversoesByAcademia.set(id, (totalConversoesByAcademia.get(id) ?? 0) + value)
+  }
 
   return rows.map((row) => ({
     id: row.id,
@@ -30,6 +56,7 @@ export async function fetchAllAcademias(): Promise<AcademiaAdmin[]> {
     numeroTelefone: row.numero_telefone,
     ativo: row.ativo,
     totalAlunos: row.total_alunos,
+    totalConversoes: totalConversoesByAcademia.get(row.id) ?? 0,
     conversoesAjusteTotal: row.conversoes_ajuste_total,
   }))
 }
