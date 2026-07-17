@@ -16,10 +16,10 @@ export type AcademiaAdmin = {
 // usado só em /academias (Super Admin). fetchActiveAcademias, abaixo, continua
 // sendo a fonte pros dropdowns/abas do resto do app.
 //
-// totalConversoes é o total real computado (histórico inteiro, já considerando
-// correções diárias de manual_data), sem somar conversoes_ajuste_total — serve de
-// referência de "quanto já foi contado automaticamente" antes de mexer no ajuste
-// manual. Mesma lógica de fetch-academia-performance.ts, período 'todos'.
+// totalConversoes é o total efetivo (histórico inteiro, considerando correções
+// diárias de manual_data + conversoes_ajuste_total) — o mesmo valor que aparece
+// em /performance na visão "Todo período". Mesma lógica de
+// fetch-academia-performance.ts.
 export async function fetchAllAcademias(): Promise<AcademiaAdmin[]> {
   const [{ rows }, { rows: conversoesPorDia }, { rows: ajustes }] = await Promise.all([
     pool.query<{
@@ -56,7 +56,7 @@ export async function fetchAllAcademias(): Promise<AcademiaAdmin[]> {
     numeroTelefone: row.numero_telefone,
     ativo: row.ativo,
     totalAlunos: row.total_alunos,
-    totalConversoes: totalConversoesByAcademia.get(row.id) ?? 0,
+    totalConversoes: (totalConversoesByAcademia.get(row.id) ?? 0) + row.conversoes_ajuste_total,
     conversoesAjusteTotal: row.conversoes_ajuste_total,
   }))
 }
