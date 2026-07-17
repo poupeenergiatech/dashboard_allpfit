@@ -38,7 +38,24 @@ export function AcademiaTable({ rows }: { rows: AcademiaPerformance[] }) {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{row.totalContatos}</td>
-                <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{row.totalConversoes}</td>
+                <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
+                  <span className="inline-flex items-center gap-1.5">
+                    {row.totalConversoes}
+                    {row.conversoesAjusteTotal !== 0 && (
+                      <span
+                        title={`Inclui ajuste manual de ${row.conversoesAjusteTotal > 0 ? '+' : ''}${row.conversoesAjusteTotal} cadastrado em /academias`}
+                        className={`badge ${
+                          row.conversoesAjusteTotal > 0
+                            ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                            : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400'
+                        }`}
+                      >
+                        {row.conversoesAjusteTotal > 0 ? '+' : ''}
+                        {row.conversoesAjusteTotal}
+                      </span>
+                    )}
+                  </span>
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">

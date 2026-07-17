@@ -86,12 +86,18 @@ export const MOCK_SCANS_SUMMARY: ScansSummary = {
   days: MOCK_SCANS_SERIES.length,
 }
 
-export const MOCK_PERFORMANCE: AcademiaPerformance[] = MOCK_ACADEMIAS.map((a, i) => ({
-  academiaId: a.id,
-  nome: a.nome,
-  totalContatos: 60 - i * 6,
-  totalConversoes: 14 - i,
-}))
+// A primeira unidade tem um ajuste manual positivo cadastrado em /academias, só
+// pra ilustrar o badge no total de conversões.
+export const MOCK_PERFORMANCE: AcademiaPerformance[] = MOCK_ACADEMIAS.map((a, i) => {
+  const conversoesAjusteTotal = i === 0 ? 3 : 0
+  return {
+    academiaId: a.id,
+    nome: a.nome,
+    totalContatos: 60 - i * 6,
+    totalConversoes: 14 - i + conversoesAjusteTotal,
+    conversoesAjusteTotal,
+  }
+})
 
 // Uma linha com ajuste manual de contatos (ex.: correção de um dia em que o
 // webhook do agregador falhou), pra ilustrar o badge no histórico.

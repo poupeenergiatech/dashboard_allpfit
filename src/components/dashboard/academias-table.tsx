@@ -62,12 +62,13 @@ export function AcademiasTable({
         <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhuma academia encontrada pra esse filtro.</div>
       ) : (
         <div className="card overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <th className="sticky left-0 z-10 border-r border-slate-100 dark:border-slate-800 bg-slate-50/95 dark:bg-slate-800/95 px-4 py-3">Unidade</th>
                 <th className="px-4 py-3">Número WhatsApp</th>
                 <th className="px-4 py-3 text-right">Total de alunos</th>
+                <th className="px-4 py-3 text-right">Ajuste conversões</th>
                 <th className="px-4 py-3">Ativa</th>
                 <th className="px-4 py-3">Ações</th>
               </tr>
@@ -156,6 +157,22 @@ function AcademiaRow({
       </td>
       <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{academia.numeroTelefone ?? '—'}</td>
       <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{academia.totalAlunos}</td>
+      <td className="px-4 py-3 text-right tabular-nums">
+        {academia.conversoesAjusteTotal !== 0 ? (
+          <span
+            className={
+              academia.conversoesAjusteTotal > 0
+                ? 'font-semibold text-emerald-600 dark:text-emerald-400'
+                : 'font-semibold text-rose-600 dark:text-rose-400'
+            }
+          >
+            {academia.conversoesAjusteTotal > 0 ? '+' : ''}
+            {academia.conversoesAjusteTotal}
+          </span>
+        ) : (
+          <span className="text-slate-300 dark:text-slate-600">—</span>
+        )}
+      </td>
       <td className="px-4 py-3">
         <button
           type="button"
@@ -224,7 +241,7 @@ function AcademiaEditRow({
 
   return (
     <tr className="border-b border-slate-50 dark:border-slate-800/60 bg-slate-50/70 dark:bg-slate-800/70 last:border-0">
-      <td className="px-4 py-3" colSpan={5}>
+      <td className="px-4 py-3" colSpan={6}>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1">
             <label className="field-label" htmlFor={`nome-${academia.id}`}>
@@ -261,6 +278,18 @@ function AcademiaEditRow({
               type="number"
               min={0}
               defaultValue={academia.totalAlunos}
+              className="input"
+            />
+          </div>
+          <div className="w-32">
+            <label className="field-label" htmlFor={`conversoes-ajuste-${academia.id}`}>
+              Ajuste conversões
+            </label>
+            <input
+              id={`conversoes-ajuste-${academia.id}`}
+              name="conversoes_ajuste_total"
+              type="number"
+              defaultValue={academia.conversoesAjusteTotal}
               className="input"
             />
           </div>

@@ -53,6 +53,19 @@ export function CreateAcademiaForm({ onCreate = createAcademia }: { onCreate?: (
         <input id="total_alunos" name="total_alunos" type="number" min={0} defaultValue={0} className="input" />
       </div>
 
+      <div>
+        <label className="field-label" htmlFor="conversoes_ajuste_total">
+          Ajuste de conversões (opcional)
+        </label>
+        <input
+          id="conversoes_ajuste_total"
+          name="conversoes_ajuste_total"
+          type="number"
+          defaultValue={0}
+          className="input"
+        />
+      </div>
+
       <div className="flex items-end lg:col-span-4">
         <button type="submit" disabled={pending} className="btn-primary">
           {pending ? 'Cadastrando…' : 'Cadastrar academia'}

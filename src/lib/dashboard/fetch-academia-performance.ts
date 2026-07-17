@@ -8,6 +8,7 @@ export type AcademiaPerformance = {
   nome: string
   totalContatos: number
   totalConversoes: number
+  conversoesAjusteTotal: number
 }
 
 export type PerformancePeriod = Period | 'todos'
@@ -35,10 +36,10 @@ export async function fetchAcademiaPerformance(
 
   const [{ rows: academias }, { rows: contatosPorDia }, { rows: conversoesPorDia }, { rows: ajustes }] =
     await Promise.all([
-      pool.query<{ id: string; nome: string }>(
+      pool.query<{ id: string; nome: string; conversoes_ajuste_total: number }>(
         scopedAcademiaId
-          ? 'select id, nome from academias where ativo = true and id = $1 order by nome'
-          : 'select id, nome from academias where ativo = true order by nome',
+          ? 'select id, nome, conversoes_ajuste_total from academias where ativo = true and id = $1 order by nome'
+          : 'select id, nome, conversoes_ajuste_total from academias where ativo = true order by nome',
         scopedAcademiaId ? [scopedAcademiaId] : []
       ),
       pool.query<{ academia_id: string; day: string; count: number }>(
@@ -93,10 +94,18 @@ export async function fetchAcademiaPerformance(
     totalConversoesByAcademia.set(id, (totalConversoesByAcademia.get(id) ?? 0) + value)
   }
 
-  return academias.map((a) => ({
-    academiaId: a.id,
-    nome: a.nome,
-    totalContatos: totalContatosByAcademia.get(a.id) ?? 0,
-    totalConversoes: totalConversoesByAcademia.get(a.id) ?? 0,
-  }))
+  // conversoes_ajuste_total não é preso a nenhum dia (diferente do ajuste em
+  // manual_data), então só faz sentido somar na visão "Todo período" — em qualquer
+  // filtro de data, um valor fixo "vazaria" pra dentro de um intervalo que não tem
+  // nada a ver com ele.
+  return academias.map((a) => {
+    const conversoesAjusteTotal = period === 'todos' ? a.conversoes_ajuste_total : 0
+    return {
+      academiaId: a.id,
+      nome: a.nome,
+      totalContatos: totalContatosByAcademia.get(a.id) ?? 0,
+      totalConversoes: (totalConversoesByAcademia.get(a.id) ?? 0) + conversoesAjusteTotal,
+      conversoesAjusteTotal,
+    }
+  })
 }

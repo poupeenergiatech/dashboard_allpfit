@@ -14,16 +14,16 @@ export async function createAcademia(formData: FormData) {
   const nome = String(formData.get('nome') ?? '').trim()
   const numeroTelefone = String(formData.get('numero_telefone') ?? '').trim()
   const totalAlunos = Number(formData.get('total_alunos') ?? 0)
+  const conversoesAjusteTotal = Number(formData.get('conversoes_ajuste_total') ?? 0)
 
   if (!nome) {
     throw new Error('Nome é obrigatório.')
   }
 
-  await pool.query('insert into academias (nome, numero_telefone, ativo, total_alunos) values ($1, $2, true, $3)', [
-    nome,
-    numeroTelefone || null,
-    totalAlunos,
-  ])
+  await pool.query(
+    'insert into academias (nome, numero_telefone, ativo, total_alunos, conversoes_ajuste_total) values ($1, $2, true, $3, $4)',
+    [nome, numeroTelefone || null, totalAlunos, conversoesAjusteTotal]
+  )
 
   revalidatePath('/academias')
   revalidatePath('/')
@@ -54,17 +54,16 @@ export async function updateAcademia(academiaId: string, formData: FormData) {
   const nome = String(formData.get('nome') ?? '').trim()
   const numeroTelefone = String(formData.get('numero_telefone') ?? '').trim()
   const totalAlunos = Number(formData.get('total_alunos') ?? 0)
+  const conversoesAjusteTotal = Number(formData.get('conversoes_ajuste_total') ?? 0)
 
   if (!nome) {
     throw new Error('Nome é obrigatório.')
   }
 
-  await pool.query('update academias set nome = $1, numero_telefone = $2, total_alunos = $3 where id = $4', [
-    nome,
-    numeroTelefone || null,
-    totalAlunos,
-    academiaId,
-  ])
+  await pool.query(
+    'update academias set nome = $1, numero_telefone = $2, total_alunos = $3, conversoes_ajuste_total = $4 where id = $5',
+    [nome, numeroTelefone || null, totalAlunos, conversoesAjusteTotal, academiaId]
+  )
 
   revalidatePath('/academias')
   revalidatePath('/')

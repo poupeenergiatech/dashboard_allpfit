@@ -8,6 +8,7 @@ export type AcademiaAdmin = {
   numeroTelefone: string | null
   ativo: boolean
   totalAlunos: number
+  conversoesAjusteTotal: number
 }
 
 // Todas as academias (ativas e inativas), com os campos administrativos —
@@ -20,7 +21,8 @@ export async function fetchAllAcademias(): Promise<AcademiaAdmin[]> {
     numero_telefone: string | null
     ativo: boolean
     total_alunos: number
-  }>('select id, nome, numero_telefone, ativo, total_alunos from academias order by nome')
+    conversoes_ajuste_total: number
+  }>('select id, nome, numero_telefone, ativo, total_alunos, conversoes_ajuste_total from academias order by nome')
 
   return rows.map((row) => ({
     id: row.id,
@@ -28,6 +30,7 @@ export async function fetchAllAcademias(): Promise<AcademiaAdmin[]> {
     numeroTelefone: row.numero_telefone,
     ativo: row.ativo,
     totalAlunos: row.total_alunos,
+    conversoesAjusteTotal: row.conversoes_ajuste_total,
   }))
 }
 
