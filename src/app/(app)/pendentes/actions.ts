@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { pool } from '@/lib/db/pool'
-import { canWrite, getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
+import { canManageUsers, canWrite, getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
 
 export async function savePendenciaAssinatura(formData: FormData) {
   const profile = await getCurrentUserProfile()
@@ -37,4 +37,30 @@ export async function savePendenciaAssinatura(formData: FormData) {
   )
 
   revalidatePath('/pendentes')
+}
+
+export type ResetPendenciasResult = {
+  lancamentosZerados: number
+}
+
+// Zera só o lançamento manual (pendencias_assinatura) — o outro pedaço da
+// contagem, clientes com status 'pendente' em clientes_alle (ver
+// fetch-pendencias-assinatura.ts), tem seu próprio ciclo de vida em /clientes-alle
+// e não é afetado aqui. Mesmo guard/escopo do reset de conversões
+// (resetAllConversoes em configuracoes/actions.ts): ação destrutiva cobrindo todas
+// as academias, restrita a Super Admin.
+export async function resetPendencias(): Promise<ResetPendenciasResult> {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canManageUsers(profile.role)) {
+    throw new Error('Apenas Super Admin pode resetar pendências.')
+  }
+
+  const { rowCount } = await pool.query(
+    `update pendencias_assinatura set quantidade = 0, updated_at = now() where quantidade != 0`
+  )
+
+  revalidatePath('/pendentes')
+  revalidatePath('/')
+
+  return { lancamentosZerados: rowCount ?? 0 }
 }

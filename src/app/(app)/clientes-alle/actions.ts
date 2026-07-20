@@ -48,6 +48,7 @@ export async function createClienteAlle(formData: FormData) {
 
   revalidatePath('/clientes-alle')
   revalidatePath('/')
+  revalidatePath('/pendentes')
 }
 
 export async function updateClienteAlle(clienteId: string, formData: FormData) {
@@ -80,6 +81,7 @@ export async function updateClienteAlle(clienteId: string, formData: FormData) {
 
   revalidatePath('/clientes-alle')
   revalidatePath('/')
+  revalidatePath('/pendentes')
 }
 
 export async function deleteClienteAlle(clienteId: string) {
@@ -95,6 +97,7 @@ export async function deleteClienteAlle(clienteId: string) {
 
   revalidatePath('/clientes-alle')
   revalidatePath('/')
+  revalidatePath('/pendentes')
 }
 
 export type ImportClientesAlleResult = {
@@ -207,6 +210,43 @@ export async function importClientesAlleCsv(formData: FormData): Promise<ImportC
 
   revalidatePath('/clientes-alle')
   revalidatePath('/')
+  revalidatePath('/pendentes')
 
   return { importados, atualizados, ignorados, academiasNaoEncontradas: [...academiasNaoEncontradas] }
+}
+
+// Ações em massa (seleção múltipla na tabela) — mesmo guard das ações individuais
+// acima. Sem checagem de escopo por academia: canManageManualData já é
+// super_admin/gestor, e os dois sempre enxergam todas as academias
+// (seesAllAcademias), então não existe cliente "de outra unidade" fora do alcance
+// desses roles.
+export async function bulkUpdateClientesAlleStatus(clienteIds: string[], status: ClienteAlleStatus) {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canManageManualData(profile.role)) {
+    throw new Error('Sem permissão para editar clientes Alle.')
+  }
+  if (clienteIds.length === 0) return
+
+  await pool.query(`update clientes_alle set status = $1, updated_at = now() where id = any($2::uuid[])`, [
+    status,
+    clienteIds,
+  ])
+
+  revalidatePath('/clientes-alle')
+  revalidatePath('/')
+  revalidatePath('/pendentes')
+}
+
+export async function bulkDeleteClientesAlle(clienteIds: string[]) {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canManageManualData(profile.role)) {
+    throw new Error('Sem permissão para excluir clientes Alle.')
+  }
+  if (clienteIds.length === 0) return
+
+  await pool.query(`delete from clientes_alle where id = any($1::uuid[])`, [clienteIds])
+
+  revalidatePath('/clientes-alle')
+  revalidatePath('/')
+  revalidatePath('/pendentes')
 }

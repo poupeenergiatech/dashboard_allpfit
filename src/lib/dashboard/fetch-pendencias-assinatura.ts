@@ -8,9 +8,12 @@ export type PendenciaPorAcademia = {
   data: string | null
 }
 
-// Última quantidade lançada por academia (não soma pelo período — é um snapshot
-// de backlog atual, não um contador de eventos do dia). Academia sem nenhum
-// lançamento ainda entra com quantidade 0 e data null.
+// Backlog atual por academia = última quantidade lançada manualmente (não soma
+// pelo período — é um snapshot, não um contador de eventos do dia) + contagem de
+// clientes com status 'pendente' em clientes_alle (nome próprio, ver
+// fetch-clientes-alle.ts) — desde a migration 0016, que zerou o lançamento manual
+// antigo pra essa soma não dobrar quem já tinha entrado como número solto. Academia
+// sem nenhum lançamento manual ainda entra com esse pedaço 0 e data null.
 //
 // requestedAcademiaId vem do filtro de academia da tela (?academia=, ver page.tsx) —
 // scopeAcademiaId ignora o valor pedido pra quem só enxerga a própria academia, então
@@ -24,12 +27,15 @@ export async function fetchPendenciasPorAcademia(
   const { rows } = await pool.query<{
     academia_id: string
     nome: string
-    quantidade: number | null
+    quantidade_manual: number | null
+    clientes_pendentes: number
     data: string | null
   }>(
     `select a.id as academia_id, a.nome,
             (select pa.quantidade from pendencias_assinatura pa
-             where pa.academia_id = a.id order by pa.data desc limit 1) as quantidade,
+             where pa.academia_id = a.id order by pa.data desc limit 1) as quantidade_manual,
+            (select count(*) from clientes_alle ca
+             where ca.academia_id = a.id and ca.status = 'pendente') as clientes_pendentes,
             (select pa.data from pendencias_assinatura pa
              where pa.academia_id = a.id order by pa.data desc limit 1) as data
      from academias a
@@ -41,7 +47,7 @@ export async function fetchPendenciasPorAcademia(
   return rows.map((row) => ({
     academiaId: row.academia_id,
     nome: row.nome,
-    quantidade: row.quantidade ?? 0,
+    quantidade: (row.quantidade_manual ?? 0) + row.clientes_pendentes,
     data: row.data,
   }))
 }

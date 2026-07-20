@@ -14,7 +14,14 @@ export default function PreviewClientesAllePage() {
 
       <AcademiaFilterLinks basePath="/preview/clientes-alle" academias={MOCK_ACADEMIAS} academiaId={null} />
 
-      <ClientesAlleTable clientes={MOCK_CLIENTES_ALLE} academias={MOCK_ACADEMIAS} onUpdate={mockSave} onDelete={mockConfirm} />
+      <ClientesAlleTable
+        clientes={MOCK_CLIENTES_ALLE}
+        academias={MOCK_ACADEMIAS}
+        onUpdate={mockSave}
+        onDelete={mockConfirm}
+        onBulkUpdateStatus={mockSave}
+        onBulkDelete={mockConfirm}
+      />
 
       <div>
         <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Cadastrar cliente</h3>

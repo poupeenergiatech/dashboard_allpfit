@@ -3,13 +3,14 @@ import { PendenciaSection } from '@/components/dashboard/pendencia-section'
 import { PendenciasPorAcademiaChart } from '@/components/dashboard/pendencias-por-academia-chart'
 import { PendenciasTotalCard } from '@/components/dashboard/pendencias-total-card'
 import { PendenciasTrendChart } from '@/components/dashboard/pendencias-trend-chart'
+import { ResetPendenciasButton } from '@/components/dashboard/reset-pendencias-button'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import {
   fetchPendenciasHistory,
   fetchPendenciasPorAcademia,
   fetchPendenciasTrend,
 } from '@/lib/dashboard/fetch-pendencias-assinatura'
-import { canWrite, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
+import { canManageUsers, canWrite, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 
 export default async function PendentesPage({
   searchParams,
@@ -30,7 +31,10 @@ export default async function PendentesPage({
     <div className="space-y-6">
       <div>
         <h2 className="page-title">Pendentes de assinatura</h2>
-        <p className="page-subtitle">Quantos alunos estão com assinatura de termo pendente, por academia.</p>
+        <p className="page-subtitle">
+          Quantos alunos estão com assinatura de termo pendente, por academia — soma o lançamento manual com os
+          clientes de status &quot;Pendente&quot; em /clientes-alle.
+        </p>
       </div>
 
       <AcademiaFilterLinks basePath="/pendentes" academias={academias} academiaId={requestedAcademiaId} />
@@ -48,6 +52,13 @@ export default async function PendentesPage({
             fixedAcademiaId={seesAllAcademias(profile.role) ? null : profile.academiaId}
             history={history}
           />
+        </div>
+      )}
+
+      {profile && canManageUsers(profile.role) && (
+        <div>
+          <h3 className="mb-3 text-sm font-semibold text-red-700 dark:text-red-400">Zona de risco</h3>
+          <ResetPendenciasButton />
         </div>
       )}
     </div>
