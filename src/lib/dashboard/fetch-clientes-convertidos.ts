@@ -7,6 +7,7 @@ export type ClienteConvertido = {
   academiaNome: string | null
   nome: string | null
   telefone: string | null
+  clienteAlleId: string | null
   createdAt: string
 }
 
@@ -17,6 +18,9 @@ export type ClienteConvertido = {
 // só aparecem aqui pra quem enxerga todas as academias: scopeAcademiaId sempre
 // resolve pra uma academia real quando o role é escopado (coordenador/
 // visualizador), então esses registros null nunca entram no filtro deles.
+// clienteAlleId vem preenchido depois que alguém confirma que a pessoa assinou o
+// termo de adesão (promoverClienteConvertido, em convertidos/actions.ts) — vira
+// cliente Alle ativo.
 export async function fetchClientesConvertidos(
   profile: UserProfile,
   requestedAcademiaId?: string | null
@@ -29,9 +33,10 @@ export async function fetchClientesConvertidos(
     academia_nome: string | null
     nome: string | null
     telefone: string | null
+    cliente_alle_id: string | null
     created_at: string
   }>(
-    `select c.id, c.academia_id, a.nome as academia_nome, c.nome, c.telefone, c.created_at
+    `select c.id, c.academia_id, a.nome as academia_nome, c.nome, c.telefone, c.cliente_alle_id, c.created_at
      from conversions c
      left join academias a on a.id = c.academia_id
      where ($1::uuid is null or c.academia_id = $1)
@@ -45,6 +50,7 @@ export async function fetchClientesConvertidos(
     academiaNome: row.academia_nome,
     nome: row.nome,
     telefone: row.telefone,
+    clienteAlleId: row.cliente_alle_id,
     createdAt: row.created_at,
   }))
 }

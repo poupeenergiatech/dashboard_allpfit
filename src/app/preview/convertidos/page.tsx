@@ -16,7 +16,12 @@ export default function PreviewConvertidosPage() {
 
       <AcademiaFilterLinks basePath="/preview/convertidos" academias={MOCK_ACADEMIAS} academiaId={null} />
 
-      <ClientesConvertidosTable clientes={MOCK_CLIENTES_CONVERTIDOS} academias={MOCK_ACADEMIAS} onUpdate={mockSave} />
+      <ClientesConvertidosTable
+        clientes={MOCK_CLIENTES_CONVERTIDOS}
+        academias={MOCK_ACADEMIAS}
+        onUpdate={mockSave}
+        onPromote={mockSave}
+      />
     </div>
   )
 }

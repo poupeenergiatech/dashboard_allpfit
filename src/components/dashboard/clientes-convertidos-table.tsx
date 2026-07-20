@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
-import { updateClienteConvertidoAcademia } from '@/app/(app)/convertidos/actions'
+import { promoverClienteConvertido, updateClienteConvertidoAcademia } from '@/app/(app)/convertidos/actions'
 import { Avatar } from '@/components/ui/avatar'
 import { ListFilterBar } from './list-filter-bar'
 import { Pagination } from './pagination'
@@ -11,6 +11,7 @@ import type { ClienteConvertido } from '@/lib/dashboard/fetch-clientes-convertid
 
 type StatusFilter = 'todos' | 'sem_unidade'
 type UpdateAction = (conversionId: string, formData: FormData) => Promise<void>
+type PromoteAction = (conversionId: string) => Promise<void>
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
@@ -28,11 +29,13 @@ export function ClientesConvertidosTable({
   academias,
   editable = true,
   onUpdate = updateClienteConvertidoAcademia,
+  onPromote = promoverClienteConvertido,
 }: {
   clientes: ClienteConvertido[]
   academias: Academia[]
   editable?: boolean
   onUpdate?: UpdateAction
+  onPromote?: PromoteAction
 }) {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<StatusFilter>('todos')
@@ -60,7 +63,7 @@ export function ClientesConvertidosTable({
     return <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhum cliente convertido ainda.</div>
   }
 
-  const columnCount = editable ? 5 : 4
+  const columnCount = editable ? 6 : 4
 
   return (
     <div className="space-y-3">
@@ -77,13 +80,14 @@ export function ClientesConvertidosTable({
         <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhum cliente encontrado pra esse filtro.</div>
       ) : (
         <div className="card overflow-x-auto">
-          <table className="w-full min-w-[700px] text-sm">
+          <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <th className="sticky left-0 z-10 border-r border-slate-100 dark:border-slate-800 bg-slate-50/95 dark:bg-slate-800/95 px-4 py-3">Nome</th>
                 <th className="px-4 py-3">Telefone</th>
                 <th className="px-4 py-3">Academia</th>
                 <th className="px-4 py-3">Convertido em</th>
+                {editable && <th className="px-4 py-3">Termo de adesão</th>}
                 {editable && <th className="px-4 py-3">Ações</th>}
               </tr>
             </thead>
@@ -123,6 +127,21 @@ export function ClientesConvertidosTable({
                     <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">{formatDate(c.createdAt)}</td>
                     {editable && (
                       <td className="px-4 py-3">
+                        {c.clienteAlleId ? (
+                          <span className="badge bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                            Cliente Alle ativo
+                          </span>
+                        ) : c.academiaId ? (
+                          <PromoverButton clienteId={c.id} nome={c.nome} onPromote={onPromote} />
+                        ) : (
+                          <span className="text-xs text-slate-400 dark:text-slate-500" title="Defina a academia antes de marcar como assinado.">
+                            —
+                          </span>
+                        )}
+                      </td>
+                    )}
+                    {editable && (
+                      <td className="px-4 py-3">
                         {c.academiaId === null && (
                           <button
                             type="button"
@@ -144,6 +163,40 @@ export function ClientesConvertidosTable({
         </div>
       )}
     </div>
+  )
+}
+
+function PromoverButton({
+  clienteId,
+  nome,
+  onPromote,
+}: {
+  clienteId: string
+  nome: string | null
+  onPromote: PromoteAction
+}) {
+  const [pending, startTransition] = useTransition()
+  const { showToast } = useToast()
+
+  function handleClick() {
+    if (pending) return
+    if (!window.confirm(`Confirmar que ${nome ?? 'esse cliente'} assinou o termo de adesão e virou cliente Alle ativo?`)) {
+      return
+    }
+    startTransition(async () => {
+      try {
+        await onPromote(clienteId)
+        showToast('Cliente marcado como Alle ativo.')
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'Erro ao marcar como assinado.', 'error')
+      }
+    })
+  }
+
+  return (
+    <button type="button" disabled={pending} onClick={handleClick} className="btn-outline-success btn-sm disabled:opacity-50">
+      {pending ? 'Marcando…' : 'Assinou o termo'}
+    </button>
   )
 }
 

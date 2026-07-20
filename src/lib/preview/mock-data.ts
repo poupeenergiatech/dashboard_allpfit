@@ -179,6 +179,7 @@ export const MOCK_CLIENTES_CONVERTIDOS: ClienteConvertido[] = [
     academiaNome: MOCK_ACADEMIAS[0].nome,
     nome: 'Juliana Ferreira',
     telefone: '5511991234567',
+    clienteAlleId: 'ca1',
     createdAt: '2026-07-18T13:00:00.000Z',
   },
   {
@@ -187,6 +188,7 @@ export const MOCK_CLIENTES_CONVERTIDOS: ClienteConvertido[] = [
     academiaNome: MOCK_ACADEMIAS[2].nome,
     nome: 'Roberto Alves',
     telefone: '5511998887766',
+    clienteAlleId: null,
     createdAt: '2026-07-17T10:30:00.000Z',
   },
   {
@@ -195,6 +197,7 @@ export const MOCK_CLIENTES_CONVERTIDOS: ClienteConvertido[] = [
     academiaNome: null,
     nome: 'Patrícia Gomes',
     telefone: '5511977776655',
+    clienteAlleId: null,
     createdAt: '2026-07-16T09:15:00.000Z',
   },
 ]
