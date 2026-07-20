@@ -52,7 +52,8 @@ export function ClientesAlleImportForm({
             &quot;pendente&quot; — em branco vira pendente),{' '}
             <code className="rounded bg-slate-100 dark:bg-slate-800 px-1 py-0.5">telefone</code>,{' '}
             <code className="rounded bg-slate-100 dark:bg-slate-800 px-1 py-0.5">email</code>. Mesmo nome na mesma
-            academia atualiza o cadastro em vez de duplicar.
+            academia atualiza o cadastro em vez de duplicar. Telefone que já apareceu numa conversão da Ane não
+            entra — essa pessoa já está contada do lado automático.
           </p>
         </div>
         <button type="submit" disabled={pending} className="btn-secondary shrink-0">
@@ -66,6 +67,11 @@ export function ClientesAlleImportForm({
             {result.importados} novo(s), {result.atualizados} atualizado(s)
             {result.ignorados > 0 ? `, ${result.ignorados} linha(s) ignorada(s)` : ''}.
           </p>
+          {result.jaConvertidosAne > 0 && (
+            <p className="mt-1.5 text-slate-700 dark:text-slate-300">
+              {result.jaConvertidosAne} linha(s) não entraram por já ter telefone convertido pela Ane.
+            </p>
+          )}
           {result.academiasNaoEncontradas.length > 0 && (
             <p className="mt-1.5 text-amber-700 dark:text-amber-400">
               Academia não encontrada: {result.academiasNaoEncontradas.join(', ')} — confira o nome ou cadastre um

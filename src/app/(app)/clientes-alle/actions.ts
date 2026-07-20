@@ -23,6 +23,13 @@ function parseStatus(value: FormDataEntryValue | null): ClienteAlleStatus {
   return value === 'pendente' ? 'pendente' : 'ativo'
 }
 
+// Só dígitos, pra comparar telefone sem depender de como cada lado formatou (com
+// DDI, parênteses, traço...) — nem o CSV nem o Alle Documentos garantem o mesmo
+// formato.
+function digitsOnly(value: string): string {
+  return value.replace(/\D/g, '')
+}
+
 export async function createClienteAlle(formData: FormData) {
   const profile = await getCurrentUserProfile()
   if (!profile || !canManageManualData(profile.role)) {
@@ -104,6 +111,7 @@ export type ImportClientesAlleResult = {
   importados: number
   atualizados: number
   ignorados: number
+  jaConvertidosAne: number
   academiasNaoEncontradas: string[]
 }
 
@@ -114,6 +122,11 @@ export type ImportClientesAlleResult = {
 // agregador (buildAcademiaNomeResolver) — é texto livre de fora, não bate sempre igual ao
 // cadastro. Roles escopados (coordenador/gestor de uma unidade) só importam pra própria
 // academia; linhas de outra unidade são ignoradas em vez de derrubar o lote inteiro.
+//
+// Linha com telefone que já apareceu numa conversão da Ane (conversions, vindo do
+// Supabase/Alle Documentos) não entra — essa pessoa já está contada como convertida
+// pelo pipeline automático, adicionar de novo aqui duplicaria a mesma pessoa entre
+// as duas origens (ver o split Ane/manual explicado em /clientes-alle e no funil).
 export async function importClientesAlleCsv(formData: FormData): Promise<ImportClientesAlleResult> {
   const profile = await getCurrentUserProfile()
   if (!profile || !canManageManualData(profile.role)) {
@@ -142,17 +155,20 @@ export async function importClientesAlleCsv(formData: FormData): Promise<ImportC
     throw new Error('Cabeçalho inválido — o CSV precisa das colunas "nome" e "academia".')
   }
 
-  const [{ rows: academias }, { rows: aliases }] = await Promise.all([
+  const [{ rows: academias }, { rows: aliases }, { rows: conversoesTelefones }] = await Promise.all([
     pool.query<{ id: string; nome: string }>('select id, nome from academias'),
     pool.query<{ alias_nome: string; academia_id: string }>('select alias_nome, academia_id from academia_aliases'),
+    pool.query<{ telefone: string }>(`select telefone from conversions where telefone is not null and telefone != ''`),
   ])
   const resolveAcademiaIdByNome = buildAcademiaNomeResolver(academias, aliases)
+  const telefonesConvertidosAne = new Set(conversoesTelefones.map((r) => digitsOnly(r.telefone)))
 
   const scopedAcademiaId = scopeAcademiaId(profile, null)
 
   let importados = 0
   let atualizados = 0
   let ignorados = 0
+  let jaConvertidosAne = 0
   const academiasNaoEncontradas = new Set<string>()
 
   const client = await pool.connect()
@@ -180,6 +196,11 @@ export async function importClientesAlleCsv(formData: FormData): Promise<ImportC
       }
       if (scopedAcademiaId && academiaId !== scopedAcademiaId) {
         ignorados++
+        continue
+      }
+
+      if (telefone && telefonesConvertidosAne.has(digitsOnly(telefone))) {
+        jaConvertidosAne++
         continue
       }
 
@@ -212,7 +233,7 @@ export async function importClientesAlleCsv(formData: FormData): Promise<ImportC
   revalidatePath('/')
   revalidatePath('/pendentes')
 
-  return { importados, atualizados, ignorados, academiasNaoEncontradas: [...academiasNaoEncontradas] }
+  return { importados, atualizados, ignorados, jaConvertidosAne, academiasNaoEncontradas: [...academiasNaoEncontradas] }
 }
 
 // Ações em massa (seleção múltipla na tabela) — mesmo guard das ações individuais
