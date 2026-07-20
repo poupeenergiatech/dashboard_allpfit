@@ -9,6 +9,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Funil / Dashboard', href: '', icon: 'chart' },
   { label: 'Performance por Academia', href: '/performance', icon: 'bars' },
   { label: 'Scans QR', href: '/scans', icon: 'qr' },
+  { label: 'Clientes Convertidos', href: '/convertidos', icon: 'trophy' },
   { label: 'Pendentes de Assinatura', href: '/pendentes', icon: 'pen' },
   { label: 'Números (WhatsApp)', href: '/numeros', icon: 'chat' },
   { label: 'Clientes Alle', href: '/clientes-alle', icon: 'id-card' },

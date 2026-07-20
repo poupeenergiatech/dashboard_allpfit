@@ -1,0 +1,21 @@
+import { AcademiaFilterLinks } from '@/components/dashboard/academia-filter-links'
+import { ClientesConvertidosTable } from '@/components/dashboard/clientes-convertidos-table'
+import { MOCK_ACADEMIAS, MOCK_CLIENTES_CONVERTIDOS } from '@/lib/preview/mock-data'
+
+export default function PreviewConvertidosPage() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="page-title">Clientes convertidos</h2>
+        <p className="page-subtitle">
+          Convertidos automaticamente pela Ane (sync do Alle Documentos), com nome e telefone — inclui quem ainda
+          está sem unidade vinculada, quando o filtro é &quot;Todas as academias&quot;.
+        </p>
+      </div>
+
+      <AcademiaFilterLinks basePath="/preview/convertidos" academias={MOCK_ACADEMIAS} academiaId={null} />
+
+      <ClientesConvertidosTable clientes={MOCK_CLIENTES_CONVERTIDOS} />
+    </div>
+  )
+}

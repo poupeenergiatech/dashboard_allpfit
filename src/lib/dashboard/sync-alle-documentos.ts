@@ -8,6 +8,8 @@ type AlleDocumentoClienteRow = {
   completo: string | null
   pos_venda: string | null
   created_at: string | null
+  nome: string | null
+  telefone: string | null
 }
 
 function isFilled(value: string | null): boolean {
@@ -27,13 +29,16 @@ export type SyncTrigger = 'manual' | 'automatico'
 // Único uso de escrita indireta a partir do Supabase: lê (GET, somente leitura,
 // src/lib/supabase/readonly.ts) a tabela `alle_documentos_clientes` — que não é
 // nossa, é do sistema de vendas/documentos da Alle Energia — e replica só os
-// clientes convertidos (completo + pos_venda preenchidos) como linhas em
-// `conversions`, aqui no nosso Postgres. `alle_documento_id` garante que rodar de
-// novo não duplica (on conflict do nothing). unidade_allpfit é texto livre do lado
-// deles; o vínculo com a academia é resolvido em 3 passos (ver resolveAcademiaId):
-// nome exato normalizado, nome sem acento/hífen (só se único), e por fim
-// academia_aliases (nomes vinculados manualmente em /academias). O que sobrar volta
-// na lista `naoEncontradas` pra vínculo manual.
+// clientes convertidos (completo + pos_venda preenchidos), com nome/telefone, como
+// linhas em `conversions`, aqui no nosso Postgres — visíveis depois em /convertidos.
+// `alle_documento_id` garante que rodar de novo não duplica (on conflict do
+// nothing). unidade_allpfit é texto livre do lado deles; o vínculo com a academia é
+// resolvido em 3 passos (ver resolveAcademiaId): nome exato normalizado, nome sem
+// acento/hífen (só se único), e por fim academia_aliases (nomes vinculados
+// manualmente em /academias). Nome preenchido que não bate com nada vira
+// `naoEncontradas` pra vínculo manual (não insere ainda); unidade em branco de
+// verdade (sem nome nenhum pra vincular) insere com academia_id null — contado em
+// `semUnidade`, só dá pra resolver corrigindo a origem.
 //
 // Chamada tanto pela action manual (app/(app)/configuracoes/actions.ts, atrás de
 // checagem de Super Admin) quanto pelo endpoint de cron (app/api/sync-alle-documentos,
@@ -74,7 +79,7 @@ async function syncAlleDocumentosConvertidos(): Promise<SyncAlleDocumentosResult
   const supabase = createReadonlyClient()
   const { data, error } = await supabase
     .from('alle_documentos_clientes')
-    .select('id, unidade_allpfit, completo, pos_venda, created_at')
+    .select('id, unidade_allpfit, completo, pos_venda, created_at, nome, telefone')
     .returns<AlleDocumentoClienteRow[]>()
 
   if (error) {
@@ -97,28 +102,40 @@ async function syncAlleDocumentosConvertidos(): Promise<SyncAlleDocumentosResult
 
   for (const row of convertidos) {
     const unidade = (row.unidade_allpfit ?? '').trim()
+    const nome = (row.nome ?? '').trim() || null
+    const telefone = (row.telefone ?? '').trim() || null
     const academiaId = resolveAcademiaId(unidade)
 
-    if (!academiaId) {
-      // unidade em branco não é "não encontrada" (esse balde é só pra nome que veio
-      // preenchido mas não bateu com nenhuma academia/alias) — sem isso, esses
-      // registros somem de totalConvertidos sem aparecer em nenhum lugar do
-      // resultado, e a soma nunca fecha. Não dá pra vincular por alias porque não
-      // tem nome nenhum pra vincular; só corrigindo unidade_allpfit na origem.
-      if (unidade) naoEncontradas.add(unidade)
-      else semUnidade++
+    if (!academiaId && unidade) {
+      // Unidade preenchida mas sem academia/alias correspondente — Super Admin
+      // resolve criando um alias em /academias (ver NaoEncontradaRow no botão de
+      // sync); a próxima execução já insere certo. Não insere aqui: sem
+      // academia_id não dá pra saber onde esse cliente entra no funil.
+      naoEncontradas.add(unidade)
       continue
     }
 
+    if (!academiaId) {
+      // Unidade em branco de verdade (não é "não encontrada" — não tem nome de
+      // unidade nenhum pra vincular por alias). Insere mesmo assim, com
+      // academia_id null, pra não sumir da lista de clientes convertidos
+      // (/convertidos) — é lá que dá pra ver nome/telefone e ir corrigir a
+      // unidade na origem. Sem isso o registro desaparecia de totalConvertidos
+      // sem aparecer em nenhum lugar do resultado.
+      semUnidade++
+    }
+
     const { rowCount } = await pool.query(
-      `insert into conversions (academia_id, created_at, alle_documento_id)
-       values ($1, $2, $3)
+      `insert into conversions (academia_id, created_at, alle_documento_id, nome, telefone)
+       values ($1, $2, $3, $4, $5)
        on conflict (alle_documento_id) do nothing`,
-      [academiaId, row.created_at ?? new Date().toISOString(), row.id]
+      [academiaId ?? null, row.created_at ?? new Date().toISOString(), row.id, nome, telefone]
     )
 
-    if (rowCount) inseridas++
-    else jaExistentes++
+    if (academiaId) {
+      if (rowCount) inseridas++
+      else jaExistentes++
+    }
   }
 
   return {

@@ -12,6 +12,7 @@ import type { NumeroGroup } from '@/lib/dashboard/fetch-numeros'
 import type { TreinadaStatus } from '@/lib/dashboard/fetch-treinadas'
 import type { ManualDataEntry } from '@/lib/dashboard/fetch-manual-data-history'
 import type { ClienteAlle } from '@/lib/dashboard/fetch-clientes-alle'
+import type { ClienteConvertido } from '@/lib/dashboard/fetch-clientes-convertidos'
 import type { UserRow } from '@/components/dashboard/users-table'
 
 export const MOCK_ACADEMIAS: Academia[] = [
@@ -166,6 +167,35 @@ export const MOCK_CLIENTES_ALLE: ClienteAlle[] = [
     email: 'fernanda.lima@exemplo.com',
     status: 'pendente',
     createdAt: '2026-05-15T09:00:00.000Z',
+  },
+]
+
+// A última tem academiaId/academiaNome null — convertida pela Ane com
+// unidade_allpfit em branco no Alle Documentos, ilustra o badge "Sem unidade".
+export const MOCK_CLIENTES_CONVERTIDOS: ClienteConvertido[] = [
+  {
+    id: 'cv1',
+    academiaId: MOCK_ACADEMIAS[0].id,
+    academiaNome: MOCK_ACADEMIAS[0].nome,
+    nome: 'Juliana Ferreira',
+    telefone: '5511991234567',
+    createdAt: '2026-07-18T13:00:00.000Z',
+  },
+  {
+    id: 'cv2',
+    academiaId: MOCK_ACADEMIAS[2].id,
+    academiaNome: MOCK_ACADEMIAS[2].nome,
+    nome: 'Roberto Alves',
+    telefone: '5511998887766',
+    createdAt: '2026-07-17T10:30:00.000Z',
+  },
+  {
+    id: 'cv3',
+    academiaId: null,
+    academiaNome: null,
+    nome: 'Patrícia Gomes',
+    telefone: '5511977776655',
+    createdAt: '2026-07-16T09:15:00.000Z',
   },
 ]
 
