@@ -74,6 +74,16 @@ export function ClientesAlleForm({
       </div>
 
       <div>
+        <label className="field-label" htmlFor="status">
+          Status
+        </label>
+        <select id="status" name="status" defaultValue="ativo" className="select">
+          <option value="ativo">Ativo</option>
+          <option value="pendente">Pendente de assinatura</option>
+        </select>
+      </div>
+
+      <div>
         <label className="field-label" htmlFor="telefone">
           Telefone
         </label>

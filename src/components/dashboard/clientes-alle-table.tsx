@@ -10,12 +10,12 @@ import type { ClienteAlle } from '@/lib/dashboard/fetch-clientes-alle'
 
 type UpdateAction = (clienteId: string, formData: FormData) => Promise<void>
 type DeleteAction = (clienteId: string) => Promise<void>
-type StatusFilter = 'todos' | 'ativos' | 'inativos'
+type StatusFilter = 'todos' | 'ativos' | 'pendentes'
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
   { value: 'ativos', label: 'Ativos' },
-  { value: 'inativos', label: 'Inativos' },
+  { value: 'pendentes', label: 'Pendentes' },
 ]
 
 export function ClientesAlleTable({
@@ -40,8 +40,8 @@ export function ClientesAlleTable({
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
     return clientes.filter((c) => {
-      if (status === 'ativos' && !c.ativo) return false
-      if (status === 'inativos' && c.ativo) return false
+      if (status === 'ativos' && c.status !== 'ativo') return false
+      if (status === 'pendentes' && c.status !== 'pendente') return false
       if (term && !c.nome.toLowerCase().includes(term)) return false
       return true
     })
@@ -86,7 +86,7 @@ export function ClientesAlleTable({
                 <th className="px-4 py-3">Academia</th>
                 <th className="px-4 py-3">Telefone</th>
                 <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Ativo</th>
+                <th className="px-4 py-3">Status</th>
                 {editable && <th className="px-4 py-3">Ações</th>}
               </tr>
             </thead>
@@ -113,10 +113,10 @@ export function ClientesAlleTable({
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{c.telefone ?? '—'}</td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{c.email ?? '—'}</td>
                     <td className="px-4 py-3">
-                      {c.ativo ? (
+                      {c.status === 'ativo' ? (
                         <span className="badge bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">Ativo</span>
                       ) : (
-                        <span className="badge bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">Inativo</span>
+                        <span className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">Pendente</span>
                       )}
                     </td>
                     {editable && (
@@ -232,16 +232,14 @@ function ClienteAlleEditRow({
             <input id={`email-${cliente.id}`} name="email" type="email" defaultValue={cliente.email ?? ''} className="input" />
           </div>
 
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-              <input
-                type="checkbox"
-                name="ativo"
-                defaultChecked={cliente.ativo}
-                className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-600 dark:bg-slate-800"
-              />
-              Ativo
+          <div>
+            <label className="field-label" htmlFor={`status-${cliente.id}`}>
+              Status
             </label>
+            <select id={`status-${cliente.id}`} name="status" defaultValue={cliente.status} className="select">
+              <option value="ativo">Ativo</option>
+              <option value="pendente">Pendente de assinatura</option>
+            </select>
           </div>
 
           <div className="flex shrink-0 items-center gap-2 lg:col-span-6">

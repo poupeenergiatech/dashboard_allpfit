@@ -1,6 +1,8 @@
 import { pool } from '@/lib/db/pool'
 import { scopeAcademiaId, type UserProfile } from '@/lib/auth/profile'
 
+export type ClienteAlleStatus = 'ativo' | 'pendente'
+
 export type ClienteAlle = {
   id: string
   academiaId: string
@@ -8,15 +10,17 @@ export type ClienteAlle = {
   nome: string
   telefone: string | null
   email: string | null
-  ativo: boolean
+  status: ClienteAlleStatus
   createdAt: string
 }
 
-// Clientes ativos na Alle Energia, cadastrados manualmente por academia (ver
-// db/migrations/0014_clientes_alle.sql) — sem sincronização automática por enquanto.
-// requestedAcademiaId passa por scopeAcademiaId, mesmo padrão de
-// fetchAcademiaPerformance: roles escopados (coordenador/visualizador) sempre caem
-// na própria academia, mesmo que peçam outra.
+// Clientes (ativos ou pendentes de assinar o termo de adesão) da Alle Energia, por
+// academia — cadastrados manualmente ou em lote por CSV (ver
+// db/migrations/0014_clientes_alle.sql, 0015_clientes_alle_status.sql e
+// importClientesAlleCsv em app/(app)/clientes-alle/actions.ts). Sem sincronização
+// automática por enquanto. requestedAcademiaId passa por scopeAcademiaId, mesmo
+// padrão de fetchAcademiaPerformance: roles escopados (coordenador/visualizador)
+// sempre caem na própria academia, mesmo que peçam outra.
 export async function fetchClientesAlle(
   profile: UserProfile,
   requestedAcademiaId?: string | null
@@ -30,10 +34,10 @@ export async function fetchClientesAlle(
     nome: string
     telefone: string | null
     email: string | null
-    ativo: boolean
+    status: ClienteAlleStatus
     created_at: string
   }>(
-    `select ca.id, ca.academia_id, a.nome as academia_nome, ca.nome, ca.telefone, ca.email, ca.ativo, ca.created_at
+    `select ca.id, ca.academia_id, a.nome as academia_nome, ca.nome, ca.telefone, ca.email, ca.status, ca.created_at
      from clientes_alle ca
      join academias a on a.id = ca.academia_id
      where ($1::uuid is null or ca.academia_id = $1)
@@ -48,7 +52,7 @@ export async function fetchClientesAlle(
     nome: row.nome,
     telefone: row.telefone,
     email: row.email,
-    ativo: row.ativo,
+    status: row.status,
     createdAt: row.created_at,
   }))
 }

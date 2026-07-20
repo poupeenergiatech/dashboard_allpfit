@@ -144,7 +144,7 @@ export const MOCK_CLIENTES_ALLE: ClienteAlle[] = [
     nome: 'Marina Souza',
     telefone: '5511987654321',
     email: 'marina.souza@exemplo.com',
-    ativo: true,
+    status: 'ativo',
     createdAt: '2026-06-20T10:00:00.000Z',
   },
   {
@@ -154,7 +154,7 @@ export const MOCK_CLIENTES_ALLE: ClienteAlle[] = [
     nome: 'Carlos Andrade',
     telefone: '5511976543210',
     email: null,
-    ativo: true,
+    status: 'ativo',
     createdAt: '2026-06-22T14:30:00.000Z',
   },
   {
@@ -164,7 +164,7 @@ export const MOCK_CLIENTES_ALLE: ClienteAlle[] = [
     nome: 'Fernanda Lima',
     telefone: null,
     email: 'fernanda.lima@exemplo.com',
-    ativo: false,
+    status: 'pendente',
     createdAt: '2026-05-15T09:00:00.000Z',
   },
 ]

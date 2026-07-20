@@ -90,7 +90,7 @@ export async function fetchFunnelCounts(
         [from, academiaId, toExclusive]
       ),
       pool.query<{ count: number }>(
-        `select count(*) from clientes_alle where ativo = true and ($1::uuid is null or academia_id = $1)`,
+        `select count(*) from clientes_alle where status = 'ativo' and ($1::uuid is null or academia_id = $1)`,
         [academiaId]
       ),
     ])
