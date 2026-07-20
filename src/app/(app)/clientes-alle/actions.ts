@@ -46,6 +46,16 @@ export async function createClienteAlle(formData: FormData) {
     throw new Error('Academia e nome são obrigatórios.')
   }
 
+  if (telefone) {
+    const { rowCount } = await pool.query(
+      `select 1 from conversions where telefone is not null and regexp_replace(telefone, '\\D', '', 'g') = $1 limit 1`,
+      [digitsOnly(telefone)]
+    )
+    if (rowCount) {
+      throw new Error('Esse telefone já tem uma conversão registrada pela Ane — não é possível cadastrar de novo aqui.')
+    }
+  }
+
   const academiaId = resolveAcademiaId(profile, requestedAcademiaId)
 
   await pool.query(
