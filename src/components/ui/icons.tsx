@@ -21,6 +21,7 @@ export type IconName =
   | 'sun'
   | 'moon'
   | 'x-circle'
+  | 'id-card'
 
 const PATHS: Record<IconName, React.ReactNode> = {
   chart: (
@@ -117,6 +118,13 @@ const PATHS: Record<IconName, React.ReactNode> = {
       strokeLinecap="round"
       strokeLinejoin="round"
       d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
+  ),
+  'id-card': (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1zm4 6a2 2 0 100-4 2 2 0 000 4zm-3 6c.5-2 2-3 3-3s2.5 1 3 3m5-7h4m-4 3h4"
     />
   ),
 }

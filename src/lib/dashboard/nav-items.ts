@@ -11,6 +11,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Scans QR', href: '/scans', icon: 'qr' },
   { label: 'Pendentes de Assinatura', href: '/pendentes', icon: 'pen' },
   { label: 'Números (WhatsApp)', href: '/numeros', icon: 'chat' },
+  { label: 'Clientes Alle', href: '/clientes-alle', icon: 'id-card' },
   { label: 'Academias Treinadas', href: '/treinadas', icon: 'badge' },
   { label: 'Academias', href: '/academias', roles: ['super_admin'], icon: 'building' },
   { label: 'Usuários', href: '/usuarios', roles: ['super_admin'], icon: 'users' },

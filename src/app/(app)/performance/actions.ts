@@ -24,11 +24,11 @@ export async function saveManualData(formData: FormData) {
   const data = String(formData.get('data') ?? '')
   const totalScans = Number(formData.get('total_scans') ?? 0)
   const contatosAjuste = parseOptionalInt(formData.get('contatos_ajuste'))
-  const conversoesAjuste = parseOptionalInt(formData.get('conversoes_ajuste'))
-  // Reprovados não tem contagem automática pra substituir (diferente dos ajustes
-  // acima) — é só um número aditivo, mesmo padrão de total_scans, por isso cai pra
-  // 0 em vez de null quando o campo fica em branco.
+  // Reprovados e conversoes_manual não têm contagem automática pra substituir
+  // (diferente de contatos_ajuste acima) — são números aditivos, mesmo padrão de
+  // total_scans, por isso caem pra 0 em vez de null quando o campo fica em branco.
   const reprovados = Number(formData.get('reprovados') ?? 0)
+  const conversoesManual = Number(formData.get('conversoes_manual') ?? 0)
 
   if (!requestedAcademiaId || !data) {
     throw new Error('Academia e data são obrigatórios.')
@@ -46,14 +46,14 @@ export async function saveManualData(formData: FormData) {
   // valor histórico que já tinham; linhas novas ficam com o default 0 da coluna, sem
   // efeito em nada (nada mais lê manual_data.total_alunos).
   await pool.query(
-    `insert into manual_data (academia_id, data, total_scans, contatos_ajuste, conversoes_ajuste, reprovados, updated_at)
+    `insert into manual_data (academia_id, data, total_scans, contatos_ajuste, conversoes_manual, reprovados, updated_at)
      values ($1, $2, $3, $4, $5, $6, now())
      on conflict (academia_id, data)
      do update set total_scans = excluded.total_scans,
-                   contatos_ajuste = excluded.contatos_ajuste, conversoes_ajuste = excluded.conversoes_ajuste,
+                   contatos_ajuste = excluded.contatos_ajuste, conversoes_manual = excluded.conversoes_manual,
                    reprovados = excluded.reprovados,
                    updated_at = now()`,
-    [academiaId, data, totalScans, contatosAjuste, conversoesAjuste, reprovados]
+    [academiaId, data, totalScans, contatosAjuste, conversoesManual, reprovados]
   )
 
   revalidatePath('/performance')

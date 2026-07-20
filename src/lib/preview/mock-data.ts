@@ -11,6 +11,7 @@ import type {
 import type { NumeroGroup } from '@/lib/dashboard/fetch-numeros'
 import type { TreinadaStatus } from '@/lib/dashboard/fetch-treinadas'
 import type { ManualDataEntry } from '@/lib/dashboard/fetch-manual-data-history'
+import type { ClienteAlle } from '@/lib/dashboard/fetch-clientes-alle'
 import type { UserRow } from '@/components/dashboard/users-table'
 
 export const MOCK_ACADEMIAS: Academia[] = [
@@ -43,12 +44,16 @@ const MOCK_FUNNEL_SERIES: DailyFunnelPoint[] = Array.from({ length: 14 }, (_, i)
   const date = new Date('2026-06-27T00:00:00')
   date.setDate(date.getDate() + i)
   const totalScans = 20 + Math.round(8 * Math.sin(i / 3))
+  const conversoesAne = 2 + Math.round(1.5 * Math.sin(i / 2 + 1)) + Math.floor(i / 4)
+  const conversoesManual = Math.max(0, Math.round(0.5 * Math.sin(i / 4 + 2)))
   return {
     date: date.toISOString().slice(0, 10),
     totalAlunos: 300 + i * 4,
     totalScans,
     contatos: 10 + Math.round(6 * Math.sin(i / 2)) + i,
-    conversoes: 2 + Math.round(1.5 * Math.sin(i / 2 + 1)) + Math.floor(i / 4),
+    conversoesAne,
+    conversoesManual,
+    conversoes: conversoesAne + conversoesManual,
     reprovados: Math.max(0, Math.round(1 + Math.sin(i / 3))),
     scansPorAcademia: distributeScans(totalScans, i),
   }
@@ -58,8 +63,11 @@ export const MOCK_FUNNEL_COUNTS: FunnelCounts = {
   totalAlunos: 4820,
   totalScans: 612,
   totalContatos: 214,
-  totalConversoes: 47,
+  totalConversoesAne: MOCK_FUNNEL_SERIES.reduce((s, p) => s + p.conversoesAne, 0),
+  totalConversoesManual: MOCK_FUNNEL_SERIES.reduce((s, p) => s + p.conversoesManual, 0),
+  totalConversoes: MOCK_FUNNEL_SERIES.reduce((s, p) => s + p.conversoes, 0),
   totalReprovados: MOCK_FUNNEL_SERIES.reduce((s, p) => s + p.reprovados, 0),
+  totalClientesAlle: 32,
   series: MOCK_FUNNEL_SERIES,
 }
 
@@ -86,21 +94,25 @@ export const MOCK_SCANS_SUMMARY: ScansSummary = {
   days: MOCK_SCANS_SERIES.length,
 }
 
-// A primeira unidade tem um ajuste manual positivo cadastrado em /academias, só
-// pra ilustrar o badge no total de conversões.
+// A primeira unidade tem conversões manuais/Bitrix (histórico + lançamento do
+// dia) cadastradas, só pra ilustrar a coluna "Convertidos Manual".
 export const MOCK_PERFORMANCE: AcademiaPerformance[] = MOCK_ACADEMIAS.map((a, i) => {
-  const conversoesAjusteTotal = i === 0 ? 3 : 0
+  const totalConversoesAne = 14 - i
+  const conversoesManualAjusteTotal = i === 0 ? 3 : 0
+  const totalConversoesManual = (i === 0 ? 2 : 0) + conversoesManualAjusteTotal
   return {
     academiaId: a.id,
     nome: a.nome,
     totalContatos: 60 - i * 6,
-    totalConversoes: 14 - i + conversoesAjusteTotal,
-    conversoesAjusteTotal,
+    totalConversoesAne,
+    totalConversoesManual,
+    totalConversoes: totalConversoesAne + totalConversoesManual,
+    conversoesManualAjusteTotal,
   }
 })
 
 // Uma linha com ajuste manual de contatos (ex.: correção de um dia em que o
-// webhook do agregador falhou), pra ilustrar o badge no histórico.
+// webhook do agregador falhou) e conversões manuais/Bitrix lançadas no dia.
 export const MOCK_MANUAL_DATA_HISTORY: ManualDataEntry[] = [
   {
     id: 'md1',
@@ -109,7 +121,7 @@ export const MOCK_MANUAL_DATA_HISTORY: ManualDataEntry[] = [
     data: '2026-07-10',
     totalScans: 34,
     contatosAjuste: 12,
-    conversoesAjuste: null,
+    conversoesManual: 2,
     reprovados: 2,
   },
   {
@@ -119,8 +131,41 @@ export const MOCK_MANUAL_DATA_HISTORY: ManualDataEntry[] = [
     data: '2026-07-09',
     totalScans: 21,
     contatosAjuste: null,
-    conversoesAjuste: null,
+    conversoesManual: 0,
     reprovados: 0,
+  },
+]
+
+export const MOCK_CLIENTES_ALLE: ClienteAlle[] = [
+  {
+    id: 'ca1',
+    academiaId: MOCK_ACADEMIAS[0].id,
+    academiaNome: MOCK_ACADEMIAS[0].nome,
+    nome: 'Marina Souza',
+    telefone: '5511987654321',
+    email: 'marina.souza@exemplo.com',
+    ativo: true,
+    createdAt: '2026-06-20T10:00:00.000Z',
+  },
+  {
+    id: 'ca2',
+    academiaId: MOCK_ACADEMIAS[0].id,
+    academiaNome: MOCK_ACADEMIAS[0].nome,
+    nome: 'Carlos Andrade',
+    telefone: '5511976543210',
+    email: null,
+    ativo: true,
+    createdAt: '2026-06-22T14:30:00.000Z',
+  },
+  {
+    id: 'ca3',
+    academiaId: MOCK_ACADEMIAS[1].id,
+    academiaNome: MOCK_ACADEMIAS[1].nome,
+    nome: 'Fernanda Lima',
+    telefone: null,
+    email: 'fernanda.lima@exemplo.com',
+    ativo: false,
+    createdAt: '2026-05-15T09:00:00.000Z',
   },
 ]
 

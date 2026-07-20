@@ -37,8 +37,16 @@ export async function fetchFunnelCounts(
   const academiaId = scopeAcademiaId(profile, requestedAcademiaId)
   const { from, toExclusive, fromDate, toDate, days } = periodRange(period, customRange ?? undefined)
 
-  const [{ rows: academiaRows }, { rows: academiaNomeRows }, { rows: manualRows }, { rows: contatosPorDia }, { rows: conversoesPorDia }] =
-    await Promise.all([
+  const [
+    { rows: academiaRows },
+    { rows: academiaNomeRows },
+    { rows: manualRows },
+    { rows: contatosPorDia },
+    { rows: conversoesPorDia },
+    {
+      rows: [{ count: clientesAlleCount }],
+    },
+  ] = await Promise.all([
       // total_alunos vem direto do cadastro da academia (não é mais um lançamento
       // diário em manual_data) — cadastra-se uma vez em /academias e o funil já
       // reflete em qualquer período, sem precisar relançar o mesmo número todo dia.
@@ -61,10 +69,10 @@ export async function fetchFunnelCounts(
         data: string
         total_scans: number
         contatos_ajuste: number | null
-        conversoes_ajuste: number | null
+        conversoes_manual: number
         reprovados: number
       }>(
-        `select academia_id, data, total_scans, contatos_ajuste, conversoes_ajuste, reprovados
+        `select academia_id, data, total_scans, contatos_ajuste, conversoes_manual, reprovados
        from manual_data
        where data >= $1 and data <= $3 and ($2::uuid is null or academia_id = $2)`,
         [fromDate, academiaId, toDate]
@@ -81,20 +89,27 @@ export async function fetchFunnelCounts(
        group by academia_id, day`,
         [from, academiaId, toExclusive]
       ),
+      pool.query<{ count: number }>(
+        `select count(*) from clientes_alle where ativo = true and ($1::uuid is null or academia_id = $1)`,
+        [academiaId]
+      ),
     ])
 
   const totalAlunos = academiaRows.reduce((sum, row) => sum + (row.total_alunos ?? 0), 0)
   const academiaNomeById = new Map(academiaNomeRows.map((a) => [a.id, a.nome]))
 
-  // total_scans é aditivo: soma direta de todas as linhas do período. reprovados
-  // segue o mesmo padrão (sem contagem automática pra "ajustar", ver migration 0011).
+  // total_scans é aditivo: soma direta de todas as linhas do período. reprovados e
+  // conversoes_manual seguem o mesmo padrão (aditivo, sem substituir nenhuma contagem
+  // automática — ver migration 0011 e 0013).
   let totalScans = 0
   let totalReprovados = 0
+  let totalConversoesManual = 0
 
   // Por dia (pro histórico diário): soma bruta do que foi lançado naquele dia
   // específico, entre as academias no escopo.
   const scansPorDia = new Map<string, number>()
   const reprovadosPorDia = new Map<string, number>()
+  const conversoesManualPorDia = new Map<string, number>()
 
   // Mesma soma, mas mantendo a identidade da academia — pra transparência no
   // histórico (dia X teve Y scans no total, sendo Z em cada unidade), já que o
@@ -108,51 +123,59 @@ export async function fetchFunnelCounts(
     totalReprovados += row.reprovados ?? 0
     reprovadosPorDia.set(row.data, (reprovadosPorDia.get(row.data) ?? 0) + (row.reprovados ?? 0))
 
+    totalConversoesManual += row.conversoes_manual ?? 0
+    conversoesManualPorDia.set(row.data, (conversoesManualPorDia.get(row.data) ?? 0) + (row.conversoes_manual ?? 0))
+
     const porAcademia = scansPorAcademiaPorDia.get(row.data) ?? new Map<string, number>()
     porAcademia.set(row.academia_id, (porAcademia.get(row.academia_id) ?? 0) + (row.total_scans ?? 0))
     scansPorAcademiaPorDia.set(row.data, porAcademia)
   }
 
-  // Contatos/conversões: por padrão é a contagem automática (contacts/conversions,
-  // por academia+dia); quando existe um ajuste manual pra aquele academia+dia (ver
-  // migration 0002), ele substitui a contagem automática por completo — não soma em
-  // cima. O merge é por chave academia_id+dia pra um ajuste não "vazar" pra outra
-  // academia quando o filtro é "todas".
+  // Contatos: por padrão é a contagem automática (contacts, por academia+dia); quando
+  // existe um ajuste manual pra aquele academia+dia (ver migration 0002), ele substitui
+  // a contagem automática por completo — não soma em cima. O merge é por chave
+  // academia_id+dia pra um ajuste não "vazar" pra outra academia quando o filtro é
+  // "todas". Conversões da Ane (conversions) não têm mais esse merge — são só a
+  // contagem automática, exposta separadamente de conversoes_manual (acima).
   const rawContatos = new Map(contatosPorDia.map((r) => [keyOf(r.academia_id, r.day), r.count]))
-  const rawConversoes = new Map(conversoesPorDia.map((r) => [keyOf(r.academia_id, r.day), r.count]))
   const effectiveContatos = new Map(rawContatos)
-  const effectiveConversoes = new Map(rawConversoes)
 
   for (const row of manualRows) {
     const key = keyOf(row.academia_id, row.data)
     if (row.contatos_ajuste != null) effectiveContatos.set(key, row.contatos_ajuste)
-    if (row.conversoes_ajuste != null) effectiveConversoes.set(key, row.conversoes_ajuste)
   }
 
   let totalContatos = 0
-  let totalConversoes = 0
+  let totalConversoesAne = 0
   const contatosPorDiaEfetivo = new Map<string, number>()
-  const conversoesPorDiaEfetivo = new Map<string, number>()
+  const conversoesAnePorDia = new Map<string, number>()
 
   for (const [key, value] of effectiveContatos) {
     const day = key.split('|')[1]
     totalContatos += value
     contatosPorDiaEfetivo.set(day, (contatosPorDiaEfetivo.get(day) ?? 0) + value)
   }
-  for (const [key, value] of effectiveConversoes) {
-    const day = key.split('|')[1]
-    totalConversoes += value
-    conversoesPorDiaEfetivo.set(day, (conversoesPorDiaEfetivo.get(day) ?? 0) + value)
+  for (const row of conversoesPorDia) {
+    totalConversoesAne += row.count
+    conversoesAnePorDia.set(row.day, (conversoesAnePorDia.get(row.day) ?? 0) + row.count)
   }
+
+  const totalConversoes = totalConversoesAne + totalConversoesManual
+  const totalClientesAlle = clientesAlleCount
 
   // totalAlunos não varia por dia (é o total cadastrado agora, não um lançamento
   // histórico) — repete o mesmo valor em cada ponto da série.
-  const series: DailyFunnelPoint[] = enumerateDays(fromDate, days).map((date) => ({
+  const series: DailyFunnelPoint[] = enumerateDays(fromDate, days).map((date) => {
+    const conversoesAne = conversoesAnePorDia.get(date) ?? 0
+    const conversoesManual = conversoesManualPorDia.get(date) ?? 0
+    return {
     date,
     totalAlunos,
     totalScans: scansPorDia.get(date) ?? 0,
     contatos: contatosPorDiaEfetivo.get(date) ?? 0,
-    conversoes: conversoesPorDiaEfetivo.get(date) ?? 0,
+    conversoesAne,
+    conversoesManual,
+    conversoes: conversoesAne + conversoesManual,
     reprovados: reprovadosPorDia.get(date) ?? 0,
     // Toda academia ativa aparece, mesmo com 0 — é isso que deixa claro quem não
     // reportou scan nenhum naquele dia. Some a isso qualquer academia_id que só
@@ -167,14 +190,18 @@ export async function fetchFunnelCounts(
         totalScans: scansPorAcademiaPorDia.get(date)?.get(id) ?? 0,
       }))
     })(),
-  }))
+    }
+  })
 
   return {
     totalAlunos,
     totalScans,
     totalContatos,
+    totalConversoesAne,
+    totalConversoesManual,
     totalConversoes,
     totalReprovados,
+    totalClientesAlle,
     series,
   }
 }

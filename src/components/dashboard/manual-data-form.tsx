@@ -29,7 +29,7 @@ export function ManualDataForm({
   const [data, setData] = useState(editing?.data ?? todayIso())
   const [totalScans, setTotalScans] = useState('')
   const [contatosAjuste, setContatosAjuste] = useState('')
-  const [conversoesAjuste, setConversoesAjuste] = useState('')
+  const [conversoesManual, setConversoesManual] = useState('')
   const [reprovados, setReprovados] = useState('')
   const [pending, startTransition] = useTransition()
   const { showToast } = useToast()
@@ -47,12 +47,12 @@ export function ManualDataForm({
     if (existing) {
       setTotalScans(String(existing.totalScans))
       setContatosAjuste(existing.contatosAjuste != null ? String(existing.contatosAjuste) : '')
-      setConversoesAjuste(existing.conversoesAjuste != null ? String(existing.conversoesAjuste) : '')
+      setConversoesManual(String(existing.conversoesManual))
       setReprovados(String(existing.reprovados))
     } else {
       setTotalScans('')
       setContatosAjuste('')
-      setConversoesAjuste('')
+      setConversoesManual('')
       setReprovados('')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -175,18 +175,17 @@ export function ManualDataForm({
       </div>
 
       <div className="lg:col-span-2">
-        <label className="field-label" htmlFor="conversoes_ajuste">
-          Ajuste de conversões (opcional)
+        <label className="field-label" htmlFor="conversoes_manual">
+          Conversões manual (Bitrix)
         </label>
         <input
-          id="conversoes_ajuste"
-          name="conversoes_ajuste"
+          id="conversoes_manual"
+          name="conversoes_manual"
           type="number"
           min={0}
-          placeholder="deixe em branco pra usar a contagem automática"
           className="input"
-          value={conversoesAjuste}
-          onChange={(e) => setConversoesAjuste(e.target.value)}
+          value={conversoesManual}
+          onChange={(e) => setConversoesManual(e.target.value)}
         />
       </div>
 
@@ -206,9 +205,10 @@ export function ManualDataForm({
       </div>
 
       <p className="text-xs text-slate-400 dark:text-slate-500 lg:col-span-5">
-        Contatos e conversões normalmente vêm automáticos do agregador — só preencha o ajuste se precisar corrigir o
-        número desse dia específico (ele substitui a contagem automática, não soma). Reprovados/cancelados não tem
-        contagem automática — é um número somado ao total, não um ajuste.
+        Contatos normalmente vêm automáticos do agregador — só preencha o ajuste se precisar corrigir o número desse
+        dia específico (ele substitui a contagem automática, não soma). Conversões manual é uma origem separada da
+        automática (Ane), somada ao total — não é um ajuste. Reprovados/cancelados também não tem contagem
+        automática — é um número somado ao total.
       </p>
     </form>
   )

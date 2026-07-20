@@ -69,7 +69,7 @@ export function AcademiasTable({
                 <th className="px-4 py-3">Número WhatsApp</th>
                 <th className="px-4 py-3 text-right">Total de alunos</th>
                 <th className="px-4 py-3 text-right">Total de conversões</th>
-                <th className="px-4 py-3 text-right">Ajuste conversões</th>
+                <th className="px-4 py-3 text-right">Conversões manuais</th>
                 <th className="px-4 py-3">Ativa</th>
                 <th className="px-4 py-3">Ações</th>
               </tr>
@@ -160,16 +160,16 @@ function AcademiaRow({
       <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{academia.totalAlunos}</td>
       <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{academia.totalConversoes}</td>
       <td className="px-4 py-3 text-right tabular-nums">
-        {academia.conversoesAjusteTotal !== 0 ? (
+        {academia.conversoesManualAjusteTotal !== 0 ? (
           <span
             className={
-              academia.conversoesAjusteTotal > 0
+              academia.conversoesManualAjusteTotal > 0
                 ? 'font-semibold text-emerald-600 dark:text-emerald-400'
                 : 'font-semibold text-rose-600 dark:text-rose-400'
             }
           >
-            {academia.conversoesAjusteTotal > 0 ? '+' : ''}
-            {academia.conversoesAjusteTotal}
+            {academia.conversoesManualAjusteTotal > 0 ? '+' : ''}
+            {academia.conversoesManualAjusteTotal}
           </span>
         ) : (
           <span className="text-slate-300 dark:text-slate-600">—</span>
@@ -290,14 +290,14 @@ function AcademiaEditRow({
             </p>
           </div>
           <div className="w-32">
-            <label className="field-label" htmlFor={`conversoes-ajuste-${academia.id}`}>
-              Ajuste conversões
+            <label className="field-label" htmlFor={`conversoes-manual-ajuste-${academia.id}`}>
+              Conversões manuais
             </label>
             <input
-              id={`conversoes-ajuste-${academia.id}`}
-              name="conversoes_ajuste_total"
+              id={`conversoes-manual-ajuste-${academia.id}`}
+              name="conversoes_manual_ajuste_total"
               type="number"
-              defaultValue={academia.conversoesAjusteTotal}
+              defaultValue={academia.conversoesManualAjusteTotal}
               className="input"
             />
           </div>

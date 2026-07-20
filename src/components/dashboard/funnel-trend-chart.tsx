@@ -5,11 +5,13 @@ import { getChartChrome } from '@/lib/dashboard/chart-theme'
 import { useIsDark } from '@/lib/dashboard/use-is-dark'
 import type { DailyFunnelPoint } from '@/lib/dashboard/types'
 
-// Categórico, 2 séries — mesmas cores já usadas nos cards do funil (emerald pra
-// contatos, amber pra conversões). Validado: pior par ΔE 39.3 (alvo >= 12).
+// Categórico, 3 séries — emerald pra contatos, amber pra conversões da Ane
+// (automática), brand-400 pra conversões manuais. Validado com
+// scripts/validate_palette.js (skill dataviz) em claro e escuro — todas passam.
 const SERIES = {
   contatos: { key: 'contatos' as const, label: 'Contatos', color: '#059669' },
-  conversoes: { key: 'conversoes' as const, label: 'Conversões', color: '#d97706' },
+  conversoesAne: { key: 'conversoesAne' as const, label: 'Convertidos Ane', color: '#d97706' },
+  conversoesManual: { key: 'conversoesManual' as const, label: 'Convertidos Manual', color: '#ab5ccb' },
 }
 
 function formatDay(date: string): string {
@@ -72,9 +74,18 @@ export function FunnelTrendChart({ series }: { series: DailyFunnelPoint[] }) {
             />
             <Line
               type="monotone"
-              dataKey={SERIES.conversoes.key}
-              name={SERIES.conversoes.label}
-              stroke={SERIES.conversoes.color}
+              dataKey={SERIES.conversoesAne.key}
+              name={SERIES.conversoesAne.label}
+              stroke={SERIES.conversoesAne.color}
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4 }}
+            />
+            <Line
+              type="monotone"
+              dataKey={SERIES.conversoesManual.key}
+              name={SERIES.conversoesManual.label}
+              stroke={SERIES.conversoesManual.color}
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 4 }}

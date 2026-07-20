@@ -8,7 +8,7 @@ export type ManualDataEntry = {
   data: string
   totalScans: number
   contatosAjuste: number | null
-  conversoesAjuste: number | null
+  conversoesManual: number
   reprovados: number
 }
 
@@ -26,11 +26,11 @@ export async function fetchManualDataHistory(profile: UserProfile): Promise<Manu
     data: string
     total_scans: number
     contatos_ajuste: number | null
-    conversoes_ajuste: number | null
+    conversoes_manual: number
     reprovados: number
   }>(
     `select md.id, md.academia_id, a.nome as academia_nome, md.data, md.total_scans,
-            md.contatos_ajuste, md.conversoes_ajuste, md.reprovados
+            md.contatos_ajuste, md.conversoes_manual, md.reprovados
      from manual_data md
      join academias a on a.id = md.academia_id
      where ($1::uuid is null or md.academia_id = $1)
@@ -46,7 +46,7 @@ export async function fetchManualDataHistory(profile: UserProfile): Promise<Manu
     data: row.data,
     totalScans: row.total_scans,
     contatosAjuste: row.contatos_ajuste,
-    conversoesAjuste: row.conversoes_ajuste,
+    conversoesManual: row.conversoes_manual,
     reprovados: row.reprovados,
   }))
 }

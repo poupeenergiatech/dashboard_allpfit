@@ -27,7 +27,7 @@ export function ManualDataHistoryTable({
             <th className="px-4 py-3 text-right">Scans</th>
             <th className="px-4 py-3 text-right">Reprovados</th>
             <th className="px-4 py-3 text-right">Ajuste contatos</th>
-            <th className="px-4 py-3 text-right">Ajuste conversões</th>
+            <th className="px-4 py-3 text-right">Conversões manual</th>
             {onEdit && <th className="px-4 py-3" />}
           </tr>
         </thead>
@@ -52,10 +52,10 @@ export function ManualDataHistoryTable({
                 )}
               </td>
               <td className="px-4 py-3 text-right tabular-nums">
-                {entry.conversoesAjuste != null ? (
-                  <span className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">{entry.conversoesAjuste}</span>
+                {entry.conversoesManual > 0 ? (
+                  <span className="font-semibold text-amber-600 dark:text-amber-400">{entry.conversoesManual}</span>
                 ) : (
-                  <span className="text-slate-300 dark:text-slate-600">—</span>
+                  <span className="text-slate-300 dark:text-slate-600">0</span>
                 )}
               </td>
               {onEdit && (

@@ -17,12 +17,14 @@ export function AcademiaTable({ rows }: { rows: AcademiaPerformance[] }) {
 
   return (
     <div className="card overflow-x-auto">
-      <table className="w-full min-w-[560px] text-sm">
+      <table className="w-full min-w-[760px] text-sm">
         <thead>
           <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             <th className="px-4 py-3">Academia</th>
             <th className="px-4 py-3 text-right">Contatos</th>
-            <th className="px-4 py-3 text-right">Conversões</th>
+            <th className="px-4 py-3 text-right">Convertidos Ane</th>
+            <th className="px-4 py-3 text-right">Convertidos Manual</th>
+            <th className="px-4 py-3 text-right">Total convertidos</th>
             <th className="px-4 py-3">Taxa de conversão</th>
           </tr>
         </thead>
@@ -38,23 +40,10 @@ export function AcademiaTable({ rows }: { rows: AcademiaPerformance[] }) {
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{row.totalContatos}</td>
-                <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
-                  <span className="inline-flex items-center gap-1.5">
-                    {row.totalConversoes}
-                    {row.conversoesAjusteTotal !== 0 && (
-                      <span
-                        title={`Inclui ajuste manual de ${row.conversoesAjusteTotal > 0 ? '+' : ''}${row.conversoesAjusteTotal} cadastrado em /academias`}
-                        className={`badge ${
-                          row.conversoesAjusteTotal > 0
-                            ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-                            : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400'
-                        }`}
-                      >
-                        {row.conversoesAjusteTotal > 0 ? '+' : ''}
-                        {row.conversoesAjusteTotal}
-                      </span>
-                    )}
-                  </span>
+                <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{row.totalConversoesAne}</td>
+                <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{row.totalConversoesManual}</td>
+                <td className="px-4 py-3 text-right tabular-nums font-semibold text-slate-900 dark:text-white">
+                  {row.totalConversoes}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">

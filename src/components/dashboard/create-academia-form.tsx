@@ -54,12 +54,12 @@ export function CreateAcademiaForm({ onCreate = createAcademia }: { onCreate?: (
       </div>
 
       <div>
-        <label className="field-label" htmlFor="conversoes_ajuste_total">
-          Ajuste de conversões (opcional)
+        <label className="field-label" htmlFor="conversoes_manual_ajuste_total">
+          Conversões manuais (total histórico, opcional)
         </label>
         <input
-          id="conversoes_ajuste_total"
-          name="conversoes_ajuste_total"
+          id="conversoes_manual_ajuste_total"
+          name="conversoes_manual_ajuste_total"
           type="number"
           defaultValue={0}
           className="input"
