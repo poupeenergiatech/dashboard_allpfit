@@ -8,6 +8,7 @@ export type SyncLogEntry = {
   inseridas: number | null
   jaExistentes: number | null
   naoEncontradas: string[]
+  semUnidade: number | null
   errorMessage: string | null
   createdAt: string
 }
@@ -25,10 +26,11 @@ export async function fetchSyncHistory(): Promise<SyncLogEntry[]> {
     inseridas: number | null
     ja_existentes: number | null
     nao_encontradas: string[]
+    sem_unidade: number | null
     error_message: string | null
     created_at: string
   }>(
-    `select id, triggered_by, status, total_convertidos, inseridas, ja_existentes, nao_encontradas, error_message, created_at
+    `select id, triggered_by, status, total_convertidos, inseridas, ja_existentes, nao_encontradas, sem_unidade, error_message, created_at
      from alle_documentos_sync_log
      order by created_at desc
      limit $1`,
@@ -43,6 +45,7 @@ export async function fetchSyncHistory(): Promise<SyncLogEntry[]> {
     inseridas: row.inseridas,
     jaExistentes: row.ja_existentes,
     naoEncontradas: row.nao_encontradas ?? [],
+    semUnidade: row.sem_unidade,
     errorMessage: row.error_message,
     createdAt: row.created_at,
   }))

@@ -77,7 +77,7 @@ export function SyncHistoryTable({ entries }: { entries: SyncLogEntry[] }) {
         <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhuma sincronização encontrada pra esse filtro.</div>
       ) : (
         <div className="card overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-[840px] text-sm">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <th className="px-4 py-3">Quando</th>
@@ -86,6 +86,7 @@ export function SyncHistoryTable({ entries }: { entries: SyncLogEntry[] }) {
                 <th className="px-4 py-3 text-right">Convertidos</th>
                 <th className="px-4 py-3 text-right">Novas</th>
                 <th className="px-4 py-3 text-right">Já existentes</th>
+                <th className="px-4 py-3 text-right">Sem unidade</th>
                 <th className="px-4 py-3">Não encontradas</th>
               </tr>
             </thead>
@@ -119,6 +120,18 @@ export function SyncHistoryTable({ entries }: { entries: SyncLogEntry[] }) {
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{entry.inseridas ?? '—'}</td>
                   <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{entry.jaExistentes ?? '—'}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">
+                    {entry.semUnidade != null && entry.semUnidade > 0 ? (
+                      <span
+                        className="font-semibold text-amber-700 dark:text-amber-400"
+                        title="Convertidos no Alle Documentos com unidade_allpfit em branco — não dá pra vincular a nenhuma academia, precisa corrigir na origem."
+                      >
+                        {entry.semUnidade}
+                      </span>
+                    ) : (
+                      <span className="text-slate-300 dark:text-slate-600">{entry.status === 'erro' ? '—' : 0}</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 max-w-[280px] text-xs text-slate-500 dark:text-slate-400">
                     {entry.status === 'erro' ? (
                       <span className="text-rose-600 dark:text-rose-400">{entry.errorMessage}</span>

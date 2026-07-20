@@ -19,6 +19,7 @@ export type SyncAlleDocumentosResult = {
   inseridas: number
   jaExistentes: number
   naoEncontradas: string[]
+  semUnidade: number
 }
 
 export type SyncTrigger = 'manual' | 'automatico'
@@ -45,9 +46,16 @@ export async function runAlleDocumentosSync(triggeredBy: SyncTrigger): Promise<S
 
     await pool.query(
       `insert into alle_documentos_sync_log
-         (triggered_by, status, total_convertidos, inseridas, ja_existentes, nao_encontradas)
-       values ($1, 'sucesso', $2, $3, $4, $5)`,
-      [triggeredBy, result.totalConvertidos, result.inseridas, result.jaExistentes, JSON.stringify(result.naoEncontradas)]
+         (triggered_by, status, total_convertidos, inseridas, ja_existentes, nao_encontradas, sem_unidade)
+       values ($1, 'sucesso', $2, $3, $4, $5, $6)`,
+      [
+        triggeredBy,
+        result.totalConvertidos,
+        result.inseridas,
+        result.jaExistentes,
+        JSON.stringify(result.naoEncontradas),
+        result.semUnidade,
+      ]
     )
 
     return result
@@ -84,6 +92,7 @@ async function syncAlleDocumentosConvertidos(): Promise<SyncAlleDocumentosResult
 
   let inseridas = 0
   let jaExistentes = 0
+  let semUnidade = 0
   const naoEncontradas = new Set<string>()
 
   for (const row of convertidos) {
@@ -91,7 +100,13 @@ async function syncAlleDocumentosConvertidos(): Promise<SyncAlleDocumentosResult
     const academiaId = resolveAcademiaId(unidade)
 
     if (!academiaId) {
+      // unidade em branco não é "não encontrada" (esse balde é só pra nome que veio
+      // preenchido mas não bateu com nenhuma academia/alias) — sem isso, esses
+      // registros somem de totalConvertidos sem aparecer em nenhum lugar do
+      // resultado, e a soma nunca fecha. Não dá pra vincular por alias porque não
+      // tem nome nenhum pra vincular; só corrigindo unidade_allpfit na origem.
       if (unidade) naoEncontradas.add(unidade)
+      else semUnidade++
       continue
     }
 
@@ -111,5 +126,6 @@ async function syncAlleDocumentosConvertidos(): Promise<SyncAlleDocumentosResult
     inseridas,
     jaExistentes,
     naoEncontradas: [...naoEncontradas],
+    semUnidade,
   }
 }

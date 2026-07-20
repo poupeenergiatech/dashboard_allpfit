@@ -66,6 +66,14 @@ export function SyncAlleDocumentosButton({
             antes.
           </p>
 
+          {result.semUnidade > 0 && (
+            <p className="mt-2 text-amber-700 dark:text-amber-400">
+              <span className="font-semibold">{result.semUnidade}</span> convertido(s) com unidade em branco no Alle
+              Documentos — não dá pra vincular automaticamente nem por alias (não tem nome pra vincular). Corrija o
+              campo &quot;unidade_allpfit&quot; direto na origem.
+            </p>
+          )}
+
           {pendentes.length > 0 && (
             <div className="mt-3 space-y-2">
               <p className="text-amber-700 dark:text-amber-400">
