@@ -41,3 +41,56 @@ export async function setAutoSyncEnabled(enabled: boolean) {
 
   revalidatePath('/configuracoes')
 }
+
+export type ResetConversoesResult = {
+  conversoesAneRemovidas: number
+  diasManuaisZerados: number
+  academiasZeradas: number
+}
+
+// Zera as duas origens de conversão em todas as academias — apaga os registros
+// automáticos da Ane (conversions) e os lançamentos manuais/Bitrix (manual_data
+// .conversoes_manual por dia + academias.conversoes_manual_ajuste_total). A Ane não
+// é um reset permanente: como a fonte (alle_documentos_clientes) continua existindo
+// no Supabase, a próxima sincronização (automática ou pelo botão acima) pode trazer
+// os mesmos registros de volta. Os lançamentos manuais, sim, são perdidos de
+// verdade — não tem de onde vir de volta.
+export async function resetAllConversoes(): Promise<ResetConversoesResult> {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canManageUsers(profile.role)) {
+    throw new Error('Apenas Super Admin pode resetar conversões.')
+  }
+
+  const client = await pool.connect()
+  let result: ResetConversoesResult
+  try {
+    await client.query('begin')
+
+    const { rowCount: conversoesAneRemovidas } = await client.query('delete from conversions')
+    const { rowCount: diasManuaisZerados } = await client.query(
+      `update manual_data set conversoes_manual = 0, updated_at = now() where conversoes_manual != 0`
+    )
+    const { rowCount: academiasZeradas } = await client.query(
+      `update academias set conversoes_manual_ajuste_total = 0 where conversoes_manual_ajuste_total != 0`
+    )
+
+    await client.query('commit')
+    result = {
+      conversoesAneRemovidas: conversoesAneRemovidas ?? 0,
+      diasManuaisZerados: diasManuaisZerados ?? 0,
+      academiasZeradas: academiasZeradas ?? 0,
+    }
+  } catch (err) {
+    await client.query('rollback')
+    throw err
+  } finally {
+    client.release()
+  }
+
+  revalidatePath('/')
+  revalidatePath('/performance')
+  revalidatePath('/academias')
+  revalidatePath('/configuracoes')
+
+  return result
+}

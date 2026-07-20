@@ -1,5 +1,6 @@
 import { headers } from 'next/headers'
 import { AgregadorWebhookLogTable } from '@/components/dashboard/agregador-webhook-log-table'
+import { ResetConversoesButton } from '@/components/dashboard/reset-conversoes-button'
 import { ScansWebhookLogTable } from '@/components/dashboard/scans-webhook-log-table'
 import { SyncAlleDocumentosButton } from '@/components/dashboard/sync-alle-documentos-button'
 import { SyncHistoryTable } from '@/components/dashboard/sync-history-table'
@@ -97,6 +98,11 @@ export default async function ConfiguracoesPage() {
           casada e gravada em manual_data.
         </p>
         <ScansWebhookLogTable entries={scansWebhookLog} />
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-red-700 dark:text-red-400">Zona de risco</h3>
+        <ResetConversoesButton />
       </div>
     </div>
   )
