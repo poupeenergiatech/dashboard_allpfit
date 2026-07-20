@@ -1,12 +1,16 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
+import { updateClienteConvertidoAcademia } from '@/app/(app)/convertidos/actions'
 import { Avatar } from '@/components/ui/avatar'
 import { ListFilterBar } from './list-filter-bar'
 import { Pagination } from './pagination'
+import { useToast } from '@/components/ui/toast'
+import type { Academia } from '@/lib/dashboard/types'
 import type { ClienteConvertido } from '@/lib/dashboard/fetch-clientes-convertidos'
 
 type StatusFilter = 'todos' | 'sem_unidade'
+type UpdateAction = (conversionId: string, formData: FormData) => Promise<void>
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
@@ -19,10 +23,21 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR')
 }
 
-export function ClientesConvertidosTable({ clientes }: { clientes: ClienteConvertido[] }) {
+export function ClientesConvertidosTable({
+  clientes,
+  academias,
+  editable = true,
+  onUpdate = updateClienteConvertidoAcademia,
+}: {
+  clientes: ClienteConvertido[]
+  academias: Academia[]
+  editable?: boolean
+  onUpdate?: UpdateAction
+}) {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<StatusFilter>('todos')
   const [page, setPage] = useState(1)
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -45,6 +60,8 @@ export function ClientesConvertidosTable({ clientes }: { clientes: ClienteConver
     return <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhum cliente convertido ainda.</div>
   }
 
+  const columnCount = editable ? 5 : 4
+
   return (
     <div className="space-y-3">
       <ListFilterBar
@@ -60,40 +77,66 @@ export function ClientesConvertidosTable({ clientes }: { clientes: ClienteConver
         <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhum cliente encontrado pra esse filtro.</div>
       ) : (
         <div className="card overflow-x-auto">
-          <table className="w-full min-w-[620px] text-sm">
+          <table className="w-full min-w-[700px] text-sm">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <th className="sticky left-0 z-10 border-r border-slate-100 dark:border-slate-800 bg-slate-50/95 dark:bg-slate-800/95 px-4 py-3">Nome</th>
                 <th className="px-4 py-3">Telefone</th>
                 <th className="px-4 py-3">Academia</th>
                 <th className="px-4 py-3">Convertido em</th>
+                {editable && <th className="px-4 py-3">Ações</th>}
               </tr>
             </thead>
             <tbody>
-              {pageRows.map((c) => (
-                <tr key={c.id} className="border-b border-slate-50 dark:border-slate-800/60 transition last:border-0 hover:bg-slate-50/70 dark:hover:bg-slate-800/70">
-                  <td className="sticky left-0 z-10 border-r border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar name={c.nome ?? '?'} />
-                      <span className="text-slate-900 dark:text-white">{c.nome ?? '—'}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{c.telefone ?? '—'}</td>
-                  <td className="px-4 py-3">
-                    {c.academiaNome ? (
-                      <span className="text-slate-600 dark:text-slate-300">{c.academiaNome}</span>
-                    ) : (
-                      <span
-                        className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                        title="unidade_allpfit em branco no Alle Documentos — corrija na origem pra vincular."
-                      >
-                        Sem unidade
-                      </span>
+              {pageRows.map((c) =>
+                editable && editingId === c.id ? (
+                  <ClienteConvertidoEditRow
+                    key={c.id}
+                    cliente={c}
+                    academias={academias}
+                    columnCount={columnCount}
+                    onUpdate={onUpdate}
+                    onCancel={() => setEditingId(null)}
+                    onSaved={() => setEditingId(null)}
+                  />
+                ) : (
+                  <tr key={c.id} className="border-b border-slate-50 dark:border-slate-800/60 transition last:border-0 hover:bg-slate-50/70 dark:hover:bg-slate-800/70">
+                    <td className="sticky left-0 z-10 border-r border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={c.nome ?? '?'} />
+                        <span className="text-slate-900 dark:text-white">{c.nome ?? '—'}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{c.telefone ?? '—'}</td>
+                    <td className="px-4 py-3">
+                      {c.academiaNome ? (
+                        <span className="text-slate-600 dark:text-slate-300">{c.academiaNome}</span>
+                      ) : (
+                        <span
+                          className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                          title="unidade_allpfit em branco no Alle Documentos — corrija na origem pra vincular."
+                        >
+                          Sem unidade
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">{formatDate(c.createdAt)}</td>
+                    {editable && (
+                      <td className="px-4 py-3">
+                        {c.academiaId === null && (
+                          <button
+                            type="button"
+                            onClick={() => setEditingId(c.id)}
+                            className="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                          >
+                            Editar
+                          </button>
+                        )}
+                      </td>
                     )}
-                  </td>
-                  <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">{formatDate(c.createdAt)}</td>
-                </tr>
-              ))}
+                  </tr>
+                )
+              )}
             </tbody>
           </table>
 
@@ -101,5 +144,95 @@ export function ClientesConvertidosTable({ clientes }: { clientes: ClienteConver
         </div>
       )}
     </div>
+  )
+}
+
+// Só existe pra linhas "sem unidade" (academiaId null) — ver a nota em
+// convertidos/actions.ts sobre por que essa é a única forma de corrigir depois que
+// o sync já inseriu o registro.
+function ClienteConvertidoEditRow({
+  cliente,
+  academias,
+  columnCount,
+  onUpdate,
+  onCancel,
+  onSaved,
+}: {
+  cliente: ClienteConvertido
+  academias: Academia[]
+  columnCount: number
+  onUpdate: UpdateAction
+  onCancel: () => void
+  onSaved: () => void
+}) {
+  const [pending, startTransition] = useTransition()
+  const { showToast } = useToast()
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+
+    startTransition(async () => {
+      try {
+        await onUpdate(cliente.id, formData)
+        showToast('Cliente convertido atualizado.')
+        onSaved()
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'Erro ao atualizar cliente convertido.', 'error')
+      }
+    })
+  }
+
+  return (
+    <tr className="border-b border-slate-50 dark:border-slate-800/60 bg-slate-50/70 dark:bg-slate-800/70 last:border-0">
+      <td className="px-4 py-3" colSpan={columnCount}>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
+          <div className="lg:col-span-2">
+            <label className="field-label" htmlFor={`nome-${cliente.id}`}>
+              Nome
+            </label>
+            <input id={`nome-${cliente.id}`} name="nome" type="text" defaultValue={cliente.nome ?? ''} className="input" />
+          </div>
+
+          <div>
+            <label className="field-label" htmlFor={`telefone-${cliente.id}`}>
+              Telefone
+            </label>
+            <input
+              id={`telefone-${cliente.id}`}
+              name="telefone"
+              type="text"
+              defaultValue={cliente.telefone ?? ''}
+              className="input"
+            />
+          </div>
+
+          <div>
+            <label className="field-label" htmlFor={`academia-${cliente.id}`}>
+              Academia
+            </label>
+            <select id={`academia-${cliente.id}`} name="academia_id" required defaultValue="" className="select">
+              <option value="" disabled>
+                Selecione…
+              </option>
+              {academias.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2 lg:col-span-5">
+            <button type="submit" disabled={pending} className="btn-primary">
+              {pending ? 'Salvando…' : 'Salvar'}
+            </button>
+            <button type="button" onClick={onCancel} className="btn-secondary">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </td>
+    </tr>
   )
 }

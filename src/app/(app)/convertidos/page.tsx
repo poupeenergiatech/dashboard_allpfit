@@ -2,7 +2,7 @@ import { AcademiaFilterLinks } from '@/components/dashboard/academia-filter-link
 import { ClientesConvertidosTable } from '@/components/dashboard/clientes-convertidos-table'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchClientesConvertidos } from '@/lib/dashboard/fetch-clientes-convertidos'
-import { getCurrentUserProfile } from '@/lib/auth/profile'
+import { canManageManualData, getCurrentUserProfile } from '@/lib/auth/profile'
 
 export default async function ConvertidosPage({
   searchParams,
@@ -29,7 +29,11 @@ export default async function ConvertidosPage({
 
       <AcademiaFilterLinks basePath="/convertidos" academias={academias} academiaId={requestedAcademiaId} />
 
-      <ClientesConvertidosTable clientes={clientes} />
+      <ClientesConvertidosTable
+        clientes={clientes}
+        academias={academias}
+        editable={!!profile && canManageManualData(profile.role)}
+      />
     </div>
   )
 }
