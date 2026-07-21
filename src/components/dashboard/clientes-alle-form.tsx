@@ -80,6 +80,7 @@ export function ClientesAlleForm({
         <select id="status" name="status" defaultValue="ativo" className="select">
           <option value="ativo">Ativo</option>
           <option value="pendente">Pendente de assinatura</option>
+          <option value="sem_informacao">Sem informação</option>
         </select>
       </div>
 

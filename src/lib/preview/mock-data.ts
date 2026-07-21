@@ -178,6 +178,16 @@ export const MOCK_CLIENTES_ALLE: ClienteAlle[] = [
     status: 'reprovado',
     createdAt: '2026-06-10T11:00:00.000Z',
   },
+  {
+    id: 'ca5',
+    academiaId: MOCK_ACADEMIAS[2].id,
+    academiaNome: MOCK_ACADEMIAS[2].nome,
+    nome: 'Tatiane Rocha',
+    telefone: null,
+    email: null,
+    status: 'sem_informacao',
+    createdAt: '2026-06-25T16:00:00.000Z',
+  },
 ]
 
 // A última tem academiaId/academiaNome null — convertida pela Ane com
@@ -252,6 +262,16 @@ export const MOCK_CLIENTES_CONVERTIDOS: ClienteConvertido[] = [
     telefone: '5511955554444',
     status: 'reprovado',
     createdAt: '2026-07-14T08:00:00.000Z',
+  },
+  {
+    id: 'cv8',
+    origem: 'manual',
+    academiaId: MOCK_ACADEMIAS[2].id,
+    academiaNome: MOCK_ACADEMIAS[2].nome,
+    nome: 'Tatiane Rocha',
+    telefone: null,
+    status: 'sem_informacao',
+    createdAt: '2026-06-25T16:00:00.000Z',
   },
 ]
 

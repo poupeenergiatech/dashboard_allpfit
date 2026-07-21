@@ -10,7 +10,7 @@ export type ClienteConvertido = {
   academiaNome: string | null
   nome: string | null
   telefone: string | null
-  status: 'ativo' | 'pendente' | 'reprovado' | null
+  status: 'ativo' | 'pendente' | 'reprovado' | 'sem_informacao' | null
   createdAt: string
 }
 
@@ -47,7 +47,7 @@ export async function fetchClientesConvertidos(
     academia_nome: string | null
     nome: string | null
     telefone: string | null
-    status: 'ativo' | 'pendente' | 'reprovado' | null
+    status: 'ativo' | 'pendente' | 'reprovado' | 'sem_informacao' | null
     created_at: string
   }>(
     `select c.id, 'ane' as origem, c.academia_id, a.nome as academia_nome, c.nome, c.telefone,

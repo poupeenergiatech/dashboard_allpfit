@@ -20,13 +20,14 @@ type DeleteAction = (clienteId: string) => Promise<void>
 type ReprovarAction = (clienteId: string) => Promise<void>
 type BulkUpdateAction = (clienteIds: string[], status: ClienteAlleStatus) => Promise<void>
 type BulkDeleteAction = (clienteIds: string[]) => Promise<void>
-type StatusFilter = 'todos' | 'ativos' | 'pendentes' | 'reprovados'
+type StatusFilter = 'todos' | 'ativos' | 'pendentes' | 'reprovados' | 'sem_informacao'
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
   { value: 'ativos', label: 'Ativos' },
   { value: 'pendentes', label: 'Pendentes' },
   { value: 'reprovados', label: 'Reprovados' },
+  { value: 'sem_informacao', label: 'Sem informação' },
 ]
 
 const PAGE_SIZE = 15
@@ -66,6 +67,7 @@ export function ClientesAlleTable({
       if (status === 'ativos' && c.status !== 'ativo') return false
       if (status === 'pendentes' && c.status !== 'pendente') return false
       if (status === 'reprovados' && c.status !== 'reprovado') return false
+      if (status === 'sem_informacao' && c.status !== 'sem_informacao') return false
       if (term && !c.nome.toLowerCase().includes(term)) return false
       return true
     })
@@ -195,6 +197,7 @@ export function ClientesAlleTable({
             <option value="ativo">Ativo</option>
             <option value="pendente">Pendente de assinatura</option>
             <option value="reprovado">Reprovado</option>
+            <option value="sem_informacao">Sem informação</option>
           </select>
           <button type="button" disabled={bulkPending} onClick={handleBulkStatus} className="btn-secondary btn-sm">
             {bulkPending ? 'Aplicando…' : 'Aplicar status'}
@@ -277,6 +280,8 @@ export function ClientesAlleTable({
                         <span className="badge bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">Ativo</span>
                       ) : c.status === 'reprovado' ? (
                         <span className="badge bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400">Reprovado</span>
+                      ) : c.status === 'sem_informacao' ? (
+                        <span className="badge bg-slate-100 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">Sem informação</span>
                       ) : (
                         <span className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">Pendente</span>
                       )}
@@ -416,6 +421,7 @@ function ClienteAlleEditRow({
               <option value="ativo">Ativo</option>
               <option value="pendente">Pendente de assinatura</option>
               <option value="reprovado">Reprovado</option>
+              <option value="sem_informacao">Sem informação</option>
             </select>
           </div>
 

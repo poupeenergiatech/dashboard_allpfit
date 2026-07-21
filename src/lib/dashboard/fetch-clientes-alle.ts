@@ -1,7 +1,7 @@
 import { pool } from '@/lib/db/pool'
 import { scopeAcademiaId, type UserProfile } from '@/lib/auth/profile'
 
-export type ClienteAlleStatus = 'ativo' | 'pendente' | 'reprovado'
+export type ClienteAlleStatus = 'ativo' | 'pendente' | 'reprovado' | 'sem_informacao'
 
 export type ClienteAlle = {
   id: string

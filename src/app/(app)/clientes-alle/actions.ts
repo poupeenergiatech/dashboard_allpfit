@@ -22,6 +22,7 @@ function resolveAcademiaId(profile: UserProfile | null, requestedAcademiaId: str
 function parseStatus(value: FormDataEntryValue | null): ClienteAlleStatus {
   if (value === 'pendente') return 'pendente'
   if (value === 'reprovado') return 'reprovado'
+  if (value === 'sem_informacao') return 'sem_informacao'
   return 'ativo'
 }
 
