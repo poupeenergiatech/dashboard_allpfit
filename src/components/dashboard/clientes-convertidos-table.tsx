@@ -1,7 +1,13 @@
 'use client'
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
-import { promoverClienteConvertido, updateClienteConvertidoAcademia } from '@/app/(app)/convertidos/actions'
+import {
+  desfazerReprovacaoClienteConvertido,
+  promoverClienteConvertido,
+  reprovarClienteConvertido,
+  updateClienteConvertidoAcademia,
+} from '@/app/(app)/convertidos/actions'
+import { reprovarClienteAlle } from '@/app/(app)/clientes-alle/actions'
 import { Avatar } from '@/components/ui/avatar'
 import { ListFilterBar } from './list-filter-bar'
 import { Pagination } from './pagination'
@@ -12,6 +18,7 @@ import type { ClienteConvertido } from '@/lib/dashboard/fetch-clientes-convertid
 type StatusFilter = 'todos' | 'sem_unidade'
 type UpdateAction = (conversionId: string, formData: FormData) => Promise<void>
 type PromoteAction = (conversionId: string) => Promise<void>
+type ReprovarAction = (id: string) => Promise<void>
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
@@ -30,12 +37,18 @@ export function ClientesConvertidosTable({
   editable = true,
   onUpdate = updateClienteConvertidoAcademia,
   onPromote = promoverClienteConvertido,
+  onReprovarAne = reprovarClienteConvertido,
+  onDesfazerReprovacaoAne = desfazerReprovacaoClienteConvertido,
+  onReprovarManual = reprovarClienteAlle,
 }: {
   clientes: ClienteConvertido[]
   academias: Academia[]
   editable?: boolean
   onUpdate?: UpdateAction
   onPromote?: PromoteAction
+  onReprovarAne?: ReprovarAction
+  onDesfazerReprovacaoAne?: ReprovarAction
+  onReprovarManual?: ReprovarAction
 }) {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<StatusFilter>('todos')
@@ -63,7 +76,7 @@ export function ClientesConvertidosTable({
     return <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhum cliente convertido ainda.</div>
   }
 
-  const columnCount = editable ? 6 : 4
+  const columnCount = editable ? 7 : 5
 
   return (
     <div className="space-y-3">
@@ -80,12 +93,13 @@ export function ClientesConvertidosTable({
         <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhum cliente encontrado pra esse filtro.</div>
       ) : (
         <div className="card overflow-x-auto">
-          <table className="w-full min-w-[820px] text-sm">
+          <table className="w-full min-w-[920px] text-sm">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <th className="sticky left-0 z-10 border-r border-slate-100 dark:border-slate-800 bg-slate-50/95 dark:bg-slate-800/95 px-4 py-3">Nome</th>
                 <th className="px-4 py-3">Telefone</th>
                 <th className="px-4 py-3">Academia</th>
+                <th className="px-4 py-3">Origem</th>
                 <th className="px-4 py-3">Convertido em</th>
                 {editable && <th className="px-4 py-3">Termo de adesão</th>}
                 {editable && <th className="px-4 py-3">Ações</th>}
@@ -93,7 +107,7 @@ export function ClientesConvertidosTable({
             </thead>
             <tbody>
               {pageRows.map((c) =>
-                editable && editingId === c.id ? (
+                editable && c.origem === 'ane' && editingId === c.id ? (
                   <ClienteConvertidoEditRow
                     key={c.id}
                     cliente={c}
@@ -124,13 +138,24 @@ export function ClientesConvertidosTable({
                         </span>
                       )}
                     </td>
+                    <td className="px-4 py-3">
+                      {c.origem === 'ane' ? (
+                        <span className="badge bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-300">Ane</span>
+                      ) : (
+                        <span className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">Manual</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">{formatDate(c.createdAt)}</td>
                     {editable && (
                       <td className="px-4 py-3">
-                        {c.clienteAlleId ? (
+                        {c.status === 'ativo' ? (
                           <span className="badge bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
                             Cliente Alle ativo
                           </span>
+                        ) : c.status === 'pendente' ? (
+                          <span className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">Pendente</span>
+                        ) : c.status === 'reprovado' ? (
+                          <span className="badge bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400">Reprovado</span>
                         ) : c.academiaId ? (
                           <PromoverButton clienteId={c.id} nome={c.nome} onPromote={onPromote} />
                         ) : (
@@ -142,15 +167,53 @@ export function ClientesConvertidosTable({
                     )}
                     {editable && (
                       <td className="px-4 py-3">
-                        {c.academiaId === null && (
-                          <button
-                            type="button"
-                            onClick={() => setEditingId(c.id)}
-                            className="text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-                          >
-                            Editar
-                          </button>
-                        )}
+                        <div className="flex items-center gap-3 text-xs font-medium">
+                          {c.origem === 'ane' && c.academiaId === null && (
+                            <button
+                              type="button"
+                              onClick={() => setEditingId(c.id)}
+                              className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                            >
+                              Editar
+                            </button>
+                          )}
+                          {c.origem === 'ane' && c.status === 'reprovado' && (
+                            <ReprovarButton
+                              id={c.id}
+                              nome={c.nome}
+                              label="Desfazer"
+                              confirmText={`Desfazer a reprovação de ${c.nome ?? 'esse cliente'}?`}
+                              pendingLabel="Desfazendo…"
+                              successMessage="Reprovação desfeita."
+                              errorMessage="Erro ao desfazer reprovação."
+                              onReprovar={onDesfazerReprovacaoAne}
+                            />
+                          )}
+                          {c.origem === 'ane' && c.status === null && (
+                            <ReprovarButton
+                              id={c.id}
+                              nome={c.nome}
+                              label="Reprovar"
+                              confirmText={`Reprovar/cancelar ${c.nome ?? 'esse cliente'}?`}
+                              pendingLabel="Reprovando…"
+                              successMessage="Cliente marcado como reprovado."
+                              errorMessage="Erro ao reprovar cliente."
+                              onReprovar={onReprovarAne}
+                            />
+                          )}
+                          {c.origem === 'manual' && c.status !== 'reprovado' && (
+                            <ReprovarButton
+                              id={c.id}
+                              nome={c.nome}
+                              label="Reprovar"
+                              confirmText={`Reprovar/cancelar ${c.nome ?? 'esse cliente'}?`}
+                              pendingLabel="Reprovando…"
+                              successMessage="Cliente marcado como reprovado."
+                              errorMessage="Erro ao reprovar cliente."
+                              onReprovar={onReprovarManual}
+                            />
+                          )}
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -196,6 +259,57 @@ function PromoverButton({
   return (
     <button type="button" disabled={pending} onClick={handleClick} className="btn-outline-success btn-sm disabled:opacity-50">
       {pending ? 'Marcando…' : 'Assinou o termo'}
+    </button>
+  )
+}
+
+// Reutilizado pra reprovar (ane e manual) e pra desfazer reprovação (só ane, que não
+// tem outro lugar pra voltar atrás — manual pode ser editado de novo em
+// /clientes-alle).
+function ReprovarButton({
+  id,
+  nome,
+  label,
+  confirmText,
+  pendingLabel,
+  successMessage,
+  errorMessage,
+  onReprovar,
+}: {
+  id: string
+  nome: string | null
+  label: string
+  confirmText: string
+  pendingLabel: string
+  successMessage: string
+  errorMessage: string
+  onReprovar: ReprovarAction
+}) {
+  const [pending, startTransition] = useTransition()
+  const { showToast } = useToast()
+
+  function handleClick() {
+    if (pending) return
+    if (!window.confirm(confirmText)) return
+    startTransition(async () => {
+      try {
+        await onReprovar(id)
+        showToast(successMessage)
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : errorMessage, 'error')
+      }
+    })
+  }
+
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={handleClick}
+      className="text-rose-600 dark:text-rose-400 hover:text-rose-800 disabled:opacity-50"
+      title={nome ?? undefined}
+    >
+      {pending ? pendingLabel : label}
     </button>
   )
 }

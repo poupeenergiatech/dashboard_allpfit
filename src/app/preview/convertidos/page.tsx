@@ -9,8 +9,9 @@ export default function PreviewConvertidosPage() {
       <div>
         <h2 className="page-title">Clientes convertidos</h2>
         <p className="page-subtitle">
-          Convertidos automaticamente pela Ane (sync do Alle Documentos), com nome e telefone — inclui quem ainda
-          está sem unidade vinculada, quando o filtro é &quot;Todas as academias&quot;.
+          Convertidos pela Ane (sync do Alle Documentos) e manualmente (cadastro/CSV de Clientes Alle), com nome e
+          telefone — inclui quem da Ane ainda está sem unidade vinculada, quando o filtro é &quot;Todas as
+          academias&quot;.
         </p>
       </div>
 
@@ -21,6 +22,9 @@ export default function PreviewConvertidosPage() {
         academias={MOCK_ACADEMIAS}
         onUpdate={mockSave}
         onPromote={mockSave}
+        onReprovarAne={mockSave}
+        onDesfazerReprovacaoAne={mockSave}
+        onReprovarManual={mockSave}
       />
     </div>
   )

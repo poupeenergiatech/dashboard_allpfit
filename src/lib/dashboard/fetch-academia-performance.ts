@@ -38,8 +38,13 @@ export async function fetchAcademiaPerformance(
 
   const range = period === 'todos' ? null : periodRange(period, customRange ?? undefined)
 
-  const [{ rows: academias }, { rows: contatosPorDia }, { rows: conversoesPorDia }, { rows: ajustes }] =
-    await Promise.all([
+  const [
+    { rows: academias },
+    { rows: contatosPorDia },
+    { rows: conversoesPorDia },
+    { rows: ajustes },
+    { rows: clientesAlleAtivos },
+  ] = await Promise.all([
       pool.query<{ id: string; nome: string; conversoes_manual_ajuste_total: number }>(
         scopedAcademiaId
           ? 'select id, nome, conversoes_manual_ajuste_total from academias where ativo = true and id = $1 order by nome'
@@ -74,6 +79,15 @@ export async function fetchAcademiaPerformance(
            and ($2::date is null or data >= $2)
            and ($3::date is null or data <= $3)`,
         [scopedAcademiaId, range?.fromDate ?? null, range?.toDate ?? null]
+      ),
+      // Sem filtro de data — cliente Alle ativo é conversão manual sem data por
+      // linha (created_at é cadastro, não conversão), então conta pra qualquer
+      // período igual ao card "Clientes Alle" (ver fetch-funnel-counts.ts).
+      pool.query<{ academia_id: string; count: number }>(
+        `select academia_id, count(*) as count from clientes_alle
+         where status = 'ativo' and ($1::uuid is null or academia_id = $1)
+         group by academia_id`,
+        [scopedAcademiaId]
       ),
     ])
 
@@ -112,10 +126,15 @@ export async function fetchAcademiaPerformance(
   // lançamentos diários em manual_data), então só faz sentido somar na visão "Todo
   // período" — em qualquer filtro de data, um valor fixo "vazaria" pra dentro de um
   // intervalo que não tem nada a ver com ele.
+  const clientesAlleAtivosByAcademia = new Map(clientesAlleAtivos.map((r) => [r.academia_id, r.count]))
+
   return academias.map((a) => {
     const conversoesManualAjusteTotal = period === 'todos' ? a.conversoes_manual_ajuste_total : 0
     const totalConversoesAne = totalConversoesAneByAcademia.get(a.id) ?? 0
-    const totalConversoesManual = (totalConversoesManualByAcademia.get(a.id) ?? 0) + conversoesManualAjusteTotal
+    const totalConversoesManual =
+      (totalConversoesManualByAcademia.get(a.id) ?? 0) +
+      conversoesManualAjusteTotal +
+      (clientesAlleAtivosByAcademia.get(a.id) ?? 0)
     return {
       academiaId: a.id,
       nome: a.nome,

@@ -5,6 +5,7 @@ import {
   bulkDeleteClientesAlle,
   bulkUpdateClientesAlleStatus,
   deleteClienteAlle,
+  reprovarClienteAlle,
   updateClienteAlle,
 } from '@/app/(app)/clientes-alle/actions'
 import { Avatar } from '@/components/ui/avatar'
@@ -16,14 +17,16 @@ import type { ClienteAlle, ClienteAlleStatus } from '@/lib/dashboard/fetch-clien
 
 type UpdateAction = (clienteId: string, formData: FormData) => Promise<void>
 type DeleteAction = (clienteId: string) => Promise<void>
+type ReprovarAction = (clienteId: string) => Promise<void>
 type BulkUpdateAction = (clienteIds: string[], status: ClienteAlleStatus) => Promise<void>
 type BulkDeleteAction = (clienteIds: string[]) => Promise<void>
-type StatusFilter = 'todos' | 'ativos' | 'pendentes'
+type StatusFilter = 'todos' | 'ativos' | 'pendentes' | 'reprovados'
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
   { value: 'ativos', label: 'Ativos' },
   { value: 'pendentes', label: 'Pendentes' },
+  { value: 'reprovados', label: 'Reprovados' },
 ]
 
 const PAGE_SIZE = 15
@@ -34,6 +37,7 @@ export function ClientesAlleTable({
   editable = true,
   onUpdate = updateClienteAlle,
   onDelete = deleteClienteAlle,
+  onReprovar = reprovarClienteAlle,
   onBulkUpdateStatus = bulkUpdateClientesAlleStatus,
   onBulkDelete = bulkDeleteClientesAlle,
 }: {
@@ -42,6 +46,7 @@ export function ClientesAlleTable({
   editable?: boolean
   onUpdate?: UpdateAction
   onDelete?: DeleteAction
+  onReprovar?: ReprovarAction
   onBulkUpdateStatus?: BulkUpdateAction
   onBulkDelete?: BulkDeleteAction
 }) {
@@ -51,7 +56,7 @@ export function ClientesAlleTable({
   const [page, setPage] = useState(1)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkStatus, setBulkStatus] = useState<ClienteAlleStatus>('ativo')
-  const [deleting, startDeleteTransition] = useTransition()
+  const [rowActionPending, startRowActionTransition] = useTransition()
   const [bulkPending, startBulkTransition] = useTransition()
   const { showToast } = useToast()
 
@@ -60,6 +65,7 @@ export function ClientesAlleTable({
     return clientes.filter((c) => {
       if (status === 'ativos' && c.status !== 'ativo') return false
       if (status === 'pendentes' && c.status !== 'pendente') return false
+      if (status === 'reprovados' && c.status !== 'reprovado') return false
       if (term && !c.nome.toLowerCase().includes(term)) return false
       return true
     })
@@ -101,9 +107,9 @@ export function ClientesAlleTable({
   }
 
   function handleDelete(cliente: ClienteAlle) {
-    if (deleting) return
+    if (rowActionPending) return
     if (!window.confirm(`Excluir "${cliente.nome}" definitivamente? Essa ação não pode ser desfeita.`)) return
-    startDeleteTransition(async () => {
+    startRowActionTransition(async () => {
       try {
         await onDelete(cliente.id)
         showToast(`${cliente.nome} excluído.`)
@@ -123,6 +129,19 @@ export function ClientesAlleTable({
         setSelectedIds(new Set())
       } catch (err) {
         showToast(err instanceof Error ? err.message : 'Erro ao atualizar clientes.', 'error')
+      }
+    })
+  }
+
+  function handleReprovar(cliente: ClienteAlle) {
+    if (rowActionPending) return
+    if (!window.confirm(`Reprovar/cancelar "${cliente.nome}"?`)) return
+    startRowActionTransition(async () => {
+      try {
+        await onReprovar(cliente.id)
+        showToast(`${cliente.nome} marcado como reprovado.`)
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'Erro ao reprovar cliente.', 'error')
       }
     })
   }
@@ -175,6 +194,7 @@ export function ClientesAlleTable({
           >
             <option value="ativo">Ativo</option>
             <option value="pendente">Pendente de assinatura</option>
+            <option value="reprovado">Reprovado</option>
           </select>
           <button type="button" disabled={bulkPending} onClick={handleBulkStatus} className="btn-secondary btn-sm">
             {bulkPending ? 'Aplicando…' : 'Aplicar status'}
@@ -255,6 +275,8 @@ export function ClientesAlleTable({
                     <td className="px-4 py-3">
                       {c.status === 'ativo' ? (
                         <span className="badge bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">Ativo</span>
+                      ) : c.status === 'reprovado' ? (
+                        <span className="badge bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400">Reprovado</span>
                       ) : (
                         <span className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">Pendente</span>
                       )}
@@ -269,9 +291,19 @@ export function ClientesAlleTable({
                           >
                             Editar
                           </button>
+                          {c.status !== 'reprovado' && (
+                            <button
+                              type="button"
+                              disabled={rowActionPending}
+                              onClick={() => handleReprovar(c)}
+                              className="text-amber-600 dark:text-amber-400 hover:text-amber-800 disabled:opacity-50"
+                            >
+                              Reprovar
+                            </button>
+                          )}
                           <button
                             type="button"
-                            disabled={deleting}
+                            disabled={rowActionPending}
                             onClick={() => handleDelete(c)}
                             className="text-rose-600 dark:text-rose-400 hover:text-rose-800 disabled:opacity-50"
                           >
@@ -383,6 +415,7 @@ function ClienteAlleEditRow({
             <select id={`status-${cliente.id}`} name="status" defaultValue={cliente.status} className="select">
               <option value="ativo">Ativo</option>
               <option value="pendente">Pendente de assinatura</option>
+              <option value="reprovado">Reprovado</option>
             </select>
           </div>
 

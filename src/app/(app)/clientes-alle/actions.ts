@@ -20,7 +20,9 @@ function resolveAcademiaId(profile: UserProfile | null, requestedAcademiaId: str
 }
 
 function parseStatus(value: FormDataEntryValue | null): ClienteAlleStatus {
-  return value === 'pendente' ? 'pendente' : 'ativo'
+  if (value === 'pendente') return 'pendente'
+  if (value === 'reprovado') return 'reprovado'
+  return 'ativo'
 }
 
 // Só dígitos, pra comparar telefone sem depender de como cada lado formatou (com
@@ -91,6 +93,27 @@ export async function updateClienteAlle(clienteId: string, formData: FormData) {
      set academia_id = $1, nome = $2, telefone = $3, email = $4, status = $5, updated_at = now()
      where id = $6`,
     [academiaId, nome, telefone || null, email || null, status, clienteId]
+  )
+  if (rowCount === 0) {
+    throw new Error('Cliente não encontrado.')
+  }
+
+  revalidatePath('/clientes-alle')
+  revalidatePath('/')
+  revalidatePath('/pendentes')
+}
+
+// Ação rápida de linha (junto de Editar/Excluir) pra reprovar/cancelar sem abrir o
+// formulário inteiro — mesmo efeito de editar e trocar o status pra 'reprovado'.
+export async function reprovarClienteAlle(clienteId: string) {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canManageManualData(profile.role)) {
+    throw new Error('Sem permissão para reprovar clientes Alle.')
+  }
+
+  const { rowCount } = await pool.query(
+    `update clientes_alle set status = 'reprovado', updated_at = now() where id = $1`,
+    [clienteId]
   )
   if (rowCount === 0) {
     throw new Error('Cliente não encontrado.')

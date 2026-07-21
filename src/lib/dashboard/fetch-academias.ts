@@ -23,7 +23,7 @@ export type AcademiaAdmin = {
 // /performance na visão "Todo período". Mesma lógica de
 // fetch-academia-performance.ts.
 export async function fetchAllAcademias(): Promise<AcademiaAdmin[]> {
-  const [{ rows }, { rows: conversoesPorDia }, { rows: manuais }] = await Promise.all([
+  const [{ rows }, { rows: conversoesPorDia }, { rows: manuais }, { rows: clientesAlleAtivos }] = await Promise.all([
     pool.query<{
       id: string
       nome: string
@@ -41,6 +41,9 @@ export async function fetchAllAcademias(): Promise<AcademiaAdmin[]> {
     pool.query<{ academia_id: string; conversoes_manual: number }>(
       `select academia_id, conversoes_manual from manual_data where conversoes_manual != 0`
     ),
+    pool.query<{ academia_id: string; count: number }>(
+      `select academia_id, count(*) as count from clientes_alle where status = 'ativo' group by academia_id`
+    ),
   ])
 
   const totalConversoesAneByAcademia = new Map<string, number>()
@@ -56,10 +59,17 @@ export async function fetchAllAcademias(): Promise<AcademiaAdmin[]> {
     )
   }
 
+  // Cliente Alle ativo (cadastro individual ou CSV em /clientes-alle) também é
+  // conversão manual — soma direto no total, sem passar por manual_data (ver mesmo
+  // ajuste em fetch-funnel-counts.ts).
+  const clientesAlleAtivosByAcademia = new Map(clientesAlleAtivos.map((r) => [r.academia_id, r.count]))
+
   return rows.map((row) => {
     const totalConversoesAne = totalConversoesAneByAcademia.get(row.id) ?? 0
     const totalConversoesManual =
-      (totalConversoesManualByAcademia.get(row.id) ?? 0) + row.conversoes_manual_ajuste_total
+      (totalConversoesManualByAcademia.get(row.id) ?? 0) +
+      row.conversoes_manual_ajuste_total +
+      (clientesAlleAtivosByAcademia.get(row.id) ?? 0)
     return {
       id: row.id,
       nome: row.nome,

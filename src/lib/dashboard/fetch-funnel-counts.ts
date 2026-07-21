@@ -46,6 +46,9 @@ export async function fetchFunnelCounts(
     {
       rows: [{ count: clientesAlleCount }],
     },
+    {
+      rows: [{ count: reprovadosIndividuaisCount }],
+    },
   ] = await Promise.all([
       // total_alunos vem direto do cadastro da academia (não é mais um lançamento
       // diário em manual_data) — cadastra-se uma vez em /academias e o funil já
@@ -93,6 +96,16 @@ export async function fetchFunnelCounts(
         `select count(*) from clientes_alle where status = 'ativo' and ($1::uuid is null or academia_id = $1)`,
         [academiaId]
       ),
+      // Reprovado/cancelado individualmente (Reprovar em /clientes-alle ou
+      // /convertidos) — soma direta no total, sem filtro de data, mesmo ajuste que
+      // clientesAlleCount acima (ver totalConversoesManual mais abaixo).
+      pool.query<{ count: number }>(
+        `select
+           (select count(*) from clientes_alle where status = 'reprovado' and ($1::uuid is null or academia_id = $1))
+           + (select count(*) from conversions where status = 'reprovado' and ($1::uuid is null or academia_id = $1))
+           as count`,
+        [academiaId]
+      ),
     ])
 
   const totalAlunos = academiaRows.reduce((sum, row) => sum + (row.total_alunos ?? 0), 0)
@@ -131,6 +144,11 @@ export async function fetchFunnelCounts(
     scansPorAcademiaPorDia.set(row.data, porAcademia)
   }
 
+  // Reprovado/cancelado individualmente (clientes_alle.status ou conversions.status)
+  // não tem data própria pra entrar no lançamento por dia — soma só no total, mesmo
+  // ajuste de totalConversoesManual/clientesAlleCount abaixo.
+  totalReprovados += reprovadosIndividuaisCount
+
   // Contatos: por padrão é a contagem automática (contacts, por academia+dia); quando
   // existe um ajuste manual pra aquele academia+dia (ver migration 0002), ele substitui
   // a contagem automática por completo — não soma em cima. O merge é por chave
@@ -160,6 +178,13 @@ export async function fetchFunnelCounts(
     conversoesAnePorDia.set(row.day, (conversoesAnePorDia.get(row.day) ?? 0) + row.count)
   }
 
+  // clientesAlleCount entra aqui além de alimentar totalClientesAlle: cliente Alle
+  // ativo é gente convertida por fora do lançamento diário (cadastro individual ou
+  // CSV em /clientes-alle), então também é conversão manual — só que sem data por
+  // linha (created_at é quando foi cadastrado no sistema, não quando converteu),
+  // por isso soma direto no total em vez de entrar no lançamento por dia
+  // (conversoesManualPorDia/series) como o resto do stream aditivo acima.
+  totalConversoesManual += clientesAlleCount
   const totalConversoes = totalConversoesAne + totalConversoesManual
   const totalClientesAlle = clientesAlleCount
 

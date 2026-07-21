@@ -97,7 +97,10 @@ export async function promoverClienteConvertido(conversionId: string) {
       clienteAlleId = inserted[0].id
     }
 
-    await client.query('update conversions set cliente_alle_id = $1 where id = $2', [clienteAlleId, conversionId])
+    await client.query(
+      `update conversions set cliente_alle_id = $1, status = null where id = $2`,
+      [clienteAlleId, conversionId]
+    )
 
     await client.query('commit')
   } catch (err) {
@@ -111,4 +114,49 @@ export async function promoverClienteConvertido(conversionId: string) {
   revalidatePath('/clientes-alle')
   revalidatePath('/')
   revalidatePath('/pendentes')
+}
+
+// Reprova/cancela um convertido da Ane sem precisar dele ter academia ou nome
+// preenchidos (diferente de promoverClienteConvertido, que precisa dos dois pra
+// criar o cliente Alle) — por isso é uma coluna própria em conversions em vez de
+// um registro em clientes_alle (ver migration 0020). Só bloqueia quem já foi
+// promovido a cliente Alle ativo; reprovar depois de reprovado (ou antes de nunca
+// ter sido) é sempre idempotente.
+export async function reprovarClienteConvertido(conversionId: string) {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canManageManualData(profile.role)) {
+    throw new Error('Sem permissão para reprovar clientes convertidos.')
+  }
+
+  const { rows } = await pool.query<{ cliente_alle_id: string | null }>(
+    'select cliente_alle_id from conversions where id = $1',
+    [conversionId]
+  )
+  const conversion = rows[0]
+  if (!conversion) {
+    throw new Error('Convertido não encontrado.')
+  }
+  if (conversion.cliente_alle_id) {
+    throw new Error('Esse convertido já foi marcado como cliente Alle ativo.')
+  }
+
+  await pool.query(`update conversions set status = 'reprovado' where id = $1`, [conversionId])
+
+  revalidatePath('/convertidos')
+  revalidatePath('/')
+}
+
+// Desfaz uma reprovação (volta pro estado "sem decisão", disponível de novo pra
+// promover ou reprovar) — sem isso, reprovar por engano não teria como voltar
+// atrás na UI.
+export async function desfazerReprovacaoClienteConvertido(conversionId: string) {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canManageManualData(profile.role)) {
+    throw new Error('Sem permissão para editar clientes convertidos.')
+  }
+
+  await pool.query(`update conversions set status = null where id = $1`, [conversionId])
+
+  revalidatePath('/convertidos')
+  revalidatePath('/')
 }
