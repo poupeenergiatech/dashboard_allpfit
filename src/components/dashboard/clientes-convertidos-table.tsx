@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import {
+  definirStatusClienteConvertido,
   desfazerReprovacaoClienteConvertido,
-  promoverClienteConvertido,
   reprovarClienteConvertido,
   updateClienteConvertidoAcademia,
+  type ClienteConvertidoStatusEditavel,
 } from '@/app/(app)/convertidos/actions'
-import { reprovarClienteAlle } from '@/app/(app)/clientes-alle/actions'
+import { bulkUpdateClientesAlleStatus, reprovarClienteAlle } from '@/app/(app)/clientes-alle/actions'
 import { Avatar } from '@/components/ui/avatar'
 import { ListFilterBar } from './list-filter-bar'
 import { Pagination } from './pagination'
@@ -17,8 +18,8 @@ import type { ClienteConvertido } from '@/lib/dashboard/fetch-clientes-convertid
 
 type StatusFilter = 'todos' | 'sem_unidade'
 type UpdateAction = (conversionId: string, formData: FormData) => Promise<void>
-type PromoteAction = (conversionId: string) => Promise<void>
 type ReprovarAction = (id: string) => Promise<void>
+type SetStatusAction = (id: string, status: ClienteConvertidoStatusEditavel) => Promise<void>
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
@@ -36,19 +37,21 @@ export function ClientesConvertidosTable({
   academias,
   editable = true,
   onUpdate = updateClienteConvertidoAcademia,
-  onPromote = promoverClienteConvertido,
+  onSetStatusAne = definirStatusClienteConvertido,
   onReprovarAne = reprovarClienteConvertido,
   onDesfazerReprovacaoAne = desfazerReprovacaoClienteConvertido,
   onReprovarManual = reprovarClienteAlle,
+  onSetStatusManual = (id, status) => bulkUpdateClientesAlleStatus([id], status),
 }: {
   clientes: ClienteConvertido[]
   academias: Academia[]
   editable?: boolean
   onUpdate?: UpdateAction
-  onPromote?: PromoteAction
+  onSetStatusAne?: SetStatusAction
   onReprovarAne?: ReprovarAction
   onDesfazerReprovacaoAne?: ReprovarAction
   onReprovarManual?: ReprovarAction
+  onSetStatusManual?: SetStatusAction
 }) {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<StatusFilter>('todos')
@@ -148,20 +151,21 @@ export function ClientesConvertidosTable({
                     <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">{formatDate(c.createdAt)}</td>
                     {editable && (
                       <td className="px-4 py-3">
-                        {c.status === 'ativo' ? (
-                          <span className="badge bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
-                            Cliente Alle ativo
-                          </span>
-                        ) : c.status === 'pendente' ? (
-                          <span className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">Pendente</span>
-                        ) : c.status === 'reprovado' ? (
+                        {c.status === 'reprovado' ? (
                           <span className="badge bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400">Reprovado</span>
-                        ) : c.status === 'sem_informacao' ? (
-                          <span className="badge bg-slate-100 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">Sem informação</span>
+                        ) : c.origem === 'manual' ? (
+                          <StatusSelect
+                            value={c.status as ClienteConvertidoStatusEditavel}
+                            onChangeStatus={(status) => onSetStatusManual(c.id, status)}
+                          />
+                        ) : c.status !== null ? (
+                          // 'ane' já vinculada a um clientes_alle (ver definirStatusClienteConvertido) — o
+                          // status real é desse registro; editar de novo é em /clientes-alle.
+                          <StatusBadge status={c.status} />
                         ) : c.academiaId ? (
-                          <PromoverButton clienteId={c.id} nome={c.nome} onPromote={onPromote} />
+                          <StatusSelect value={null} onChangeStatus={(status) => onSetStatusAne(c.id, status)} />
                         ) : (
-                          <span className="text-xs text-slate-400 dark:text-slate-500" title="Defina a academia antes de marcar como assinado.">
+                          <span className="text-xs text-slate-400 dark:text-slate-500" title="Defina a academia antes de marcar o termo de adesão.">
                             —
                           </span>
                         )}
@@ -231,37 +235,65 @@ export function ClientesConvertidosTable({
   )
 }
 
-function PromoverButton({
-  clienteId,
-  nome,
-  onPromote,
+function StatusBadge({ status }: { status: ClienteConvertidoStatusEditavel }) {
+  if (status === 'ativo') {
+    return (
+      <span className="badge bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+        Cliente Alle ativo
+      </span>
+    )
+  }
+  if (status === 'pendente') {
+    return <span className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">Pendente</span>
+  }
+  return (
+    <span className="badge bg-slate-100 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">Sem informação</span>
+  )
+}
+
+// Termo de adesão editável — mesmas três opções do status de clientes_alle (menos
+// reprovado, que tem seu próprio botão Reprovar/Desfazer nas Ações, sem depender de
+// academia/nome preenchidos). value null é só o caso 'ane' ainda sem decisão: mostra
+// um placeholder até escolher algo, pra não gravar um status sem o usuário ter
+// escolhido de propósito.
+function StatusSelect({
+  value,
+  onChangeStatus,
 }: {
-  clienteId: string
-  nome: string | null
-  onPromote: PromoteAction
+  value: ClienteConvertidoStatusEditavel | null
+  onChangeStatus: (status: ClienteConvertidoStatusEditavel) => Promise<void>
 }) {
   const [pending, startTransition] = useTransition()
   const { showToast } = useToast()
 
-  function handleClick() {
-    if (pending) return
-    if (!window.confirm(`Confirmar que ${nome ?? 'esse cliente'} assinou o termo de adesão e virou cliente Alle ativo?`)) {
-      return
-    }
+  function handleChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const status = event.target.value as ClienteConvertidoStatusEditavel
     startTransition(async () => {
       try {
-        await onPromote(clienteId)
-        showToast('Cliente marcado como Alle ativo.')
+        await onChangeStatus(status)
+        showToast('Termo de adesão atualizado.')
       } catch (err) {
-        showToast(err instanceof Error ? err.message : 'Erro ao marcar como assinado.', 'error')
+        showToast(err instanceof Error ? err.message : 'Erro ao atualizar termo de adesão.', 'error')
       }
     })
   }
 
   return (
-    <button type="button" disabled={pending} onClick={handleClick} className="btn-outline-success btn-sm disabled:opacity-50">
-      {pending ? 'Marcando…' : 'Assinou o termo'}
-    </button>
+    <select
+      value={value ?? ''}
+      onChange={handleChange}
+      disabled={pending}
+      className="select h-8 w-auto py-0 text-xs disabled:opacity-50"
+    >
+      {value === null && (
+        <option value="" disabled>
+          Selecionar…
+        </option>
+      )}
+      <option value="ativo">Ativo</option>
+      <option value="pendente">Pendente de assinatura</option>
+      <option value="sem_informacao">Sem informação</option>
+    </select>
   )
 }
 

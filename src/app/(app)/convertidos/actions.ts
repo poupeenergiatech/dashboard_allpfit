@@ -40,16 +40,26 @@ export async function updateClienteConvertidoAcademia(conversionId: string, form
   revalidatePath('/performance')
 }
 
-// Confirma que o convertido assinou o termo de adesão e vira cliente Alle ativo —
-// cria (ou reaproveita, se já existir por academia+nome, mesmo upsert do CSV de
-// clientes_alle) o registro em clientes_alle com status 'ativo', e grava o vínculo
-// em conversions.cliente_alle_id pra não deixar promover a mesma pessoa duas vezes.
-// Exige academia definida (não dá pra criar um cliente Alle sem academia) e nome
-// preenchido — resolve isso primeiro via updateClienteConvertidoAcademia acima.
-export async function promoverClienteConvertido(conversionId: string) {
+export type ClienteConvertidoStatusEditavel = 'ativo' | 'pendente' | 'sem_informacao'
+
+// Marca o termo de adesão do convertido (Ativo/Pendente de assinatura/Sem
+// informação — igual o status de clientes_alle, ver ClienteAlleStatus) — cria (ou
+// reaproveita, se já existir por academia+nome, mesmo upsert do CSV de
+// clientes_alle) o registro em clientes_alle com esse status, e grava o vínculo em
+// conversions.cliente_alle_id pra não deixar fazer isso duas vezes pra mesma
+// conversão. Exige academia definida (não dá pra criar um cliente Alle sem
+// academia) e nome preenchido — resolve isso primeiro via
+// updateClienteConvertidoAcademia acima. Reprovado fica de fora de propósito: usa
+// reprovarClienteConvertido abaixo, que não depende de academia/nome preenchidos.
+// Depois de vinculado, mudar o status de novo é em /clientes-alle — esse registro
+// já existe lá com vida própria.
+export async function definirStatusClienteConvertido(
+  conversionId: string,
+  status: ClienteConvertidoStatusEditavel
+) {
   const profile = await getCurrentUserProfile()
   if (!profile || !canManageManualData(profile.role)) {
-    throw new Error('Sem permissão para promover clientes convertidos.')
+    throw new Error('Sem permissão para editar clientes convertidos.')
   }
 
   const { rows } = await pool.query<{
@@ -64,13 +74,13 @@ export async function promoverClienteConvertido(conversionId: string) {
     throw new Error('Convertido não encontrado.')
   }
   if (conversion.cliente_alle_id) {
-    throw new Error('Esse convertido já foi marcado como cliente Alle ativo.')
+    throw new Error('Esse convertido já foi marcado como cliente Alle — edite o status em Clientes Alle.')
   }
   if (!conversion.academia_id) {
-    throw new Error('Defina a academia antes de marcar como assinado.')
+    throw new Error('Defina a academia antes de marcar o termo de adesão.')
   }
   if (!conversion.nome) {
-    throw new Error('Esse convertido não tem nome cadastrado — edite antes de marcar como assinado.')
+    throw new Error('Esse convertido não tem nome cadastrado — edite antes de marcar o termo de adesão.')
   }
 
   const client = await pool.connect()
@@ -86,13 +96,13 @@ export async function promoverClienteConvertido(conversionId: string) {
     if (existing[0]) {
       clienteAlleId = existing[0].id
       await client.query(
-        `update clientes_alle set status = 'ativo', telefone = coalesce($1, telefone), updated_at = now() where id = $2`,
-        [conversion.telefone, clienteAlleId]
+        `update clientes_alle set status = $1, telefone = coalesce($2, telefone), updated_at = now() where id = $3`,
+        [status, conversion.telefone, clienteAlleId]
       )
     } else {
       const { rows: inserted } = await client.query<{ id: string }>(
-        `insert into clientes_alle (academia_id, nome, telefone, status) values ($1, $2, $3, 'ativo') returning id`,
-        [conversion.academia_id, conversion.nome, conversion.telefone]
+        `insert into clientes_alle (academia_id, nome, telefone, status) values ($1, $2, $3, $4) returning id`,
+        [conversion.academia_id, conversion.nome, conversion.telefone, status]
       )
       clienteAlleId = inserted[0].id
     }

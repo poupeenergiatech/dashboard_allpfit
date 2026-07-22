@@ -21,10 +21,11 @@ export default function PreviewConvertidosPage() {
         clientes={MOCK_CLIENTES_CONVERTIDOS}
         academias={MOCK_ACADEMIAS}
         onUpdate={mockSave}
-        onPromote={mockSave}
+        onSetStatusAne={mockSave}
         onReprovarAne={mockSave}
         onDesfazerReprovacaoAne={mockSave}
         onReprovarManual={mockSave}
+        onSetStatusManual={mockSave}
       />
     </div>
   )
