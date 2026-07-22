@@ -1,7 +1,11 @@
 'use client'
 
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useMemo, useState, useTransition } from 'react'
+import { createAcademiaAlias } from '@/app/(app)/academias/actions'
+import { useToast } from '@/components/ui/toast'
 import type { ScansWebhookLogEntry } from '@/lib/dashboard/fetch-scans-webhook-log'
+
+type CreateAliasAction = (academiaId: string, aliasNome: string) => Promise<void>
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
@@ -43,7 +47,17 @@ function Pills<T extends string>({
   )
 }
 
-function DistribuicaoRow({ entry }: { entry: ScansWebhookLogEntry }) {
+function DistribuicaoRow({
+  entry,
+  academias,
+  onCreateAlias,
+}: {
+  entry: ScansWebhookLogEntry
+  academias: { id: string; nome: string }[]
+  onCreateAlias: CreateAliasAction
+}) {
+  const [linked, setLinked] = useState<Set<string>>(new Set())
+
   return (
     <div className="space-y-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 px-4 py-4">
       {entry.distribuicao.length > 0 && (
@@ -63,8 +77,22 @@ function DistribuicaoRow({ entry }: { entry: ScansWebhookLogEntry }) {
                   <td className="px-3 py-2">
                     {d.academiaNome ? (
                       <span className="text-slate-700 dark:text-slate-300">{d.academiaNome}</span>
+                    ) : d.academiaLabel && linked.has(d.academiaLabel) ? (
+                      <span className="text-emerald-700 dark:text-emerald-400">
+                        vinculada — vale a partir do próximo envio
+                      </span>
                     ) : (
-                      <span className="text-amber-700 dark:text-amber-400">não encontrada</span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-amber-700 dark:text-amber-400">não encontrada</span>
+                        {d.academiaLabel && (
+                          <VincularAlias
+                            nome={d.academiaLabel}
+                            academias={academias}
+                            onCreateAlias={onCreateAlias}
+                            onLinked={() => setLinked((prev) => new Set(prev).add(d.academiaLabel!))}
+                          />
+                        )}
+                      </div>
                     )}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums text-slate-600 dark:text-slate-300">{d.totalScans ?? '—'}</td>
@@ -87,7 +115,70 @@ function DistribuicaoRow({ entry }: { entry: ScansWebhookLogEntry }) {
   )
 }
 
-export function ScansWebhookLogTable({ entries }: { entries: ScansWebhookLogEntry[] }) {
+function VincularAlias({
+  nome,
+  academias,
+  onCreateAlias,
+  onLinked,
+}: {
+  nome: string
+  academias: { id: string; nome: string }[]
+  onCreateAlias: CreateAliasAction
+  onLinked: () => void
+}) {
+  const [academiaId, setAcademiaId] = useState('')
+  const [pending, startTransition] = useTransition()
+  const { showToast } = useToast()
+
+  function handleLink() {
+    if (!academiaId || pending) return
+    startTransition(async () => {
+      try {
+        await onCreateAlias(academiaId, nome)
+        showToast(`"${nome}" vinculado.`)
+        onLinked()
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'Erro ao vincular.', 'error')
+      }
+    })
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <select
+        value={academiaId}
+        onChange={(e) => setAcademiaId(e.target.value)}
+        disabled={pending}
+        className="input h-7 max-w-[180px] py-0 text-[11px]"
+      >
+        <option value="">Vincular a…</option>
+        {academias.map((a) => (
+          <option key={a.id} value={a.id}>
+            {a.nome}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        disabled={!academiaId || pending}
+        onClick={handleLink}
+        className="btn-secondary h-7 px-2 py-0 text-[11px] disabled:opacity-50"
+      >
+        {pending ? 'Vinculando…' : 'Vincular'}
+      </button>
+    </div>
+  )
+}
+
+export function ScansWebhookLogTable({
+  entries,
+  academias,
+  onCreateAlias = createAcademiaAlias,
+}: {
+  entries: ScansWebhookLogEntry[]
+  academias: { id: string; nome: string }[]
+  onCreateAlias?: CreateAliasAction
+}) {
   const [status, setStatus] = useState<StatusFilter>('todos')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
@@ -167,7 +258,7 @@ export function ScansWebhookLogTable({ entries }: { entries: ScansWebhookLogEntr
                     {isExpanded && (
                       <tr>
                         <td colSpan={6} className="p-0">
-                          <DistribuicaoRow entry={entry} />
+                          <DistribuicaoRow entry={entry} academias={academias} onCreateAlias={onCreateAlias} />
                         </td>
                       </tr>
                     )}

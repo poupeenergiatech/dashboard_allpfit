@@ -97,7 +97,7 @@ export default async function ConfiguracoesPage() {
           Chamadas recebidas em <code>/api/webhooks/scans</code> — payload bruto e como cada academia foi
           casada e gravada em manual_data.
         </p>
-        <ScansWebhookLogTable entries={scansWebhookLog} />
+        <ScansWebhookLogTable entries={scansWebhookLog} academias={academias.map((a) => ({ id: a.id, nome: a.nome }))} />
       </div>
 
       <div>
