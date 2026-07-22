@@ -40,10 +40,16 @@ export async function updateClienteConvertidoAcademia(conversionId: string, form
   revalidatePath('/performance')
 }
 
-export type ClienteConvertidoStatusEditavel = 'ativo' | 'pendente' | 'sem_informacao'
+export type ClienteConvertidoStatusEditavel =
+  | 'ativo'
+  | 'pendente'
+  | 'sem_informacao'
+  | 'com_impedimentos'
+  | 'falta_documentos'
 
 // Marca o termo de adesão do convertido (Ativo/Pendente de assinatura/Sem
-// informação — igual o status de clientes_alle, ver ClienteAlleStatus) — cria (ou
+// informação/Com impedimentos/Falta documentos — igual o status de clientes_alle,
+// ver ClienteAlleStatus) — cria (ou
 // reaproveita, se já existir por academia+nome, mesmo upsert do CSV de
 // clientes_alle) o registro em clientes_alle com esse status, e grava o vínculo em
 // conversions.cliente_alle_id pra não deixar fazer isso duas vezes pra mesma

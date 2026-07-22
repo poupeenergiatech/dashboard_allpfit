@@ -10,7 +10,7 @@ export type ClienteConvertido = {
   academiaNome: string | null
   nome: string | null
   telefone: string | null
-  status: 'ativo' | 'pendente' | 'reprovado' | 'sem_informacao' | null
+  status: 'ativo' | 'pendente' | 'reprovado' | 'sem_informacao' | 'com_impedimentos' | 'falta_documentos' | null
   createdAt: string
 }
 
@@ -32,9 +32,9 @@ export type ClienteConvertido = {
 // botões de ação (status null + academia definida) ou o badge/seletor de status
 // (sempre o caso das linhas 'manual', que já SÃO um registro de clientes_alle).
 // Depois de vinculada (cliente_alle_id preenchido, ver definirStatusClienteConvertido
-// em convertidos/actions.ts), o status vem do clientes_alle vinculado — ativo,
-// pendente ou sem_informacao, o que estiver lá agora, não um valor fixo — editar esse
-// cliente em /clientes-alle depois de vinculado reflete aqui também. 'reprovado' do
+// em convertidos/actions.ts), o status vem do clientes_alle vinculado — qualquer um
+// dos status de ClienteAlleStatus, o que estiver lá agora, não um valor fixo — editar
+// esse cliente em /clientes-alle depois de vinculado reflete aqui também. 'reprovado' do
 // lado 'ane' (antes de vincular) vem de conversions.status (coluna própria — ver
 // migration 0020) em vez de um clientes_alle: reprovar não devia depender de
 // academia/nome estarem preenchidos, que é o caso de sem-unidade.
@@ -56,7 +56,7 @@ export async function fetchClientesConvertidos(
     academia_nome: string | null
     nome: string | null
     telefone: string | null
-    status: 'ativo' | 'pendente' | 'reprovado' | 'sem_informacao' | null
+    status: 'ativo' | 'pendente' | 'reprovado' | 'sem_informacao' | 'com_impedimentos' | 'falta_documentos' | null
     created_at: string
   }>(
     `select c.id, 'ane' as origem, c.academia_id, a.nome as academia_nome, c.nome, c.telefone,

@@ -21,7 +21,14 @@ type DeleteAction = (clienteId: string) => Promise<void>
 type ReprovarAction = (clienteId: string) => Promise<void>
 type BulkUpdateAction = (clienteIds: string[], status: ClienteAlleStatus) => Promise<void>
 type BulkDeleteAction = (clienteIds: string[]) => Promise<void>
-type StatusFilter = 'todos' | 'ativos' | 'pendentes' | 'reprovados' | 'sem_informacao'
+type StatusFilter =
+  | 'todos'
+  | 'ativos'
+  | 'pendentes'
+  | 'reprovados'
+  | 'sem_informacao'
+  | 'com_impedimentos'
+  | 'falta_documentos'
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
@@ -29,6 +36,8 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'pendentes', label: 'Pendentes' },
   { value: 'reprovados', label: 'Reprovados' },
   { value: 'sem_informacao', label: 'Sem informação' },
+  { value: 'com_impedimentos', label: 'Com impedimentos' },
+  { value: 'falta_documentos', label: 'Falta documentos' },
 ]
 
 const PAGE_SIZE = 15
@@ -68,6 +77,8 @@ export function ClientesAlleTable({
       if (status === 'pendentes' && c.status !== 'pendente') return false
       if (status === 'reprovados' && c.status !== 'reprovado') return false
       if (status === 'sem_informacao' && c.status !== 'sem_informacao') return false
+      if (status === 'com_impedimentos' && c.status !== 'com_impedimentos') return false
+      if (status === 'falta_documentos' && c.status !== 'falta_documentos') return false
       if (!matchesNomeOuTelefone(search, c.nome, c.telefone)) return false
       return true
     })
@@ -198,6 +209,8 @@ export function ClientesAlleTable({
             <option value="pendente">Pendente de assinatura</option>
             <option value="reprovado">Reprovado</option>
             <option value="sem_informacao">Sem informação</option>
+            <option value="com_impedimentos">Com impedimentos</option>
+            <option value="falta_documentos">Falta documentos</option>
           </select>
           <button type="button" disabled={bulkPending} onClick={handleBulkStatus} className="btn-secondary btn-sm">
             {bulkPending ? 'Aplicando…' : 'Aplicar status'}
@@ -282,6 +295,10 @@ export function ClientesAlleTable({
                         <span className="badge bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400">Reprovado</span>
                       ) : c.status === 'sem_informacao' ? (
                         <span className="badge bg-slate-100 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">Sem informação</span>
+                      ) : c.status === 'com_impedimentos' ? (
+                        <span className="badge bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400">Com impedimentos</span>
+                      ) : c.status === 'falta_documentos' ? (
+                        <span className="badge bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-400">Falta documentos</span>
                       ) : (
                         <span className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">Pendente</span>
                       )}
@@ -422,6 +439,8 @@ function ClienteAlleEditRow({
               <option value="pendente">Pendente de assinatura</option>
               <option value="reprovado">Reprovado</option>
               <option value="sem_informacao">Sem informação</option>
+              <option value="com_impedimentos">Com impedimentos</option>
+              <option value="falta_documentos">Falta documentos</option>
             </select>
           </div>
 

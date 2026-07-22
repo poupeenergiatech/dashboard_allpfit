@@ -246,12 +246,26 @@ function StatusBadge({ status }: { status: ClienteConvertidoStatusEditavel }) {
   if (status === 'pendente') {
     return <span className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">Pendente</span>
   }
+  if (status === 'com_impedimentos') {
+    return (
+      <span className="badge bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400">
+        Com impedimentos
+      </span>
+    )
+  }
+  if (status === 'falta_documentos') {
+    return (
+      <span className="badge bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-400">
+        Falta documentos
+      </span>
+    )
+  }
   return (
     <span className="badge bg-slate-100 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">Sem informação</span>
   )
 }
 
-// Termo de adesão editável — mesmas três opções do status de clientes_alle (menos
+// Termo de adesão editável — mesmas cinco opções do status de clientes_alle (menos
 // reprovado, que tem seu próprio botão Reprovar/Desfazer nas Ações, sem depender de
 // academia/nome preenchidos). value null é só o caso 'ane' ainda sem decisão: mostra
 // um placeholder até escolher algo, pra não gravar um status sem o usuário ter
@@ -293,6 +307,8 @@ function StatusSelect({
       <option value="ativo">Ativo</option>
       <option value="pendente">Pendente de assinatura</option>
       <option value="sem_informacao">Sem informação</option>
+      <option value="com_impedimentos">Com impedimentos</option>
+      <option value="falta_documentos">Falta documentos</option>
     </select>
   )
 }

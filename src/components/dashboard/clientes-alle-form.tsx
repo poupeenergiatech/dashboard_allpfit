@@ -81,6 +81,8 @@ export function ClientesAlleForm({
           <option value="ativo">Ativo</option>
           <option value="pendente">Pendente de assinatura</option>
           <option value="sem_informacao">Sem informação</option>
+          <option value="com_impedimentos">Com impedimentos</option>
+          <option value="falta_documentos">Falta documentos</option>
         </select>
       </div>
 

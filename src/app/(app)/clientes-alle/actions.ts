@@ -23,6 +23,8 @@ function parseStatus(value: FormDataEntryValue | null): ClienteAlleStatus {
   if (value === 'pendente') return 'pendente'
   if (value === 'reprovado') return 'reprovado'
   if (value === 'sem_informacao') return 'sem_informacao'
+  if (value === 'com_impedimentos') return 'com_impedimentos'
+  if (value === 'falta_documentos') return 'falta_documentos'
   return 'ativo'
 }
 
