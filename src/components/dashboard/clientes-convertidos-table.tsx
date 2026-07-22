@@ -13,6 +13,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { ListFilterBar } from './list-filter-bar'
 import { Pagination } from './pagination'
 import { useToast } from '@/components/ui/toast'
+import { matchesNomeOuTelefone } from '@/lib/dashboard/search-match'
 import type { Academia } from '@/lib/dashboard/types'
 import type { ClienteConvertido } from '@/lib/dashboard/fetch-clientes-convertidos'
 
@@ -59,10 +60,9 @@ export function ClientesConvertidosTable({
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase()
     return clientes.filter((c) => {
       if (status === 'sem_unidade' && c.academiaId !== null) return false
-      if (term && !(c.nome ?? '').toLowerCase().includes(term)) return false
+      if (!matchesNomeOuTelefone(search, c.nome, c.telefone)) return false
       return true
     })
   }, [clientes, search, status])
@@ -86,7 +86,7 @@ export function ClientesConvertidosTable({
       <ListFilterBar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Buscar por nome…"
+        searchPlaceholder="Buscar por nome ou telefone…"
         statusOptions={semUnidadeCount > 0 ? STATUS_OPTIONS : []}
         status={status}
         onStatusChange={setStatus}
@@ -174,7 +174,7 @@ export function ClientesConvertidosTable({
                     {editable && (
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3 text-xs font-medium">
-                          {c.origem === 'ane' && c.academiaId === null && (
+                          {c.origem === 'ane' && c.status === null && (
                             <button
                               type="button"
                               onClick={() => setEditingId(c.id)}
@@ -348,9 +348,10 @@ function ReprovarButton({
   )
 }
 
-// Só existe pra linhas "sem unidade" (academiaId null) — ver a nota em
-// convertidos/actions.ts sobre por que essa é a única forma de corrigir depois que
-// o sync já inseriu o registro.
+// Disponível pra qualquer linha 'ane' ainda não vinculada a um clientes_alle
+// (status null — nem reprovada, nem com termo de adesão definido, ver
+// definirStatusClienteConvertido). Depois de vinculada, corrigir nome/telefone é em
+// /clientes-alle — esse registro já tem vida própria lá.
 function ClienteConvertidoEditRow({
   cliente,
   academias,
@@ -412,7 +413,13 @@ function ClienteConvertidoEditRow({
             <label className="field-label" htmlFor={`academia-${cliente.id}`}>
               Academia
             </label>
-            <select id={`academia-${cliente.id}`} name="academia_id" required defaultValue="" className="select">
+            <select
+              id={`academia-${cliente.id}`}
+              name="academia_id"
+              required
+              defaultValue={cliente.academiaId ?? ''}
+              className="select"
+            >
               <option value="" disabled>
                 Selecione…
               </option>

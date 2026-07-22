@@ -12,6 +12,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { ListFilterBar } from './list-filter-bar'
 import { Pagination } from './pagination'
 import { useToast } from '@/components/ui/toast'
+import { matchesNomeOuTelefone } from '@/lib/dashboard/search-match'
 import type { Academia } from '@/lib/dashboard/types'
 import type { ClienteAlle, ClienteAlleStatus } from '@/lib/dashboard/fetch-clientes-alle'
 
@@ -62,13 +63,12 @@ export function ClientesAlleTable({
   const { showToast } = useToast()
 
   const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase()
     return clientes.filter((c) => {
       if (status === 'ativos' && c.status !== 'ativo') return false
       if (status === 'pendentes' && c.status !== 'pendente') return false
       if (status === 'reprovados' && c.status !== 'reprovado') return false
       if (status === 'sem_informacao' && c.status !== 'sem_informacao') return false
-      if (term && !c.nome.toLowerCase().includes(term)) return false
+      if (!matchesNomeOuTelefone(search, c.nome, c.telefone)) return false
       return true
     })
   }, [clientes, search, status])
@@ -180,7 +180,7 @@ export function ClientesAlleTable({
       <ListFilterBar
         search={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Buscar por nome…"
+        searchPlaceholder="Buscar por nome ou telefone…"
         statusOptions={STATUS_OPTIONS}
         status={status}
         onStatusChange={setStatus}
