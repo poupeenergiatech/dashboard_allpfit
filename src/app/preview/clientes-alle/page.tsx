@@ -1,5 +1,6 @@
 import { AcademiaFilterLinks } from '@/components/dashboard/academia-filter-links'
 import { ClientesAlleForm } from '@/components/dashboard/clientes-alle-form'
+import { ClientesAlleStatusChart } from '@/components/dashboard/clientes-alle-status-chart'
 import { ClientesAlleTable } from '@/components/dashboard/clientes-alle-table'
 import { MOCK_ACADEMIAS, MOCK_CLIENTES_ALLE } from '@/lib/preview/mock-data'
 import { mockConfirm, mockSave } from '@/lib/preview/mock-actions'
@@ -13,6 +14,8 @@ export default function PreviewClientesAllePage() {
       </div>
 
       <AcademiaFilterLinks basePath="/preview/clientes-alle" academias={MOCK_ACADEMIAS} academiaId={null} />
+
+      <ClientesAlleStatusChart clientes={MOCK_CLIENTES_ALLE} />
 
       <ClientesAlleTable
         clientes={MOCK_CLIENTES_ALLE}

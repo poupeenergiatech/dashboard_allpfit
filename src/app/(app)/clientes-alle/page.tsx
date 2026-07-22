@@ -1,6 +1,7 @@
 import { AcademiaFilterLinks } from '@/components/dashboard/academia-filter-links'
 import { ClientesAlleForm } from '@/components/dashboard/clientes-alle-form'
 import { ClientesAlleImportForm } from '@/components/dashboard/clientes-alle-import-form'
+import { ClientesAlleStatusChart } from '@/components/dashboard/clientes-alle-status-chart'
 import { ClientesAlleTable } from '@/components/dashboard/clientes-alle-table'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchClientesAlle } from '@/lib/dashboard/fetch-clientes-alle'
@@ -30,6 +31,8 @@ export default async function ClientesAllePage({
       </div>
 
       <AcademiaFilterLinks basePath="/clientes-alle" academias={academias} academiaId={requestedAcademiaId} />
+
+      <ClientesAlleStatusChart clientes={clientes} />
 
       <ClientesAlleTable
         clientes={clientes}
