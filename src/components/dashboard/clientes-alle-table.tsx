@@ -12,9 +12,31 @@ import { Avatar } from '@/components/ui/avatar'
 import { ListFilterBar } from './list-filter-bar'
 import { Pagination } from './pagination'
 import { useToast } from '@/components/ui/toast'
+import { downloadCsv, toCsv } from '@/lib/dashboard/csv'
 import { matchesNomeOuTelefone } from '@/lib/dashboard/search-match'
 import type { Academia } from '@/lib/dashboard/types'
 import type { ClienteAlle, ClienteAlleStatus } from '@/lib/dashboard/fetch-clientes-alle'
+
+function statusLabel(status: ClienteAlleStatus): string {
+  switch (status) {
+    case 'ativo':
+      return 'Ativo'
+    case 'pendente':
+      return 'Pendente de assinatura'
+    case 'reprovado':
+      return 'Reprovado'
+    case 'sem_informacao':
+      return 'Sem informação'
+    case 'com_impedimentos':
+      return 'Com impedimentos'
+    case 'falta_documentos':
+      return 'Falta documentos'
+  }
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('pt-BR')
+}
 
 type UpdateAction = (clienteId: string, formData: FormData) => Promise<void>
 type DeleteAction = (clienteId: string) => Promise<void>
@@ -180,6 +202,19 @@ export function ClientesAlleTable({
     })
   }
 
+  function handleExport() {
+    const header = ['Nome', 'Academia', 'Telefone', 'Email', 'Status', 'Cadastrado em']
+    const dataRows = filtered.map((c) => [
+      c.nome,
+      c.academiaNome,
+      c.telefone ?? '',
+      c.email ?? '',
+      statusLabel(c.status),
+      formatDate(c.createdAt),
+    ])
+    downloadCsv(`clientes-alle-${new Date().toISOString().slice(0, 10)}.csv`, toCsv([header, ...dataRows]))
+  }
+
   if (clientes.length === 0) {
     return <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhum cliente Alle cadastrado ainda.</div>
   }
@@ -196,6 +231,12 @@ export function ClientesAlleTable({
         status={status}
         onStatusChange={setStatus}
       />
+
+      <div className="flex justify-end">
+        <button type="button" onClick={handleExport} className="btn-secondary btn-sm">
+          Exportar CSV
+        </button>
+      </div>
 
       {editable && selectedIds.size > 0 && (
         <div className="card flex flex-wrap items-center gap-3 p-4 text-sm">

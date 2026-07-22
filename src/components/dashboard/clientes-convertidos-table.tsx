@@ -13,9 +13,29 @@ import { Avatar } from '@/components/ui/avatar'
 import { ListFilterBar } from './list-filter-bar'
 import { Pagination } from './pagination'
 import { useToast } from '@/components/ui/toast'
+import { downloadCsv, toCsv } from '@/lib/dashboard/csv'
 import { matchesNomeOuTelefone } from '@/lib/dashboard/search-match'
 import type { Academia } from '@/lib/dashboard/types'
 import type { ClienteConvertido } from '@/lib/dashboard/fetch-clientes-convertidos'
+
+function termoLabel(status: ClienteConvertidoStatusEditavel | 'reprovado' | null): string {
+  switch (status) {
+    case 'ativo':
+      return 'Ativo'
+    case 'pendente':
+      return 'Pendente de assinatura'
+    case 'sem_informacao':
+      return 'Sem informação'
+    case 'com_impedimentos':
+      return 'Com impedimentos'
+    case 'falta_documentos':
+      return 'Falta documentos'
+    case 'reprovado':
+      return 'Reprovado'
+    default:
+      return 'Sem decisão'
+  }
+}
 
 type StatusFilter = 'todos' | 'sem_unidade'
 type UpdateAction = (conversionId: string, formData: FormData) => Promise<void>
@@ -142,6 +162,19 @@ export function ClientesConvertidosTable({
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
   const semUnidadeCount = clientes.filter((c) => c.academiaId === null).length
 
+  function handleExport() {
+    const header = ['Nome', 'Telefone', 'Academia', 'Origem', 'Termo de adesão', 'Convertido em']
+    const dataRows = filtered.map((c) => [
+      c.nome ?? '',
+      c.telefone ?? '',
+      c.academiaNome ?? '',
+      c.origem === 'ane' ? 'Ane' : 'Manual',
+      termoLabel(c.status),
+      formatDate(c.createdAt),
+    ])
+    downloadCsv(`clientes-convertidos-${new Date().toISOString().slice(0, 10)}.csv`, toCsv([header, ...dataRows]))
+  }
+
   if (clientes.length === 0) {
     return <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhum cliente convertido ainda.</div>
   }
@@ -158,6 +191,12 @@ export function ClientesConvertidosTable({
         status={status}
         onStatusChange={setStatus}
       />
+
+      <div className="flex justify-end">
+        <button type="button" onClick={handleExport} className="btn-secondary btn-sm">
+          Exportar CSV
+        </button>
+      </div>
 
       <div className="card flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center">
         {editable && (
