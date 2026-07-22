@@ -27,10 +27,72 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'sem_unidade', label: 'Sem unidade' },
 ]
 
+// 'sem_decisao' cobre status null — tanto quem ainda não teve o termo definido
+// (StatusSelect com placeholder) quanto quem nem tem academia pra decidir ainda
+// ('—'). 'reprovado' é lido do mesmo campo (ver fetch-clientes-convertidos.ts).
+type TermoFilter =
+  | 'todos'
+  | 'ativo'
+  | 'pendente'
+  | 'sem_informacao'
+  | 'com_impedimentos'
+  | 'falta_documentos'
+  | 'reprovado'
+  | 'sem_decisao'
+
+const TERMO_OPTIONS: { value: TermoFilter; label: string }[] = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'ativo', label: 'Ativo' },
+  { value: 'pendente', label: 'Pendente' },
+  { value: 'sem_informacao', label: 'Sem informação' },
+  { value: 'com_impedimentos', label: 'Com impedimentos' },
+  { value: 'falta_documentos', label: 'Falta documentos' },
+  { value: 'reprovado', label: 'Reprovado' },
+  { value: 'sem_decisao', label: 'Sem decisão' },
+]
+
+type OrigemFilter = 'todos' | 'ane' | 'manual'
+
+const ORIGEM_OPTIONS: { value: OrigemFilter; label: string }[] = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'ane', label: 'Ane' },
+  { value: 'manual', label: 'Manual' },
+]
+
 const PAGE_SIZE = 15
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR')
+}
+
+function Pills<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[]
+  value: T
+  onChange: (value: T) => void
+}) {
+  return (
+    <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          aria-pressed={value === opt.value}
+          className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
+            value === opt.value
+              ? 'bg-white dark:bg-slate-900 text-brand-700 dark:text-brand-300 shadow-sm'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
 }
 
 export function ClientesConvertidosTable({
@@ -56,20 +118,25 @@ export function ClientesConvertidosTable({
 }) {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<StatusFilter>('todos')
+  const [termoFilter, setTermoFilter] = useState<TermoFilter>('todos')
+  const [origemFilter, setOrigemFilter] = useState<OrigemFilter>('todos')
   const [page, setPage] = useState(1)
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
     return clientes.filter((c) => {
       if (status === 'sem_unidade' && c.academiaId !== null) return false
+      if (origemFilter !== 'todos' && c.origem !== origemFilter) return false
+      if (termoFilter === 'sem_decisao' && c.status !== null) return false
+      if (termoFilter !== 'todos' && termoFilter !== 'sem_decisao' && c.status !== termoFilter) return false
       if (!matchesNomeOuTelefone(search, c.nome, c.telefone)) return false
       return true
     })
-  }, [clientes, search, status])
+  }, [clientes, search, status, termoFilter, origemFilter])
 
   useEffect(() => {
     setPage(1)
-  }, [search, status])
+  }, [search, status, termoFilter, origemFilter])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -91,6 +158,19 @@ export function ClientesConvertidosTable({
         status={status}
         onStatusChange={setStatus}
       />
+
+      <div className="card flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center">
+        {editable && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Termo de adesão</span>
+            <Pills options={TERMO_OPTIONS} value={termoFilter} onChange={setTermoFilter} />
+          </div>
+        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Origem</span>
+          <Pills options={ORIGEM_OPTIONS} value={origemFilter} onChange={setOrigemFilter} />
+        </div>
+      </div>
 
       {filtered.length === 0 ? (
         <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhum cliente encontrado pra esse filtro.</div>
