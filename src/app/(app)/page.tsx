@@ -1,5 +1,5 @@
 import { FunnelDashboard } from '@/components/dashboard/funnel-dashboard'
-import { canManageManualData, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
+import { canManageManualData, canManageUsers, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchManualDataHistory } from '@/lib/dashboard/fetch-manual-data-history'
 
@@ -28,6 +28,7 @@ export default async function DashboardHomePage() {
       academias={academias}
       initialAcademiaId={fixedAcademiaId}
       canEditManualData={canEditManualData}
+      isSuperAdmin={canManageUsers(profile.role)}
       manualDataHistory={history}
     />
   )

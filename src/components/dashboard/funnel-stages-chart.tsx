@@ -9,8 +9,8 @@ import type { FunnelCounts } from '@/lib/dashboard/types'
 // monótono, e o degrau mais claro ainda contrasta com o fundo (>= 2:1). O degradê
 // claro->escuro do tema claro perderia contraste num card escuro (#1e3a8a quase
 // some no slate-900), por isso o modo escuro usa uma escala mais clara/saturada.
-const STAGE_COLORS = ['#60a5fa', '#3b82f6', '#1d4ed8', '#1e3a8a']
-const STAGE_COLORS_DARK = ['#bfdbfe', '#93c5fd', '#60a5fa', '#3b82f6']
+const STAGE_COLORS = ['#60a5fa', '#3b82f6', '#1d4ed8', '#1e3a8a', '#172554']
+const STAGE_COLORS_DARK = ['#bfdbfe', '#93c5fd', '#60a5fa', '#3b82f6', '#2563eb']
 
 function formatNumber(value: number): string {
   return value.toLocaleString('pt-BR')
@@ -52,6 +52,7 @@ export function FunnelStagesChart({ counts }: { counts: FunnelCounts }) {
     { name: 'Scans QR', value: counts.totalScans },
     { name: 'Contatos', value: counts.totalContatos },
     { name: 'Conversões', value: counts.totalConversoes },
+    { name: 'Clientes Alle ativos', value: counts.totalClientesAlle },
   ]
 
   if (raw.every((stage) => stage.value === 0)) {

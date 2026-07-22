@@ -34,7 +34,7 @@ export default function PreviewFunnelPage() {
         onCustomRangeChange={setCustomRange}
       />
 
-      <FunnelGrid counts={MOCK_FUNNEL_COUNTS} />
+      <FunnelGrid counts={MOCK_FUNNEL_COUNTS} isSuperAdmin />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <FunnelStagesChart counts={MOCK_FUNNEL_COUNTS} />
@@ -42,7 +42,11 @@ export default function PreviewFunnelPage() {
       </div>
 
       <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Histórico diário</h3>
+        <h3 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Histórico diário</h3>
+        <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+          Um resumo por dia do período selecionado acima — quantos scans, contatos, conversões e reprovados cada
+          dia teve, somando todas as academias no filtro.
+        </p>
         <FunnelDailyHistoryTable series={MOCK_FUNNEL_COUNTS.series} />
       </div>
 

@@ -16,11 +16,13 @@ export function FunnelDashboard({
   academias,
   initialAcademiaId,
   canEditManualData,
+  isSuperAdmin,
   manualDataHistory,
 }: {
   academias: Academia[]
   initialAcademiaId: string | null
   canEditManualData: boolean
+  isSuperAdmin: boolean
   manualDataHistory: ManualDataEntry[]
 }) {
   const { academiaId, setAcademiaId, period, setPeriod, customRange, setCustomRange } =
@@ -68,13 +70,17 @@ export function FunnelDashboard({
       ) : (
         counts && (
           <>
-            <FunnelGrid counts={counts} />
+            <FunnelGrid counts={counts} isSuperAdmin={isSuperAdmin} />
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               <FunnelStagesChart counts={counts} />
               <FunnelTrendChart series={counts.series} />
             </div>
             <div>
-              <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Histórico diário</h3>
+              <h3 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Histórico diário</h3>
+              <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                Um resumo por dia do período selecionado acima — quantos scans, contatos, conversões e reprovados
+                cada dia teve, somando todas as academias no filtro.
+              </p>
               {/* key força remontar (e resetar a página) quando o filtro muda — sem
                   isso, o poll de 10s trocaria a prop `series` e a paginação ficaria
                   instável enquanto o usuário navega entre páginas. */}
