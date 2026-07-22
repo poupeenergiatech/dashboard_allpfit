@@ -38,6 +38,7 @@ export function Sidebar({ role, basePath = '' }: { role: UserRole | null; basePa
               key={item.href}
               href={href}
               onClick={onNavigate}
+              title={item.hint}
               className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
                 active
                   ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300'

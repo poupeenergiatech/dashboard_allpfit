@@ -15,10 +15,13 @@ export function LiveIndicator({ lastUpdatedAt }: { lastUpdatedAt: Date | null })
     : null
 
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-1.5 text-xs text-slate-500 dark:text-slate-400">
-      <span className="relative flex h-2 w-2">
+    <div
+      title="Os números atualizam sozinhos a cada poucos segundos — não precisa recarregar a página."
+      className="inline-flex items-center gap-2 rounded-full border border-emerald-100 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 px-3.5 py-2 text-sm text-slate-500 dark:text-slate-400"
+    >
+      <span className="relative flex h-2.5 w-2.5">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
       </span>
       <span className="font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">AO VIVO</span>
       {secondsAgo !== null && (

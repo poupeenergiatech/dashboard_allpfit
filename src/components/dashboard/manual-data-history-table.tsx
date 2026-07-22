@@ -21,12 +21,26 @@ export function ManualDataHistoryTable({
     <div className="card overflow-x-auto">
       <table className="w-full min-w-[780px] text-sm">
         <thead>
+          {/* Linha de grupo separando o que é lançado todo dia (Scans/Reprovados) do
+              que é uma exceção pontual (Ajuste contatos/Conversões manual) — sem
+              isso as 4 colunas numéricas leem como um bloco só, e "Ajuste contatos"
+              (que normalmente vem em branco) não fica óbvio como algo à parte. */}
+          <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-800/40 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <th className="px-4 py-1.5" colSpan={2} />
+            <th className="px-4 py-1.5 text-right" colSpan={2}>
+              Números do dia
+            </th>
+            <th className="border-l border-slate-200 dark:border-slate-700 px-4 py-1.5 text-right" colSpan={2}>
+              Ajustes / exceções
+            </th>
+            {onEdit && <th className="px-4 py-1.5" />}
+          </tr>
           <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             <th className="px-4 py-3">Academia</th>
             <th className="px-4 py-3">Data</th>
             <th className="px-4 py-3 text-right">Scans</th>
             <th className="px-4 py-3 text-right">Reprovados</th>
-            <th className="px-4 py-3 text-right">Ajuste contatos</th>
+            <th className="border-l border-slate-200 dark:border-slate-700 px-4 py-3 text-right">Ajuste contatos</th>
             <th className="px-4 py-3 text-right">Conversões manual</th>
             {onEdit && <th className="px-4 py-3" />}
           </tr>
@@ -44,7 +58,7 @@ export function ManualDataHistoryTable({
                   <span className="text-slate-300 dark:text-slate-600">0</span>
                 )}
               </td>
-              <td className="px-4 py-3 text-right tabular-nums">
+              <td className="border-l border-slate-100 dark:border-slate-800 px-4 py-3 text-right tabular-nums">
                 {entry.contatosAjuste != null ? (
                   <span className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">{entry.contatosAjuste}</span>
                 ) : (
