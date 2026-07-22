@@ -104,11 +104,13 @@ export const MOCK_PERFORMANCE: AcademiaPerformance[] = MOCK_ACADEMIAS.map((a, i)
   return {
     academiaId: a.id,
     nome: a.nome,
+    totalAlunos: 320 - i * 18,
     totalContatos: 60 - i * 6,
     totalConversoesAne,
     totalConversoesManual,
     totalConversoes: totalConversoesAne + totalConversoesManual,
     conversoesManualAjusteTotal,
+    clientesAlleAtivos: i === 0 ? 5 : 2,
   }
 })
 

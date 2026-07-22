@@ -6,11 +6,13 @@ import type { DateRange, Period } from './types'
 export type AcademiaPerformance = {
   academiaId: string
   nome: string
+  totalAlunos: number
   totalContatos: number
   totalConversoesAne: number
   totalConversoesManual: number
   totalConversoes: number
   conversoesManualAjusteTotal: number
+  clientesAlleAtivos: number
 }
 
 export type PerformancePeriod = Period | 'todos'
@@ -45,10 +47,10 @@ export async function fetchAcademiaPerformance(
     { rows: ajustes },
     { rows: clientesAlleAtivos },
   ] = await Promise.all([
-      pool.query<{ id: string; nome: string; conversoes_manual_ajuste_total: number }>(
+      pool.query<{ id: string; nome: string; total_alunos: number; conversoes_manual_ajuste_total: number }>(
         scopedAcademiaId
-          ? 'select id, nome, conversoes_manual_ajuste_total from academias where ativo = true and id = $1 order by nome'
-          : 'select id, nome, conversoes_manual_ajuste_total from academias where ativo = true order by nome',
+          ? 'select id, nome, total_alunos, conversoes_manual_ajuste_total from academias where ativo = true and id = $1 order by nome'
+          : 'select id, nome, total_alunos, conversoes_manual_ajuste_total from academias where ativo = true order by nome',
         scopedAcademiaId ? [scopedAcademiaId] : []
       ),
       pool.query<{ academia_id: string; day: string; count: number }>(
@@ -138,11 +140,13 @@ export async function fetchAcademiaPerformance(
     return {
       academiaId: a.id,
       nome: a.nome,
+      totalAlunos: a.total_alunos ?? 0,
       totalContatos: totalContatosByAcademia.get(a.id) ?? 0,
       totalConversoesAne,
       totalConversoesManual,
       totalConversoes: totalConversoesAne + totalConversoesManual,
       conversoesManualAjusteTotal,
+      clientesAlleAtivos: clientesAlleAtivosByAcademia.get(a.id) ?? 0,
     }
   })
 }
