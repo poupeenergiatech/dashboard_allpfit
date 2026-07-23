@@ -19,7 +19,7 @@ export function TopbarShell({
   children?: React.ReactNode
 }) {
   const pathname = usePathname()
-  const { setOpen } = useMobileNav()
+  const { setOpen, desktopCollapsed, setDesktopCollapsed } = useMobileNav()
 
   const current = NAV_ITEMS.find((item) => pathname === (`${basePath}${item.href}` || '/'))
   const title = current?.label ?? 'Dashboard de Performance'
@@ -32,6 +32,18 @@ export function TopbarShell({
           onClick={() => setOpen(true)}
           aria-label="Abrir menu de navegação"
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 md:hidden"
+        >
+          <Icon name="menu" className="h-5 w-5" strokeWidth={2} />
+        </button>
+        {/* Recolher a sidebar fixa (>= md) — útil em telas de notebook, onde 256px de
+            sidebar + o conteúdo centralizado ficam apertados; o drawer mobile acima
+            é outro botão/estado (setOpen), esse aqui só existe em telas maiores. */}
+        <button
+          type="button"
+          onClick={() => setDesktopCollapsed(!desktopCollapsed)}
+          aria-label={desktopCollapsed ? 'Mostrar menu de navegação' : 'Esconder menu de navegação'}
+          title={desktopCollapsed ? 'Mostrar menu de navegação' : 'Esconder menu de navegação'}
+          className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 md:flex"
         >
           <Icon name="menu" className="h-5 w-5" strokeWidth={2} />
         </button>

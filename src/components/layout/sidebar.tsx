@@ -24,7 +24,7 @@ function Logo() {
 // ("") e na rota de prévia com dados fictícios ("/preview").
 export function Sidebar({ role, basePath = '' }: { role: UserRole | null; basePath?: string }) {
   const pathname = usePathname()
-  const { open, setOpen } = useMobileNav()
+  const { open, setOpen, desktopCollapsed } = useMobileNav()
   const items = NAV_ITEMS.filter((item) => !item.roles || (role && item.roles.includes(role)))
 
   function nav(onNavigate?: () => void) {
@@ -64,12 +64,16 @@ export function Sidebar({ role, basePath = '' }: { role: UserRole | null; basePa
 
   return (
     <>
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200/70 bg-white md:flex dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex h-16 items-center border-b border-slate-100 px-5 dark:border-slate-800">
+      <aside
+        className={`hidden shrink-0 flex-col overflow-hidden border-r border-slate-200/70 bg-white transition-[width] duration-200 md:flex dark:border-slate-800 dark:bg-slate-900 ${
+          desktopCollapsed ? 'md:w-0 md:border-r-0' : 'md:w-64'
+        }`}
+      >
+        <div className="flex h-16 w-64 shrink-0 items-center border-b border-slate-100 px-5 dark:border-slate-800">
           <Logo />
         </div>
-        {nav()}
-        <div className="border-t border-slate-100 px-5 py-4 dark:border-slate-800">
+        <div className="w-64 flex-1 shrink-0 overflow-y-auto">{nav()}</div>
+        <div className="w-64 shrink-0 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
           <p className="text-[11px] text-slate-400 dark:text-slate-500">Allp Fit × Alle Energia</p>
         </div>
       </aside>
