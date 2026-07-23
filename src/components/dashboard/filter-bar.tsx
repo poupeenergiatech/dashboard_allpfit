@@ -59,7 +59,7 @@ export function FilterBar({
           </select>
         ) : null}
 
-        <div className="flex gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
+        <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
           {PERIODS.map((p) => (
             <button
               key={p.value}

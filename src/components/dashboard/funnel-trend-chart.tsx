@@ -35,7 +35,7 @@ export function FunnelTrendChart({ series }: { series: DailyFunnelPoint[] }) {
       <p className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-400">Contatos e conversões por dia</p>
       <div className="h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={series} margin={{ top: 4, right: 12, left: -12, bottom: 0 }}>
+          <LineChart data={series} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
             <CartesianGrid stroke={chrome.grid} vertical={false} />
             <XAxis
               dataKey="date"
