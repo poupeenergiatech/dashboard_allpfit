@@ -27,7 +27,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: 'pen',
     hint: 'Quem já converteu mas ainda não assinou o termo de adesão — o que falta pra virar Cliente Alle ativo.',
   },
-  { label: 'Números (WhatsApp)', href: '/numeros', icon: 'chat' },
+  { label: 'Contatos por Unidade', href: '/numeros', icon: 'chat' },
   {
     label: 'Clientes Alle',
     href: '/clientes-alle',
