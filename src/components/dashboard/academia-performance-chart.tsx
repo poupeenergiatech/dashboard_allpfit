@@ -82,19 +82,19 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
     clientesAlleWeight: toWeight(r.clientesAlleAtivos, maxLog),
   }))
 
-  // Largura mínima por academia (130px) — com muitas unidades, a alternativa seria
-  // espremer os grupos até os rótulos colidirem (foi o que quebrou no mobile: "Vila
-  // Mariana" e "Ipiranga" se sobrepondo). Em vez disso, igual às tabelas do app
-  // (overflow-x-auto + min-width), o gráfico vira rolável horizontalmente — cada
-  // grupo sempre com o espaço mínimo pra ficar legível, ao custo de precisar
-  // arrastar em telas estreitas com muitas academias.
-  const minWidth = Math.max(480, rows.length * 130)
+  // Largura mínima por academia (160px, era 130) — com muitas unidades, a
+  // alternativa seria espremer os grupos até os rótulos colidirem (foi o que
+  // quebrou no mobile: "Vila Mariana" e "Ipiranga" se sobrepondo). Em vez disso,
+  // igual às tabelas do app (overflow-x-auto + min-width), o gráfico vira rolável
+  // horizontalmente — cada grupo sempre com o espaço mínimo pra ficar legível, ao
+  // custo de precisar arrastar em telas estreitas com muitas academias.
+  const minWidth = Math.max(560, rows.length * 160)
 
   return (
-    <div className="card p-5">
-      <p className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-400">Alunos, contatos e clientes Alle ativos por academia</p>
+    <div className="card p-6">
+      <p className="mb-4 text-sm font-medium text-slate-500 dark:text-slate-400">Alunos, contatos e clientes Alle ativos por academia</p>
       <div className="overflow-x-auto">
-        <div style={{ height: 360, minWidth }}>
+        <div style={{ height: 460, minWidth }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 24, right: 12, left: 0, bottom: 4 }} barGap={6} barCategoryGap="20%">
               <XAxis
@@ -128,7 +128,7 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
                 name={SERIES.alunos.label}
                 fill={isDark ? SERIES.alunos.dark : SERIES.alunos.light}
                 radius={[4, 4, 0, 0]}
-                barSize={22}
+                barSize={26}
               >
                 <LabelList dataKey={SERIES.alunos.key} position="top" fill={labelColor} fontSize={11} formatter={(v) => formatNumber(Number(v))} />
               </Bar>
@@ -137,7 +137,7 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
                 name={SERIES.contatos.label}
                 fill={isDark ? SERIES.contatos.dark : SERIES.contatos.light}
                 radius={[4, 4, 0, 0]}
-                barSize={22}
+                barSize={26}
               >
                 <LabelList dataKey={SERIES.contatos.key} position="top" fill={labelColor} fontSize={11} formatter={(v) => formatNumber(Number(v))} />
               </Bar>
@@ -146,7 +146,7 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
                 name={SERIES.clientesAlle.label}
                 fill={isDark ? SERIES.clientesAlle.dark : SERIES.clientesAlle.light}
                 radius={[4, 4, 0, 0]}
-                barSize={22}
+                barSize={26}
               >
                 <LabelList
                   dataKey={SERIES.clientesAlle.key}
