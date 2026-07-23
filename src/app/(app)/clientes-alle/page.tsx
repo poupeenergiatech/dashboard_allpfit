@@ -5,7 +5,7 @@ import { ClientesAlleStatusChart } from '@/components/dashboard/clientes-alle-st
 import { ClientesAlleTable } from '@/components/dashboard/clientes-alle-table'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchClientesAlle } from '@/lib/dashboard/fetch-clientes-alle'
-import { canManageManualData, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
+import { canManageManualData, canManageUsers, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 
 export default async function ClientesAllePage({
   searchParams,
@@ -40,7 +40,7 @@ export default async function ClientesAllePage({
         editable={!!profile && canManageManualData(profile.role)}
       />
 
-      {profile && canManageManualData(profile.role) && (
+      {profile && canManageUsers(profile.role) && (
         <>
           <div>
             <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Cadastrar cliente</h3>
