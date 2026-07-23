@@ -1,9 +1,9 @@
 import { Avatar } from '@/components/ui/avatar'
 import type { AcademiaPerformance } from '@/lib/dashboard/fetch-academia-performance'
 
-function conversionRate(totalConversoes: number, totalContatos: number): number {
-  if (!totalContatos) return 0
-  return (totalConversoes / totalContatos) * 100
+function conversionRate(totalConversoes: number, base: number): number {
+  if (!base) return 0
+  return (totalConversoes / base) * 100
 }
 
 export function AcademiaTable({ rows }: { rows: AcademiaPerformance[] }) {
@@ -17,7 +17,7 @@ export function AcademiaTable({ rows }: { rows: AcademiaPerformance[] }) {
 
   return (
     <div className="card overflow-x-auto">
-      <table className="w-full min-w-[760px] text-sm">
+      <table className="w-full min-w-[940px] text-sm">
         <thead>
           <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             <th className="px-4 py-3">Academia</th>
@@ -25,12 +25,14 @@ export function AcademiaTable({ rows }: { rows: AcademiaPerformance[] }) {
             <th className="px-4 py-3 text-right">Convertidos Ane</th>
             <th className="px-4 py-3 text-right">Convertidos Manual</th>
             <th className="px-4 py-3 text-right">Total convertidos</th>
-            <th className="px-4 py-3">Taxa de conversão</th>
+            <th className="px-4 py-3">Taxa de conversão (contatos)</th>
+            <th className="px-4 py-3">Taxa de conversão (alunos)</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row) => {
             const rate = conversionRate(row.totalConversoes, row.totalContatos)
+            const rateAlunos = conversionRate(row.totalConversoes, row.totalAlunos)
             return (
               <tr key={row.academiaId} className="border-b border-slate-50 dark:border-slate-800/60 transition last:border-0 hover:bg-slate-50/70 dark:hover:bg-slate-800/70">
                 <td className="px-4 py-3">
@@ -55,6 +57,19 @@ export function AcademiaTable({ rows }: { rows: AcademiaPerformance[] }) {
                     </div>
                     <span className="w-12 shrink-0 text-right text-xs font-medium tabular-nums text-slate-500 dark:text-slate-400">
                       {rate.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%
+                    </span>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-brand-500 to-accent-500"
+                        style={{ width: `${Math.min(rateAlunos, 100)}%` }}
+                      />
+                    </div>
+                    <span className="w-12 shrink-0 text-right text-xs font-medium tabular-nums text-slate-500 dark:text-slate-400">
+                      {rateAlunos.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%
                     </span>
                   </div>
                 </td>
