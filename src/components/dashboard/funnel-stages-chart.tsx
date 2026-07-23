@@ -1,6 +1,7 @@
 'use client'
 
 import { Cell, Funnel, FunnelChart, LabelList, ResponsiveContainer, Tooltip } from 'recharts'
+import { computeMaxLog, toWeight } from '@/lib/dashboard/log-scale'
 import { useIsDark } from '@/lib/dashboard/use-is-dark'
 import type { FunnelCounts } from '@/lib/dashboard/types'
 
@@ -25,14 +26,8 @@ type Stage = { name: string; value: number; weight: number; rate: number | null;
 // Alunos totais fica em ordens de grandeza acima de scans/contatos/conversões (ex.:
 // 45.000 vs dezenas) — largura proporcional ao valor bruto faz o funil colapsar num
 // "V" logo depois da 1ª etapa, com as demais reduzidas a poucos pixels (foi o caso
-// reportado: só a legenda ficava legível, a forma não). log1p comprime a proporção
-// preservando a ordem, então cada etapa não-zero ainda fica com uma faixa legível; o
-// piso de 4% é só pra um valor > 0 nunca desaparecer visualmente igual a um 0 de
-// verdade.
-function toWeight(value: number, maxLog: number): number {
-  if (value <= 0 || maxLog <= 0) return 0
-  return Math.max(Math.log1p(value) / maxLog, 0.04)
-}
+// reportado: só a legenda ficava legível, a forma não). toWeight (log-scale.ts)
+// resolve isso comprimindo a proporção via log1p.
 
 function FunnelTooltip({ active, payload }: { active?: boolean; payload?: { payload: Stage }[] }) {
   if (!active || !payload?.length) return null
@@ -70,7 +65,7 @@ export function FunnelStagesChart({ counts }: { counts: FunnelCounts }) {
     )
   }
 
-  const maxLog = Math.log1p(Math.max(...raw.map((s) => s.value)))
+  const maxLog = computeMaxLog(raw.map((s) => s.value))
   // Taxa etapa a etapa direto no funil (padrão Mixpanel/Amplitude de funil) — assim o
   // gráfico já conta a história completa (valor + conversão) sem precisar dos cards
   // de baixo pra saber a taxa de cada etapa.

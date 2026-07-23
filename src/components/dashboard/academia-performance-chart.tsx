@@ -2,6 +2,7 @@
 
 import { Bar, BarChart, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis, LabelList } from 'recharts'
 import { getChartChrome } from '@/lib/dashboard/chart-theme'
+import { computeMaxLog, toWeight } from '@/lib/dashboard/log-scale'
 import { useIsDark } from '@/lib/dashboard/use-is-dark'
 import type { AcademiaPerformance } from '@/lib/dashboard/fetch-academia-performance'
 
@@ -12,9 +13,15 @@ import type { AcademiaPerformance } from '@/lib/dashboard/fetch-academia-perform
 // usa accent-700 em vez de 600 — 600 caía fora da faixa de luminância do modo
 // escuro).
 const SERIES = {
-  alunos: { key: 'totalAlunos' as const, label: 'Alunos', light: '#3b82f6', dark: '#3b82f6' },
-  contatos: { key: 'totalContatos' as const, label: 'Contatos', light: '#059669', dark: '#059669' },
-  clientesAlle: { key: 'clientesAlleAtivos' as const, label: 'Clientes Alle ativos', light: '#ef6700', dark: '#da5f00' },
+  alunos: { key: 'totalAlunos' as const, weightKey: 'alunosWeight' as const, label: 'Alunos', light: '#3b82f6', dark: '#3b82f6' },
+  contatos: { key: 'totalContatos' as const, weightKey: 'contatosWeight' as const, label: 'Contatos', light: '#059669', dark: '#059669' },
+  clientesAlle: {
+    key: 'clientesAlleAtivos' as const,
+    weightKey: 'clientesAlleWeight' as const,
+    label: 'Clientes Alle ativos',
+    light: '#ef6700',
+    dark: '#da5f00',
+  },
 }
 
 function formatNumber(value: number): string {
@@ -43,13 +50,21 @@ function stripCommonPrefix(names: string[]): string[] {
 // Colunas verticais (era barra horizontal) — versão horizontal rotacionava o nome da
 // academia a -40° pra caber, e o texto diagonal colidia com a legenda; cortando o
 // prefixo comum ("Allp Fit - ") o nome que sobra ("Santo Amaro", "Vila Mariana"...)
-// cabe na horizontal sem rotacionar (nome completo continua no tooltip). Cada série
-// mantém sua própria escala (yAxisId próprio, eixo escondido) — Alunos (~300),
-// Contatos (~30-60) e Clientes Alle ativos (~2-5) são ordens de grandeza distantes
-// entre si; num eixo só, as duas últimas viravam traços quase invisíveis ao lado da
-// coluna de Alunos. O valor exato de cada coluna vai no LabelList (mesma ideia do
-// FunnelStagesChart): sem eixo visível pra não sugerir uma escala comum que não
-// existe, a leitura do número é sempre pelo rótulo, não pela régua.
+// cabe na horizontal sem rotacionar (nome completo continua no tooltip).
+//
+// Alunos, Contatos e Clientes Alle ativos são ordens de grandeza distantes entre si
+// (ex.: 1500 vs 200 vs 5) — cada série na sua própria escala linear (versão anterior)
+// deixava colunas de séries diferentes com a MESMA altura mesmo quando os valores
+// reais eram bem diferentes (a série X normalizada pro próprio máximo não tem
+// nenhuma relação de tamanho com a série Y normalizada pro dela). Uma única escala
+// em log1p (toWeight, log-scale.ts) compartilhada pelas 3 séries resolve isso:
+// preserva a proporção real entre Alunos/Contatos/Clientes Alle (quem é maior
+// continua visivelmente maior), só compacta a razão pra a menor não sumir num traço
+// de 1px. A posição de cada LabelList vem da barra a que ele pertence (dataKey do
+// Bar = campo do peso), mas o texto exibido usa o dataKey do próprio LabelList — por
+// isso aponta pro campo bruto (ex.: totalAlunos), não pro peso: mostra a contagem
+// real, não o número normalizado 0-1. O eixo continua escondido, porque uma régua em
+// log não se lê tão direto quanto o número escrito em cima da barra.
 export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[] }) {
   const isDark = useIsDark()
   const chrome = getChartChrome(isDark)
@@ -58,11 +73,14 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
   const labelColor = isDark ? '#f8fafc' : '#0f172a'
 
   const shortNames = stripCommonPrefix(rows.map((r) => r.nome))
-  const chartData = rows.map((r, i) => ({ ...r, shortNome: shortNames[i] }))
-
-  const maxAlunos = Math.max(1, ...rows.map((r) => r.totalAlunos))
-  const maxContatos = Math.max(1, ...rows.map((r) => r.totalContatos))
-  const maxClientesAlle = Math.max(1, ...rows.map((r) => r.clientesAlleAtivos))
+  const maxLog = computeMaxLog(rows.flatMap((r) => [r.totalAlunos, r.totalContatos, r.clientesAlleAtivos]))
+  const chartData = rows.map((r, i) => ({
+    ...r,
+    shortNome: shortNames[i],
+    alunosWeight: toWeight(r.totalAlunos, maxLog),
+    contatosWeight: toWeight(r.totalContatos, maxLog),
+    clientesAlleWeight: toWeight(r.clientesAlleAtivos, maxLog),
+  }))
 
   // Largura mínima por academia (130px) — com muitas unidades, a alternativa seria
   // espremer os grupos até os rótulos colidirem (foi o que quebrou no mobile: "Vila
@@ -86,11 +104,16 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
                 axisLine={{ stroke: chrome.axisLine }}
                 interval={0}
               />
-              <YAxis yAxisId="alunos" type="number" domain={[0, maxAlunos]} hide />
-              <YAxis yAxisId="contatos" type="number" domain={[0, maxContatos]} hide />
-              <YAxis yAxisId="clientesAlle" type="number" domain={[0, maxClientesAlle]} hide />
+              <YAxis type="number" domain={[0, 1.05]} hide />
               <Tooltip
                 labelFormatter={(_, payload) => payload?.[0]?.payload?.nome ?? ''}
+                formatter={(_, name, item) => {
+                  const rawKey = (
+                    { Alunos: 'totalAlunos', Contatos: 'totalContatos', 'Clientes Alle ativos': 'clientesAlleAtivos' } as const
+                  )[name as string]
+                  const raw = rawKey ? (item.payload as AcademiaPerformance)[rawKey] : ''
+                  return [formatNumber(Number(raw)), name]
+                }}
                 contentStyle={{
                   borderRadius: 12,
                   borderColor: chrome.tooltipBorder,
@@ -101,8 +124,7 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
               />
               <Legend iconType="circle" iconSize={8} verticalAlign="top" wrapperStyle={{ fontSize: 13, color: chrome.legend, paddingBottom: 8 }} />
               <Bar
-                yAxisId="alunos"
-                dataKey={SERIES.alunos.key}
+                dataKey={SERIES.alunos.weightKey}
                 name={SERIES.alunos.label}
                 fill={isDark ? SERIES.alunos.dark : SERIES.alunos.light}
                 radius={[4, 4, 0, 0]}
@@ -111,8 +133,7 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
                 <LabelList dataKey={SERIES.alunos.key} position="top" fill={labelColor} fontSize={11} formatter={(v) => formatNumber(Number(v))} />
               </Bar>
               <Bar
-                yAxisId="contatos"
-                dataKey={SERIES.contatos.key}
+                dataKey={SERIES.contatos.weightKey}
                 name={SERIES.contatos.label}
                 fill={isDark ? SERIES.contatos.dark : SERIES.contatos.light}
                 radius={[4, 4, 0, 0]}
@@ -121,8 +142,7 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
                 <LabelList dataKey={SERIES.contatos.key} position="top" fill={labelColor} fontSize={11} formatter={(v) => formatNumber(Number(v))} />
               </Bar>
               <Bar
-                yAxisId="clientesAlle"
-                dataKey={SERIES.clientesAlle.key}
+                dataKey={SERIES.clientesAlle.weightKey}
                 name={SERIES.clientesAlle.label}
                 fill={isDark ? SERIES.clientesAlle.dark : SERIES.clientesAlle.light}
                 radius={[4, 4, 0, 0]}
