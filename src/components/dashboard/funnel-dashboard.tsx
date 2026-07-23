@@ -60,10 +60,8 @@ export function FunnelDashboard({
 
       {loading && !counts ? (
         <>
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <div className="skeleton h-72 rounded-2xl" />
-            <div className="skeleton h-72 rounded-2xl" />
-          </div>
+          <div className="skeleton h-96 rounded-2xl" />
+          <div className="skeleton h-72 rounded-2xl" />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="skeleton h-32 rounded-2xl" />
@@ -75,11 +73,12 @@ export function FunnelDashboard({
           <>
             {/* Gráfico primeiro, números depois: quem só quer bater o olho lê o
                 formato do funil (onde está afunilando) antes de entrar nos números
-                card a card — os cards continuam logo abaixo pra quem quer o detalhe. */}
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <FunnelStagesChart counts={counts} />
-              <FunnelTrendChart series={counts.series} />
-            </div>
+                card a card — os cards continuam logo abaixo pra quem quer o detalhe.
+                Funil ocupa a seção inteira (não mais 50% dividido com a tendência) —
+                é o gráfico principal da página, merece a largura toda pra ler valor e
+                taxa de cada etapa confortavelmente. */}
+            <FunnelStagesChart counts={counts} />
+            <FunnelTrendChart series={counts.series} />
             <FunnelGrid counts={counts} isSuperAdmin={isSuperAdmin} />
             <div>
               <h3 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Histórico diário</h3>

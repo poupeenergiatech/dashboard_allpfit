@@ -37,10 +37,8 @@ export default function PreviewFunnelPage() {
         onCustomRangeChange={setCustomRange}
       />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <FunnelStagesChart counts={MOCK_FUNNEL_COUNTS} />
-        <FunnelTrendChart series={MOCK_FUNNEL_COUNTS.series} />
-      </div>
+      <FunnelStagesChart counts={MOCK_FUNNEL_COUNTS} />
+      <FunnelTrendChart series={MOCK_FUNNEL_COUNTS.series} />
 
       <FunnelGrid counts={MOCK_FUNNEL_COUNTS} isSuperAdmin />
 
