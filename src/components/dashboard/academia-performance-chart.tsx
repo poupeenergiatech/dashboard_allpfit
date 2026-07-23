@@ -38,8 +38,9 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
 
   // Barra horizontal — melhor pra muitas categorias com nome longo (nome da
   // unidade) do que barras verticais espremidas. Altura cresce com o número de
-  // academias pra não amontoar.
-  const height = Math.max(240, rows.length * 44)
+  // academias pra não amontoar — 60px/linha (em vez de 44) dá espaço pra barras
+  // mais grossas (maxBarSize 22, era 16) sem apertar o espaçamento entre academias.
+  const height = Math.max(260, rows.length * 60)
   const labelColor = isDark ? '#f8fafc' : '#0f172a'
 
   const maxAlunos = Math.max(1, ...rows.map((r) => r.totalAlunos))
@@ -51,7 +52,7 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
       <p className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-400">Alunos, contatos e clientes Alle ativos por academia</p>
       <div style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 40, left: 8, bottom: 0 }} barGap={2}>
+          <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 40, left: 8, bottom: 0 }} barGap={3}>
             <XAxis xAxisId="alunos" type="number" domain={[0, maxAlunos]} hide />
             <XAxis xAxisId="contatos" type="number" domain={[0, maxContatos]} hide />
             <XAxis xAxisId="clientesAlle" type="number" domain={[0, maxClientesAlle]} hide />
@@ -80,7 +81,7 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
               name={SERIES.alunos.label}
               fill={isDark ? SERIES.alunos.dark : SERIES.alunos.light}
               radius={[0, 4, 4, 0]}
-              maxBarSize={16}
+              maxBarSize={22}
             >
               <LabelList dataKey={SERIES.alunos.key} position="right" fill={labelColor} fontSize={11} formatter={(v) => formatNumber(Number(v))} />
             </Bar>
@@ -90,7 +91,7 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
               name={SERIES.contatos.label}
               fill={isDark ? SERIES.contatos.dark : SERIES.contatos.light}
               radius={[0, 4, 4, 0]}
-              maxBarSize={16}
+              maxBarSize={22}
             >
               <LabelList dataKey={SERIES.contatos.key} position="right" fill={labelColor} fontSize={11} formatter={(v) => formatNumber(Number(v))} />
             </Bar>
@@ -100,7 +101,7 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
               name={SERIES.clientesAlle.label}
               fill={isDark ? SERIES.clientesAlle.dark : SERIES.clientesAlle.light}
               radius={[0, 4, 4, 0]}
-              maxBarSize={16}
+              maxBarSize={22}
             >
               <LabelList
                 dataKey={SERIES.clientesAlle.key}
