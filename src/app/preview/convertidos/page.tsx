@@ -26,6 +26,8 @@ export default function PreviewConvertidosPage() {
         onDesfazerReprovacaoAne={mockSave}
         onReprovarManual={mockSave}
         onSetStatusManual={mockSave}
+        onDeleteAne={mockSave}
+        onDeleteManual={mockSave}
       />
     </div>
   )

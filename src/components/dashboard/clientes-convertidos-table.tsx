@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import {
   definirStatusClienteConvertido,
+  deleteClienteConvertidoAne,
   desfazerReprovacaoClienteConvertido,
   reprovarClienteConvertido,
   updateClienteConvertidoAcademia,
   type ClienteConvertidoStatusEditavel,
 } from '@/app/(app)/convertidos/actions'
-import { bulkUpdateClientesAlleStatus, reprovarClienteAlle } from '@/app/(app)/clientes-alle/actions'
+import { bulkUpdateClientesAlleStatus, deleteClienteAlle, reprovarClienteAlle } from '@/app/(app)/clientes-alle/actions'
 import { Avatar } from '@/components/ui/avatar'
 import { ListFilterBar } from './list-filter-bar'
 import { Pagination } from './pagination'
@@ -41,6 +42,7 @@ type StatusFilter = 'todos' | 'sem_unidade'
 type UpdateAction = (conversionId: string, formData: FormData) => Promise<void>
 type ReprovarAction = (id: string) => Promise<void>
 type SetStatusAction = (id: string, status: ClienteConvertidoStatusEditavel) => Promise<void>
+type DeleteAction = (id: string) => Promise<void>
 
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
@@ -125,6 +127,8 @@ export function ClientesConvertidosTable({
   onDesfazerReprovacaoAne = desfazerReprovacaoClienteConvertido,
   onReprovarManual = reprovarClienteAlle,
   onSetStatusManual = (id, status) => bulkUpdateClientesAlleStatus([id], status),
+  onDeleteAne = deleteClienteConvertidoAne,
+  onDeleteManual = deleteClienteAlle,
 }: {
   clientes: ClienteConvertido[]
   academias: Academia[]
@@ -135,6 +139,8 @@ export function ClientesConvertidosTable({
   onDesfazerReprovacaoAne?: ReprovarAction
   onReprovarManual?: ReprovarAction
   onSetStatusManual?: SetStatusAction
+  onDeleteAne?: DeleteAction
+  onDeleteManual?: DeleteAction
 }) {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<StatusFilter>('todos')
@@ -303,7 +309,7 @@ export function ClientesConvertidosTable({
                             </button>
                           )}
                           {c.origem === 'ane' && c.status === 'reprovado' && (
-                            <ReprovarButton
+                            <ConfirmActionButton
                               id={c.id}
                               nome={c.nome}
                               label="Desfazer"
@@ -311,11 +317,11 @@ export function ClientesConvertidosTable({
                               pendingLabel="Desfazendo…"
                               successMessage="Reprovação desfeita."
                               errorMessage="Erro ao desfazer reprovação."
-                              onReprovar={onDesfazerReprovacaoAne}
+                              onConfirm={onDesfazerReprovacaoAne}
                             />
                           )}
                           {c.origem === 'ane' && c.status === null && (
-                            <ReprovarButton
+                            <ConfirmActionButton
                               id={c.id}
                               nome={c.nome}
                               label="Reprovar"
@@ -323,11 +329,11 @@ export function ClientesConvertidosTable({
                               pendingLabel="Reprovando…"
                               successMessage="Cliente marcado como reprovado."
                               errorMessage="Erro ao reprovar cliente."
-                              onReprovar={onReprovarAne}
+                              onConfirm={onReprovarAne}
                             />
                           )}
                           {c.origem === 'manual' && c.status !== 'reprovado' && (
-                            <ReprovarButton
+                            <ConfirmActionButton
                               id={c.id}
                               nome={c.nome}
                               label="Reprovar"
@@ -335,7 +341,23 @@ export function ClientesConvertidosTable({
                               pendingLabel="Reprovando…"
                               successMessage="Cliente marcado como reprovado."
                               errorMessage="Erro ao reprovar cliente."
-                              onReprovar={onReprovarManual}
+                              onConfirm={onReprovarManual}
+                            />
+                          )}
+                          {/* Excluído aqui só quando o registro de fato vive nessa origem: manual
+                              sempre (é o próprio clientes_alle), ane só quando ainda não vinculado
+                              (status null/reprovado) — depois de vinculado, a exclusão é em
+                              /clientes-alle (ver deleteClienteConvertidoAne). */}
+                          {(c.origem === 'manual' || c.status === null || c.status === 'reprovado') && (
+                            <ConfirmActionButton
+                              id={c.id}
+                              nome={c.nome}
+                              label="Excluir"
+                              confirmText={`Excluir "${c.nome ?? 'esse cliente'}" definitivamente? Essa ação não pode ser desfeita.`}
+                              pendingLabel="Excluindo…"
+                              successMessage="Cliente excluído."
+                              errorMessage="Erro ao excluir cliente."
+                              onConfirm={c.origem === 'manual' ? onDeleteManual : onDeleteAne}
                             />
                           )}
                         </div>
@@ -432,10 +454,10 @@ function StatusSelect({
   )
 }
 
-// Reutilizado pra reprovar (ane e manual) e pra desfazer reprovação (só ane, que não
-// tem outro lugar pra voltar atrás — manual pode ser editado de novo em
-// /clientes-alle).
-function ReprovarButton({
+// Reutilizado pra reprovar (ane e manual), desfazer reprovação (só ane, que não tem
+// outro lugar pra voltar atrás — manual pode ser editado de novo em /clientes-alle) e
+// excluir — as três ações são "clique, confirme num modal nativo, chame a action".
+function ConfirmActionButton({
   id,
   nome,
   label,
@@ -443,7 +465,7 @@ function ReprovarButton({
   pendingLabel,
   successMessage,
   errorMessage,
-  onReprovar,
+  onConfirm,
 }: {
   id: string
   nome: string | null
@@ -452,7 +474,7 @@ function ReprovarButton({
   pendingLabel: string
   successMessage: string
   errorMessage: string
-  onReprovar: ReprovarAction
+  onConfirm: ReprovarAction
 }) {
   const [pending, startTransition] = useTransition()
   const { showToast } = useToast()
@@ -462,7 +484,7 @@ function ReprovarButton({
     if (!window.confirm(confirmText)) return
     startTransition(async () => {
       try {
-        await onReprovar(id)
+        await onConfirm(id)
         showToast(successMessage)
       } catch (err) {
         showToast(err instanceof Error ? err.message : errorMessage, 'error')

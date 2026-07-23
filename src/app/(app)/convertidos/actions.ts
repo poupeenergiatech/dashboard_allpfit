@@ -176,3 +176,26 @@ export async function desfazerReprovacaoClienteConvertido(conversionId: string) 
   revalidatePath('/convertidos')
   revalidatePath('/')
 }
+
+// Exclui definitivamente uma linha 'ane' (conversions) — exige cliente_alle_id nulo,
+// mesma trava de updateClienteConvertidoAcademia acima: depois de vinculado (ver
+// definirStatusClienteConvertido), o registro que importa é o clientes_alle, e
+// excluir a linha de conversions aqui deixaria esse cliente Alle órfão sem o vínculo
+// de origem — a exclusão nesse caso é em /clientes-alle.
+export async function deleteClienteConvertidoAne(conversionId: string) {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canManageManualData(profile.role)) {
+    throw new Error('Sem permissão para excluir clientes convertidos.')
+  }
+
+  const { rowCount } = await pool.query('delete from conversions where id = $1 and cliente_alle_id is null', [
+    conversionId,
+  ])
+  if (rowCount === 0) {
+    throw new Error('Convertido não encontrado ou já vinculado a um cliente Alle — exclua em Clientes Alle.')
+  }
+
+  revalidatePath('/convertidos')
+  revalidatePath('/')
+  revalidatePath('/performance')
+}
