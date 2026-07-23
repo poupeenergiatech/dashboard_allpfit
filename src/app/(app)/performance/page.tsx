@@ -6,7 +6,7 @@ import { PeriodFilterLinks } from '@/components/dashboard/period-filter-links'
 import { fetchAcademiaPerformance, type PerformancePeriod } from '@/lib/dashboard/fetch-academia-performance'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchManualDataHistory } from '@/lib/dashboard/fetch-manual-data-history'
-import { canManageManualData, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
+import { canManageManualData, canManageUsers, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 import type { DateRange } from '@/lib/dashboard/types'
 
 const VALID_PERIODS: PerformancePeriod[] = ['todos', 'hoje', 'ontem', '7dias', '30dias', '90dias', '1ano', 'personalizado']
@@ -36,12 +36,15 @@ export default async function PerformancePage({
       : null
   const requestedAcademiaId = searchParams.academia ?? null
 
+  const isSuperAdmin = !!profile && canManageUsers(profile.role)
+
   const [rows, academias, history] = await Promise.all([
     profile ? fetchAcademiaPerformance(profile, period, customRange, requestedAcademiaId) : Promise.resolve([]),
     fetchActiveAcademias(profile),
-    // Dados manuais e histórico agora são visíveis (leitura) pra qualquer role
-    // autenticada — só a edição fica restrita, ver canManageManualData abaixo.
-    profile ? fetchManualDataHistory(profile) : Promise.resolve([]),
+    // Diferente do Funil/Dashboard (onde Dados manuais é visível em modo leitura pra
+    // qualquer role — ver canManageManualData), aqui em /performance a seção fica
+    // restrita a Super Admin de propósito: só busca o histórico se for exibir.
+    isSuperAdmin ? fetchManualDataHistory(profile) : Promise.resolve([]),
   ])
 
   const periodExtraParams: Record<string, string> = requestedAcademiaId ? { academia: requestedAcademiaId } : {}
@@ -75,7 +78,7 @@ export default async function PerformancePage({
 
       <AcademiaTable rows={rows} />
 
-      {profile && (
+      {isSuperAdmin && (
         <div>
           <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Dados manuais</h3>
           <ManualDataSection
