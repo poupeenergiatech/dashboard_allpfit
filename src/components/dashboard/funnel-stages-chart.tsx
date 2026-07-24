@@ -1,6 +1,5 @@
 'use client'
 
-import { Cell, Funnel, FunnelChart, LabelList, ResponsiveContainer, Tooltip } from 'recharts'
 import { computeMaxLog, toWeight } from '@/lib/dashboard/log-scale'
 import { useIsDark } from '@/lib/dashboard/use-is-dark'
 import type { FunnelCounts } from '@/lib/dashboard/types'
@@ -21,33 +20,23 @@ function formatRate(value: number): string {
   return value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
 }
 
-type Stage = { name: string; value: number; weight: number; rate: number | null; valueLabel: string }
+type Stage = { name: string; value: number; weight: number; rate: number | null }
 
 // Alunos totais fica em ordens de grandeza acima de scans/contatos/conversões (ex.:
 // 45.000 vs dezenas) — largura proporcional ao valor bruto faz o funil colapsar num
-// "V" logo depois da 1ª etapa, com as demais reduzidas a poucos pixels (foi o caso
-// reportado: só a legenda ficava legível, a forma não). toWeight (log-scale.ts)
-// resolve isso comprimindo a proporção via log1p.
-
-function FunnelTooltip({ active, payload }: { active?: boolean; payload?: { payload: Stage }[] }) {
-  if (!active || !payload?.length) return null
-  const stage = payload[0].payload
-  return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-[13px] shadow-sm">
-      <p className="font-medium text-slate-900 dark:text-white">{stage.name}</p>
-      <p className="tabular-nums text-slate-600 dark:text-slate-300">{formatNumber(stage.value)}</p>
-      {stage.rate != null && (
-        <p className="tabular-nums text-slate-400 dark:text-slate-500">{formatRate(stage.rate)}% da etapa anterior</p>
-      )}
-    </div>
-  )
-}
-
+// "V" logo depois da 1ª etapa, com as demais reduzidas a poucos pixels. toWeight
+// (log-scale.ts) resolve isso comprimindo a proporção via log1p.
+//
+// Cada barra é desenhada com largura própria (proporcional só ao seu valor), não
+// como um trapézio conectado à barra vizinha — o Funnel da Recharts interpola a
+// forma entre etapas adjacentes, e como os dados reais nem sempre são monótonos
+// decrescentes (ex.: Scans/Contatos zerados por falha de captura, mas Conversões >
+// 0 por lançamento manual), essa interpolação produzia uma silhueta em "gravata"
+// bem feia (pescoço colado a 0 e alargando de novo embaixo). Barras
+// independentes não têm esse problema: cada uma só descreve a si mesma.
 export function FunnelStagesChart({ counts }: { counts: FunnelCounts }) {
   const isDark = useIsDark()
   const stageColors = isDark ? STAGE_COLORS_DARK : STAGE_COLORS
-  const labelColor = isDark ? '#cbd5e1' : '#334155'
-  const valueColor = isDark ? '#f8fafc' : '#0f172a'
 
   const raw = [
     { name: 'Alunos totais', value: counts.totalAlunos },
@@ -66,14 +55,10 @@ export function FunnelStagesChart({ counts }: { counts: FunnelCounts }) {
   }
 
   const maxLog = computeMaxLog(raw.map((s) => s.value))
-  // Taxa etapa a etapa direto no funil (padrão Mixpanel/Amplitude de funil) — assim o
-  // gráfico já conta a história completa (valor + conversão) sem precisar dos cards
-  // de baixo pra saber a taxa de cada etapa.
   const stages: Stage[] = raw.map((s, i) => {
     const prev = raw[i - 1]
     const rate = i === 0 || !prev || !prev.value ? null : (s.value / prev.value) * 100
-    const valueLabel = rate == null ? formatNumber(s.value) : `${formatNumber(s.value)} · ${formatRate(rate)}%`
-    return { ...s, weight: toWeight(s.value, maxLog), rate, valueLabel }
+    return { ...s, weight: toWeight(s.value, maxLog), rate }
   })
 
   // Conversão de ponta a ponta (alunos -> clientes Alle ativos) — a pergunta que todo
@@ -83,7 +68,7 @@ export function FunnelStagesChart({ counts }: { counts: FunnelCounts }) {
 
   return (
     <div className="card p-5">
-      <div className="mb-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Funil de conversão</p>
         {overallRate != null && (
           <span className="inline-flex items-center rounded-full bg-accent-50 dark:bg-accent-500/10 px-2.5 py-0.5 text-xs font-semibold text-accent-600 dark:text-accent-400">
@@ -91,37 +76,31 @@ export function FunnelStagesChart({ counts }: { counts: FunnelCounts }) {
           </span>
         )}
       </div>
-      <div className="h-72 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <FunnelChart margin={{ top: 4, right: 88, left: 96, bottom: 4 }}>
-            <Tooltip content={<FunnelTooltip />} />
-            {/* lastShapeType="rectangle": por padrão a Recharts desenha a última etapa
-                como um triângulo (afunila até uma ponta), o que faz a última faixa
-                (menor valor) parecer um respingo esticado embaixo do funil em vez de
-                uma faixa igual às demais. */}
-            <Funnel dataKey="weight" data={stages} isAnimationActive={false} lastShapeType="rectangle">
-              {stages.map((stage, index) => (
-                <Cell key={stage.name} fill={stageColors[index]} />
-              ))}
-              <LabelList
-                position="right"
-                dataKey="name"
-                stroke="none"
-                fill={labelColor}
-                fontSize={13}
-                fontWeight={500}
+      <div className="space-y-3.5">
+        {stages.map((stage, i) => (
+          <div key={stage.name}>
+            <div className="mb-1.5 flex items-baseline justify-between gap-3">
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{stage.name}</span>
+              <span className="whitespace-nowrap text-sm tabular-nums">
+                <span className="font-semibold text-slate-900 dark:text-white">{formatNumber(stage.value)}</span>
+                {stage.rate != null && (
+                  <span className="ml-1.5 text-xs text-slate-400 dark:text-slate-500">
+                    · {formatRate(stage.rate)}% da etapa anterior
+                  </span>
+                )}
+              </span>
+            </div>
+            <div className="h-8 w-full overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800/60">
+              <div
+                className="h-full rounded-lg"
+                style={{
+                  width: `${stage.weight * 100}%`,
+                  backgroundColor: stage.value > 0 ? stageColors[i] : 'transparent',
+                }}
               />
-              <LabelList
-                position="left"
-                dataKey="valueLabel"
-                stroke="none"
-                fill={valueColor}
-                fontSize={13}
-                fontWeight={600}
-              />
-            </Funnel>
-          </FunnelChart>
-        </ResponsiveContainer>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
