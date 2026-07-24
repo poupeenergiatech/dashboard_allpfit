@@ -14,10 +14,9 @@ export default function LoginPage({
       <div className="w-full max-w-sm animate-fade-up">
         <div className="mb-8 flex flex-col items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element -- asset local pequeno e fixo, sem next/image em nenhum outro lugar do app */}
-          <img src="/logo.png" alt="Allp Fit" className="h-14 w-14" />
+          <img src="/logo.png" alt="Dashboard Alle Energia" className="h-14 w-14" />
           <div className="text-center">
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">Allp Fit</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Dashboard de Performance</p>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white">Dashboard Alle Energia</h1>
           </div>
         </div>
 
@@ -65,7 +64,7 @@ export default function LoginPage({
           </form>
         </div>
 
-        <p className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">Allp Fit × Alle Energia</p>
+        <p className="mt-6 text-center text-xs text-slate-400 dark:text-slate-500">Dashboard Alle Energia</p>
       </div>
     </div>
   )

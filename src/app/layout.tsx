@@ -14,8 +14,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Allp Fit | Dashboard de Performance",
-  description: "Dashboard de Performance — Allp Fit x Alle Energia",
+  title: "Dashboard Alle Energia",
+  description: "Dashboard de performance da Alle Energia.",
 };
 
 // Roda antes da primeira pintura (via dangerouslySetInnerHTML no <head>) pra

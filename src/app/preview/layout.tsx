@@ -26,7 +26,7 @@ export default function PreviewLayout({ children }: { children: React.ReactNode 
               <Icon name="warning" className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
               Modo prévia — dados fictícios, nenhuma ação aqui é salva de verdade
             </div>
-            <TopbarShell basePath="/preview" subtitle="Allp Fit × Alle Energia (prévia)">
+            <TopbarShell basePath="/preview" subtitle="Dashboard Alle Energia (prévia)">
               <div className="hidden items-center gap-2.5 rounded-full border border-slate-200 bg-white py-1 pl-1 pr-3 shadow-sm sm:flex dark:border-slate-700 dark:bg-slate-800">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-700">
                   P

@@ -12,10 +12,7 @@ function Logo() {
     <Link href="/" className="flex items-center gap-2.5">
       {/* eslint-disable-next-line @next/next/no-img-element -- asset local pequeno e fixo, sem next/image em nenhum outro lugar do app */}
       <img src="/logo.png" alt="" className="h-9 w-9 shrink-0" />
-      <span className="leading-tight">
-        <span className="block text-[15px] font-bold text-slate-900 dark:text-white">Allp Fit</span>
-        <span className="block text-[11px] font-medium text-slate-400 dark:text-slate-500">Performance</span>
-      </span>
+      <span className="text-[15px] font-bold leading-tight text-slate-900 dark:text-white">Dashboard Alle Energia</span>
     </Link>
   )
 }
@@ -74,7 +71,7 @@ export function Sidebar({ role, basePath = '' }: { role: UserRole | null; basePa
         </div>
         <div className="w-64 flex-1 shrink-0 overflow-y-auto">{nav()}</div>
         <div className="w-64 shrink-0 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
-          <p className="text-[11px] text-slate-400 dark:text-slate-500">Allp Fit × Alle Energia</p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-500">Dashboard Alle Energia</p>
         </div>
       </aside>
 

@@ -11,7 +11,7 @@ import { useMobileNav } from './nav-context'
 // badge de role etc.), que difere entre dados reais e fictícios.
 export function TopbarShell({
   basePath = '',
-  subtitle = 'Allp Fit × Alle Energia',
+  subtitle = 'Dashboard Alle Energia',
   children,
 }: {
   basePath?: string
