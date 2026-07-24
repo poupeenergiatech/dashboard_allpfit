@@ -1,6 +1,7 @@
 'use client'
 
 import { Cell, Funnel, FunnelChart, LabelList, ResponsiveContainer, Tooltip } from 'recharts'
+import type { LabelProps } from 'recharts'
 import { computeMaxLog, toWeight } from '@/lib/dashboard/log-scale'
 import { useIsDark } from '@/lib/dashboard/use-is-dark'
 import type { FunnelCounts } from '@/lib/dashboard/types'
@@ -10,6 +11,13 @@ import type { FunnelCounts } from '@/lib/dashboard/types'
 const STAGE_COLORS = ['#60a5fa', '#3b82f6', '#1d4ed8', '#1e3a8a', '#172554']
 const STAGE_COLORS_DARK = ['#bfdbfe', '#93c5fd', '#60a5fa', '#3b82f6', '#2563eb']
 
+// Cor do texto da taxa (dentro de cada bloco). No modo claro todos os tons já são
+// azuis saturados o bastante pra texto branco funcionar; no escuro, os 2 primeiros
+// tons (STAGE_COLORS_DARK) são pastéis quase brancos e precisam de texto escuro —
+// os 3 seguintes já são saturados o bastante pra texto branco.
+const RATE_TEXT_COLOR = ['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff']
+const RATE_TEXT_COLOR_DARK = ['#1e3a8a', '#1e3a8a', '#ffffff', '#ffffff', '#ffffff']
+
 function formatNumber(value: number): string {
   return value.toLocaleString('pt-BR')
 }
@@ -18,7 +26,14 @@ function formatRate(value: number): string {
   return value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
 }
 
-type Stage = { name: string; value: number; weight: number; rate: number | null; valueLabel: string }
+type Stage = {
+  name: string
+  value: number
+  weight: number
+  rate: number | null
+  valueLabel: string
+  rateLabel: string
+}
 
 function FunnelTooltip({ active, payload }: { active?: boolean; payload?: { payload: Stage }[] }) {
   if (!active || !payload?.length) return null
@@ -73,12 +88,42 @@ export function FunnelShapeChart({ counts }: { counts: FunnelCounts }) {
   const stages: Stage[] = raw.map((s, i) => {
     const prev = raw[i - 1]
     const rate = i === 0 || !prev || !prev.value ? null : (s.value / prev.value) * 100
-    const valueLabel = rate == null ? formatNumber(s.value) : `${formatNumber(s.value)} · ${formatRate(rate)}%`
     runningMin = Math.min(runningMin, toWeight(s.value, maxLog))
-    return { ...s, weight: runningMin, rate, valueLabel }
+    return {
+      ...s,
+      weight: runningMin,
+      rate,
+      valueLabel: formatNumber(s.value),
+      rateLabel: rate == null ? '' : `${formatRate(rate)}%`,
+    }
   })
 
   const overallRate = raw[0].value ? (raw[raw.length - 1].value / raw[0].value) * 100 : null
+
+  const rateTextColors = isDark ? RATE_TEXT_COLOR_DARK : RATE_TEXT_COLOR
+
+  // Renderiza a taxa centralizada dentro do próprio bloco do funil (em vez de do lado
+  // da quantidade, fora da forma) — com opacidade reduzida pra ficar claramente
+  // secundária em relação ao número absoluto (fora) e ao nome da etapa.
+  function RateLabel({ viewBox, value, index }: LabelProps) {
+    if (!viewBox || !value || index == null || !('width' in viewBox)) return null
+    const cx = viewBox.x! + viewBox.width! / 2
+    const cy = viewBox.y! + viewBox.height! / 2
+    return (
+      <text
+        x={cx}
+        y={cy}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fill={rateTextColors[index]}
+        fillOpacity={0.55}
+        fontSize={12}
+        fontWeight={600}
+      >
+        {value}
+      </text>
+    )
+  }
 
   return (
     <div className="card p-5">
@@ -118,6 +163,7 @@ export function FunnelShapeChart({ counts }: { counts: FunnelCounts }) {
                 fontSize={13}
                 fontWeight={600}
               />
+              <LabelList dataKey="rateLabel" content={RateLabel} />
             </Funnel>
           </FunnelChart>
         </ResponsiveContainer>
