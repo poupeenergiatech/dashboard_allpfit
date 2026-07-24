@@ -95,7 +95,11 @@ export function FunnelStagesChart({ counts }: { counts: FunnelCounts }) {
         <ResponsiveContainer width="100%" height="100%">
           <FunnelChart margin={{ top: 4, right: 88, left: 96, bottom: 4 }}>
             <Tooltip content={<FunnelTooltip />} />
-            <Funnel dataKey="weight" data={stages} isAnimationActive={false}>
+            {/* lastShapeType="rectangle": por padrão a Recharts desenha a última etapa
+                como um triângulo (afunila até uma ponta), o que faz a última faixa
+                (menor valor) parecer um respingo esticado embaixo do funil em vez de
+                uma faixa igual às demais. */}
+            <Funnel dataKey="weight" data={stages} isAnimationActive={false} lastShapeType="rectangle">
               {stages.map((stage, index) => (
                 <Cell key={stage.name} fill={stageColors[index]} />
               ))}

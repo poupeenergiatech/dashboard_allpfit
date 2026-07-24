@@ -37,10 +37,10 @@ export default function PreviewFunnelPage() {
         onCustomRangeChange={setCustomRange}
       />
 
+      <FunnelGrid counts={MOCK_FUNNEL_COUNTS} isSuperAdmin />
+
       <FunnelStagesChart counts={MOCK_FUNNEL_COUNTS} />
       <FunnelTrendChart series={MOCK_FUNNEL_COUNTS.series} />
-
-      <FunnelGrid counts={MOCK_FUNNEL_COUNTS} isSuperAdmin />
 
       <div>
         <h3 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Histórico diário</h3>

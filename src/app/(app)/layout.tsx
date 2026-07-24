@@ -27,7 +27,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <div className="flex min-w-0 flex-1 flex-col">
             <Topbar />
             <main className="flex-1 p-4 md:p-8">
-              <div className="mx-auto w-full max-w-6xl animate-fade-up">{children}</div>
+              <div className="mx-auto w-full max-w-7xl animate-fade-up">{children}</div>
             </main>
           </div>
         </div>

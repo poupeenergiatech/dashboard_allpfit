@@ -37,7 +37,7 @@ export default function PreviewLayout({ children }: { children: React.ReactNode 
               <ThemeToggle />
             </TopbarShell>
             <main className="flex-1 p-4 md:p-8">
-              <div className="mx-auto w-full max-w-6xl animate-fade-up">{children}</div>
+              <div className="mx-auto w-full max-w-7xl animate-fade-up">{children}</div>
             </main>
           </div>
         </div>
