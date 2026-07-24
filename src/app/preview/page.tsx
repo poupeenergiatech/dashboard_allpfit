@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { FilterBar } from '@/components/dashboard/filter-bar'
 import { FunnelDailyHistoryTable } from '@/components/dashboard/funnel-daily-history-table'
 import { FunnelGrid } from '@/components/dashboard/funnel-grid'
+import { FunnelShapeChart } from '@/components/dashboard/funnel-shape-chart'
 import { FunnelStagesChart } from '@/components/dashboard/funnel-stages-chart'
 import { FunnelTrendChart } from '@/components/dashboard/funnel-trend-chart'
 import { LiveIndicator } from '@/components/dashboard/live-indicator'
@@ -40,6 +41,7 @@ export default function PreviewFunnelPage() {
       <FunnelGrid counts={MOCK_FUNNEL_COUNTS} isSuperAdmin />
 
       <FunnelStagesChart counts={MOCK_FUNNEL_COUNTS} />
+      <FunnelShapeChart counts={MOCK_FUNNEL_COUNTS} />
       <FunnelTrendChart series={MOCK_FUNNEL_COUNTS.series} />
 
       <div>

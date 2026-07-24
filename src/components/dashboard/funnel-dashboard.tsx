@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { FilterBar } from './filter-bar'
 import { FunnelDailyHistoryTable } from './funnel-daily-history-table'
 import { FunnelGrid } from './funnel-grid'
+import { FunnelShapeChart } from './funnel-shape-chart'
 import { FunnelStagesChart } from './funnel-stages-chart'
 import { FunnelTrendChart } from './funnel-trend-chart'
 import { LiveIndicator } from './live-indicator'
@@ -79,6 +80,7 @@ export function FunnelDashboard({
                 taxa de cada etapa confortavelmente. */}
             <FunnelGrid counts={counts} isSuperAdmin={isSuperAdmin} />
             <FunnelStagesChart counts={counts} />
+            <FunnelShapeChart counts={counts} />
             <FunnelTrendChart series={counts.series} />
             <div>
               <h3 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Histórico diário</h3>
