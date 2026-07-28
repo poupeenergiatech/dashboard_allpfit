@@ -10,6 +10,7 @@ import type {
 } from '@/lib/dashboard/fetch-pendencias-assinatura'
 import type { NumeroGroup } from '@/lib/dashboard/fetch-numeros'
 import type { TreinadaStatus } from '@/lib/dashboard/fetch-treinadas'
+import type { GestoresPanelData, GestoresPanelRow } from '@/lib/dashboard/fetch-gestores-panel'
 import type { ManualDataEntry } from '@/lib/dashboard/fetch-manual-data-history'
 import type { ClienteAlle } from '@/lib/dashboard/fetch-clientes-alle'
 import type { ClienteConvertido } from '@/lib/dashboard/fetch-clientes-convertidos'
@@ -341,6 +342,57 @@ export const MOCK_TREINADAS: TreinadaStatus[] = MOCK_ACADEMIAS.map((a, i) => ({
   nome: a.nome,
   treinada: i % 2 === 0,
 }))
+
+// Composto a partir dos outros mocks acima (mesmas academias/números já usados em
+// /preview/performance, /preview/scans, /preview/treinadas e /preview/pendentes) em
+// vez de inventar um conjunto novo — mantém os números coerentes entre as telas de
+// prévia, como estariam num ambiente real onde é tudo a mesma base.
+const gestoresPanelRows: GestoresPanelRow[] = MOCK_ACADEMIAS.map((a) => {
+  const performance = MOCK_PERFORMANCE.find((p) => p.academiaId === a.id)!
+  const scans = MOCK_SCANS_SUMMARY.porAcademia.find((s) => s.academiaId === a.id)!
+  const treinada = MOCK_TREINADAS.find((t) => t.academiaId === a.id)?.treinada ?? false
+  const pendentes = MOCK_PENDENCIAS_POR_ACADEMIA.find((p) => p.academiaId === a.id)?.quantidade ?? 0
+
+  return {
+    academiaId: a.id,
+    nome: a.nome,
+    totalAlunos: performance.totalAlunos,
+    totalContatos: performance.totalContatos,
+    totalScansPeriodo: scans.totalScans,
+    totalScansHoje: Math.round(scans.totalScans * 0.12),
+    totalConversoesAne: performance.totalConversoesAne,
+    totalConversoesManual: performance.totalConversoesManual,
+    totalConversoes: performance.totalConversoes,
+    clientesAlleAtivos: performance.clientesAlleAtivos,
+    treinada,
+    pendentesAssinatura: pendentes,
+  }
+}).sort((a, b) => b.totalConversoes - a.totalConversoes)
+
+export const MOCK_GESTORES_PANEL: GestoresPanelData = {
+  days: 7,
+  rows: gestoresPanelRows,
+  totals: gestoresPanelRows.reduce(
+    (acc, r) => ({
+      totalScansPeriodo: acc.totalScansPeriodo + r.totalScansPeriodo,
+      totalScansHoje: acc.totalScansHoje + r.totalScansHoje,
+      totalConversoes: acc.totalConversoes + r.totalConversoes,
+      clientesAlleAtivos: acc.clientesAlleAtivos + r.clientesAlleAtivos,
+      pendentesAssinatura: acc.pendentesAssinatura + r.pendentesAssinatura,
+      academiasTreinadas: acc.academiasTreinadas + (r.treinada ? 1 : 0),
+      academiasTotal: acc.academiasTotal + 1,
+    }),
+    {
+      totalScansPeriodo: 0,
+      totalScansHoje: 0,
+      totalConversoes: 0,
+      clientesAlleAtivos: 0,
+      pendentesAssinatura: 0,
+      academiasTreinadas: 0,
+      academiasTotal: 0,
+    }
+  ),
+}
 
 export const MOCK_USERS: UserRow[] = [
   { id: 'u1', email: 'superadmin@allpfit.dev', role: 'super_admin', academiaId: null, academiaNome: null },

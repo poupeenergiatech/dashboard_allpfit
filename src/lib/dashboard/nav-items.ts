@@ -13,6 +13,13 @@ export type NavItem = { label: string; href: string; roles?: UserRole[]; icon: I
 // ou modal só pra explicar isso.
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Funil / Dashboard', href: '', icon: 'chart' },
+  {
+    label: 'Painel de Gestores',
+    href: '/gestores',
+    roles: ['super_admin', 'gestor', 'coordenador'],
+    icon: 'trend',
+    hint: 'Resumo comparativo entre unidades — performance, scans, conversões e treinamento num só lugar.',
+  },
   { label: 'Performance por Academia', href: '/performance', icon: 'bars' },
   { label: 'Scans QR', href: '/scans', icon: 'qr' },
   {

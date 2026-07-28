@@ -75,6 +75,15 @@ export function seesAllAcademias(role: UserRole): boolean {
   return role === 'super_admin' || role === 'gestor'
 }
 
+// Painel de Gestores (/gestores): resumo comparativo entre TODAS as unidades, feito
+// pra gerar competição — inclui coordenador de propósito, diferente de
+// seesAllAcademias, porque o objetivo ali é justamente deixar um coordenador ver como
+// a própria unidade se compara às outras, não só a si mesmo. visualizador fica de
+// fora (leitura já é ampla demais pra também ganhar um placar entre unidades).
+export function canAccessPainelGestores(role: UserRole): boolean {
+  return role === 'super_admin' || role === 'gestor' || role === 'coordenador'
+}
+
 // Sem RLS, essa é a barreira real de escopo por academia — antes o Postgres do
 // Supabase filtrava/rejeitava sozinho qualquer linha fora da academia do usuário; agora
 // cada leitura/escrita que recebe um academiaId de fora (form, query param, argumento de

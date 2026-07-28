@@ -1,0 +1,24 @@
+import { GestoresPanelSummaryCards } from '@/components/dashboard/gestores-panel-summary-cards'
+import { GestoresPodium } from '@/components/dashboard/gestores-podium'
+import { GestoresRankingTable } from '@/components/dashboard/gestores-ranking-table'
+import { GestoresScansChart } from '@/components/dashboard/gestores-scans-chart'
+import { MOCK_GESTORES_PANEL } from '@/lib/preview/mock-data'
+
+export default function PreviewGestoresPage() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="page-title">Painel de Gestores</h2>
+        <p className="page-subtitle">
+          Resumo comparativo entre as unidades — performance, scans, conversões e treinamento, tudo num só lugar
+          pra facilitar a competição.
+        </p>
+      </div>
+
+      <GestoresPanelSummaryCards data={MOCK_GESTORES_PANEL} />
+      <GestoresPodium rows={MOCK_GESTORES_PANEL.rows} />
+      <GestoresScansChart rows={MOCK_GESTORES_PANEL.rows} />
+      <GestoresRankingTable rows={MOCK_GESTORES_PANEL.rows} />
+    </div>
+  )
+}
