@@ -75,18 +75,46 @@ export async function runAlleDocumentosSync(triggeredBy: SyncTrigger): Promise<S
   }
 }
 
-async function syncAlleDocumentosConvertidos(): Promise<SyncAlleDocumentosResult> {
-  const supabase = createReadonlyClient()
-  const { data, error } = await supabase
-    .from('alle_documentos_clientes')
-    .select('id, unidade_allpfit, completo, pos_venda, created_at, nome, telefone')
-    .returns<AlleDocumentoClienteRow[]>()
+// PostgREST (a API do Supabase) impõe um teto de linhas por resposta (Max Rows do
+// projeto, tipicamente 1000) mesmo sem `.limit()` nenhum no código — e sem
+// `.order()`, o corte desse teto não é nem determinístico nem cronológico (pode
+// variar de execução pra execução). Com a tabela de origem crescendo, isso vinha
+// truncando o select silenciosamente bem antes do filtro completo+pos_venda em
+// memória: parava de pegar convertidos novos e às vezes faltava algum antigo
+// também, sem erro nenhum pra acusar. Paginar em ordem estável por `id` garante
+// que a tabela inteira é percorrida, não importa o tamanho.
+const PAGE_SIZE = 1000
 
-  if (error) {
-    throw new Error(`Falha ao consultar o Supabase: ${error.message}`)
+async function fetchAllAlleDocumentosClientes(): Promise<AlleDocumentoClienteRow[]> {
+  const supabase = createReadonlyClient()
+  const rows: AlleDocumentoClienteRow[] = []
+  let from = 0
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('alle_documentos_clientes')
+      .select('id, unidade_allpfit, completo, pos_venda, created_at, nome, telefone')
+      .order('id', { ascending: true })
+      .range(from, from + PAGE_SIZE - 1)
+      .returns<AlleDocumentoClienteRow[]>()
+
+    if (error) {
+      throw new Error(`Falha ao consultar o Supabase: ${error.message}`)
+    }
+
+    rows.push(...(data ?? []))
+
+    if (!data || data.length < PAGE_SIZE) break
+    from += PAGE_SIZE
   }
 
-  const convertidos = (data ?? []).filter((row) => isFilled(row.completo) && isFilled(row.pos_venda))
+  return rows
+}
+
+async function syncAlleDocumentosConvertidos(): Promise<SyncAlleDocumentosResult> {
+  const data = await fetchAllAlleDocumentosClientes()
+
+  const convertidos = data.filter((row) => isFilled(row.completo) && isFilled(row.pos_venda))
 
   const { rows: academias } = await pool.query<{ id: string; nome: string }>('select id, nome from academias')
   const { rows: aliases } = await pool.query<{ alias_nome: string; academia_id: string }>(
