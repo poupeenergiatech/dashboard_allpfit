@@ -59,7 +59,7 @@ export async function fetchGestoresPanel(
 ): Promise<GestoresPanelData> {
   const profile = await getCurrentUserProfile()
   if (!profile || !canAccessPainelGestores(profile.role)) {
-    throw new Error('Sem permissão para ver o Painel de Gestores.')
+    throw new Error('Sem permissão para ver o Dashboard.')
   }
 
   // Filtro de UI, não de segurança: diferente de scopeAcademiaId (usado nas

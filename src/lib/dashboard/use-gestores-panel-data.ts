@@ -32,7 +32,7 @@ export function useGestoresPanelData(
       setLastUpdatedAt(new Date())
       setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar o Painel de Gestores')
+      setError(err instanceof Error ? err.message : 'Erro ao carregar o Dashboard')
     } finally {
       setLoading(false)
     }

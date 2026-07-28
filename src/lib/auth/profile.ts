@@ -75,7 +75,7 @@ export function seesAllAcademias(role: UserRole): boolean {
   return role === 'super_admin' || role === 'gestor'
 }
 
-// Painel de Gestores (/gestores): resumo comparativo entre TODAS as unidades, feito
+// Dashboard (/gestores, exibido como "Dashboard" no menu): resumo comparativo entre TODAS as unidades, feito
 // pra gerar competição — inclui coordenador de propósito, diferente de
 // seesAllAcademias, porque o objetivo ali é justamente deixar um coordenador ver como
 // a própria unidade se compara às outras, não só a si mesmo. visualizador fica de

@@ -9,7 +9,7 @@ export default function PreviewGestoresPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="page-title">Painel de Gestores</h2>
+        <h2 className="page-title">Dashboard</h2>
         <p className="page-subtitle">
           Resumo comparativo entre as unidades — performance, scans, conversões e treinamento, tudo num só lugar
           pra facilitar a competição.

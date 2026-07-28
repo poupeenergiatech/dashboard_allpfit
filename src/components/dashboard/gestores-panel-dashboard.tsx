@@ -49,7 +49,7 @@ export function GestoresPanelDashboard({ academias }: { academias: Academia[] })
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="page-title">Painel de Gestores</h2>
+          <h2 className="page-title">Dashboard</h2>
           <p className="page-subtitle">
             Resumo comparativo entre as unidades — performance, scans, conversões e treinamento, tudo num só lugar
             pra facilitar a competição.

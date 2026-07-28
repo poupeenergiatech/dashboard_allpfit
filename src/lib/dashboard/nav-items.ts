@@ -14,7 +14,7 @@ export type NavItem = { label: string; href: string; roles?: UserRole[]; icon: I
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Funil / Dashboard', href: '', icon: 'chart' },
   {
-    label: 'Painel de Gestores',
+    label: 'Dashboard',
     href: '/gestores',
     roles: ['super_admin', 'gestor', 'coordenador'],
     icon: 'trend',
