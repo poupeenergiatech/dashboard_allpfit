@@ -1,3 +1,4 @@
+import { AcademiaPerformanceChart } from '@/components/dashboard/academia-performance-chart'
 import { GestoresPanelSummaryCards } from '@/components/dashboard/gestores-panel-summary-cards'
 import { GestoresPodium } from '@/components/dashboard/gestores-podium'
 import { GestoresRankingTable } from '@/components/dashboard/gestores-ranking-table'
@@ -17,8 +18,9 @@ export default function PreviewGestoresPage() {
 
       <GestoresPanelSummaryCards data={MOCK_GESTORES_PANEL} />
       <GestoresPodium rows={MOCK_GESTORES_PANEL.rows} />
-      <GestoresScansChart rows={MOCK_GESTORES_PANEL.rows} />
       <GestoresRankingTable rows={MOCK_GESTORES_PANEL.rows} />
+      <GestoresScansChart rows={MOCK_GESTORES_PANEL.rows} />
+      <AcademiaPerformanceChart rows={MOCK_GESTORES_PANEL.rows} />
     </div>
   )
 }

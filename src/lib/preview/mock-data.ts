@@ -363,6 +363,7 @@ const gestoresPanelRows: GestoresPanelRow[] = MOCK_ACADEMIAS.map((a) => {
     totalConversoesAne: performance.totalConversoesAne,
     totalConversoesManual: performance.totalConversoesManual,
     totalConversoes: performance.totalConversoes,
+    conversoesManualAjusteTotal: performance.conversoesManualAjusteTotal,
     clientesAlleAtivos: performance.clientesAlleAtivos,
     treinada,
     pendentesAssinatura: pendentes,

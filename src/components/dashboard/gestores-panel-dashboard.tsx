@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { AcademiaPerformanceChart } from './academia-performance-chart'
 import { GestoresPanelSummaryCards } from './gestores-panel-summary-cards'
 import { GestoresPodium } from './gestores-podium'
 import { GestoresRankingTable } from './gestores-ranking-table'
@@ -8,7 +9,7 @@ import { GestoresScansChart } from './gestores-scans-chart'
 import { LiveIndicator } from './live-indicator'
 import { useGestoresPanelData } from '@/lib/dashboard/use-gestores-panel-data'
 import type { GestoresPanelPeriod } from '@/lib/dashboard/fetch-gestores-panel'
-import type { DateRange } from '@/lib/dashboard/types'
+import type { Academia, DateRange } from '@/lib/dashboard/types'
 
 const PERIODS: { value: GestoresPanelPeriod; label: string }[] = [
   { value: 'hoje', label: 'Hoje' },
@@ -30,12 +31,10 @@ function defaultCustomRange(): DateRange {
   return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) }
 }
 
-// Sem seletor de academia de propósito — o painel é justamente o placar entre TODAS
-// as unidades (ver fetchGestoresPanel/canAccessPainelGestores), filtrar por uma só
-// academia não faria sentido aqui como faz em /performance ou /scans.
-export function GestoresPanelDashboard() {
+export function GestoresPanelDashboard({ academias }: { academias: Academia[] }) {
   const [period, setPeriod] = useState<GestoresPanelPeriod>('7dias')
   const [customRange, setCustomRange] = useState<DateRange | null>(null)
+  const [academiaId, setAcademiaId] = useState<string | null>(null)
 
   function changePeriod(next: GestoresPanelPeriod) {
     setPeriod(next)
@@ -44,7 +43,7 @@ export function GestoresPanelDashboard() {
     }
   }
 
-  const { data, loading, error, lastUpdatedAt } = useGestoresPanelData(period, customRange)
+  const { data, loading, error, lastUpdatedAt } = useGestoresPanelData(period, customRange, academiaId)
 
   return (
     <div className="space-y-5">
@@ -60,22 +59,42 @@ export function GestoresPanelDashboard() {
       </div>
 
       <div className="card flex flex-col gap-3 p-4">
-        <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
-          {PERIODS.map((p) => (
-            <button
-              key={p.value}
-              type="button"
-              onClick={() => changePeriod(p.value)}
-              aria-pressed={period === p.value}
-              className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold transition ${
-                period === p.value
-                  ? 'bg-white dark:bg-slate-900 text-brand-700 dark:text-brand-300 shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Diferente de /performance ou /scans: aqui filtrar por academia não
+              restringe o que dá pra ver (o painel já mostra todas as unidades pra
+              quem tem acesso, ver canAccessPainelGestores) — só estreita a visão
+              pra quem quer focar numa unidade sem sair da página. */}
+          <select
+            value={academiaId ?? ''}
+            onChange={(e) => setAcademiaId(e.target.value || null)}
+            aria-label="Filtrar por academia"
+            className="select w-full sm:w-64"
+          >
+            <option value="">Todas as academias</option>
+            {academias.map((academia) => (
+              <option key={academia.id} value={academia.id}>
+                {academia.nome}
+              </option>
+            ))}
+          </select>
+
+          <div className="flex flex-wrap gap-1 rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
+            {PERIODS.map((p) => (
+              <button
+                key={p.value}
+                type="button"
+                onClick={() => changePeriod(p.value)}
+                aria-pressed={period === p.value}
+                className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold transition ${
+                  period === p.value
+                    ? 'bg-white dark:bg-slate-900 text-brand-700 dark:text-brand-300 shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {period === 'personalizado' && (
@@ -126,8 +145,9 @@ export function GestoresPanelDashboard() {
           <>
             <GestoresPanelSummaryCards data={data} />
             <GestoresPodium rows={data.rows} />
-            <GestoresScansChart rows={data.rows} />
             <GestoresRankingTable rows={data.rows} />
+            <GestoresScansChart rows={data.rows} />
+            <AcademiaPerformanceChart rows={data.rows} />
           </>
         )
       )}

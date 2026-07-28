@@ -9,7 +9,11 @@ const POLL_MS = 10_000
 // Mesmo padrão de use-funnel-data.ts: sem equivalente a Realtime no Postgres
 // próprio, então "ao vivo" é polling simples — pensado pra ficar aberto num telão
 // da sala dos gestores, atualizando sozinho sem precisar de F5.
-export function useGestoresPanelData(period: GestoresPanelPeriod, customRange: DateRange | null) {
+export function useGestoresPanelData(
+  period: GestoresPanelPeriod,
+  customRange: DateRange | null,
+  academiaId: string | null
+) {
   const [data, setData] = useState<GestoresPanelData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -23,7 +27,7 @@ export function useGestoresPanelData(period: GestoresPanelPeriod, customRange: D
       return
     }
     try {
-      const next = await fetchGestoresPanel(period, customRange)
+      const next = await fetchGestoresPanel(period, customRange, academiaId)
       setData(next)
       setLastUpdatedAt(new Date())
       setError(null)
@@ -33,7 +37,7 @@ export function useGestoresPanelData(period: GestoresPanelPeriod, customRange: D
       setLoading(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period, customRange?.from, customRange?.to, rangeIncomplete])
+  }, [period, customRange?.from, customRange?.to, academiaId, rangeIncomplete])
 
   useEffect(() => {
     setLoading(true)

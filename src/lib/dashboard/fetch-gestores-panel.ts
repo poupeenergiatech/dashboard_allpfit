@@ -18,6 +18,10 @@ export type GestoresPanelRow = {
   totalConversoesAne: number
   totalConversoesManual: number
   totalConversoes: number
+  // Superset de AcademiaPerformance (fetch-academia-performance.ts) — inclui esse
+  // campo só pra poder reaproveitar AcademiaPerformanceChart aqui direto, sem
+  // adaptar as linhas. Não aparece em nenhum card/coluna própria do painel.
+  conversoesManualAjusteTotal: number
   clientesAlleAtivos: number
   treinada: boolean
   pendentesAssinatura: number
@@ -50,12 +54,20 @@ function keyOf(academiaId: string, day: string): string {
 // academias que não são a sua.
 export async function fetchGestoresPanel(
   period: GestoresPanelPeriod,
-  customRange?: DateRange | null
+  customRange?: DateRange | null,
+  requestedAcademiaId?: string | null
 ): Promise<GestoresPanelData> {
   const profile = await getCurrentUserProfile()
   if (!profile || !canAccessPainelGestores(profile.role)) {
     throw new Error('Sem permissão para ver o Painel de Gestores.')
   }
+
+  // Filtro de UI, não de segurança: diferente de scopeAcademiaId (usado nas
+  // outras telas pra restringir quem só enxerga a própria academia), aqui quem
+  // tem acesso já vê todas as unidades por definição (ver
+  // canAccessPainelGestores) — academiaId só estreita a visão pra quem quer
+  // focar numa unidade específica sem perder o resto do painel.
+  const academiaId = requestedAcademiaId ?? null
 
   const range = period === 'todos' ? null : periodRange(period, customRange ?? undefined)
   const hoje = periodRange('hoje')
@@ -72,19 +84,24 @@ export async function fetchGestoresPanel(
     { rows: pendentes },
   ] = await Promise.all([
     pool.query<{ id: string; nome: string; total_alunos: number; conversoes_manual_ajuste_total: number }>(
-      'select id, nome, total_alunos, conversoes_manual_ajuste_total from academias where ativo = true order by nome'
+      `select id, nome, total_alunos, conversoes_manual_ajuste_total from academias
+       where ativo = true and ($1::uuid is null or id = $1)
+       order by nome`,
+      [academiaId]
     ),
     pool.query<{ academia_id: string; day: string; count: number }>(
       `select academia_id, date_trunc('day', created_at)::date as day, count(*) as count from contacts
        where ($1::timestamptz is null or created_at >= $1) and ($2::timestamptz is null or created_at < $2)
+         and ($3::uuid is null or academia_id = $3)
        group by academia_id, day`,
-      [range?.from ?? null, range?.toExclusive ?? null]
+      [range?.from ?? null, range?.toExclusive ?? null, academiaId]
     ),
     pool.query<{ academia_id: string; day: string; count: number }>(
       `select academia_id, date_trunc('day', created_at)::date as day, count(*) as count from conversions
        where ($1::timestamptz is null or created_at >= $1) and ($2::timestamptz is null or created_at < $2)
+         and ($3::uuid is null or academia_id = $3)
        group by academia_id, day`,
-      [range?.from ?? null, range?.toExclusive ?? null]
+      [range?.from ?? null, range?.toExclusive ?? null, academiaId]
     ),
     pool.query<{
       academia_id: string
@@ -94,15 +111,17 @@ export async function fetchGestoresPanel(
       total_scans: number
     }>(
       `select academia_id, data, contatos_ajuste, conversoes_manual, total_scans from manual_data
-       where ($1::date is null or data >= $1) and ($2::date is null or data <= $2)`,
-      [range?.fromDate ?? null, range?.toDate ?? null]
+       where ($1::date is null or data >= $1) and ($2::date is null or data <= $2)
+         and ($3::uuid is null or academia_id = $3)`,
+      [range?.fromDate ?? null, range?.toDate ?? null, academiaId]
     ),
     // Scans "de hoje" ficam fixos no dia corrente, independente do período
     // selecionado no filtro — é a referência rápida que o gestor quer bater o olho
     // e comparar com o total do período ao lado, no mesmo gráfico.
     pool.query<{ academia_id: string; total_scans: number }>(
-      `select academia_id, total_scans from manual_data where data = $1`,
-      [hoje.fromDate]
+      `select academia_id, total_scans from manual_data
+       where data = $1 and ($2::uuid is null or academia_id = $2)`,
+      [hoje.fromDate, academiaId]
     ),
     // `total` é o headcount real de ATIVOS (exibido como "Clientes Alle ativos"
     // no painel — quem não assinou o termo ainda não entra aqui). `exclusivo` é
@@ -122,10 +141,14 @@ export async function fetchGestoresPanel(
                   and not exists (select 1 from conversions c2 where c2.cliente_alle_id = ca.id)
               ) as exclusivo
        from clientes_alle ca
+       where ($2::uuid is null or ca.academia_id = $2)
        group by ca.academia_id`,
-      [statusesConversao]
+      [statusesConversao, academiaId]
     ),
-    pool.query<{ academia_id: string; treinada: boolean | null }>('select academia_id, treinada from trained_academias'),
+    pool.query<{ academia_id: string; treinada: boolean | null }>(
+      `select academia_id, treinada from trained_academias where ($1::uuid is null or academia_id = $1)`,
+      [academiaId]
+    ),
     // Mesma composição de fetch-pendencias-assinatura.ts: último lançamento manual
     // (snapshot, não soma por período) + clientes com termo de adesão pendente.
     pool.query<{ academia_id: string; quantidade_manual: number | null; clientes_pendentes: number }>(
@@ -135,7 +158,8 @@ export async function fetchGestoresPanel(
               (select count(*) from clientes_alle ca
                where ca.academia_id = a.id and ca.status = 'pendente') as clientes_pendentes
        from academias a
-       where a.ativo = true`
+       where a.ativo = true and ($1::uuid is null or a.id = $1)`,
+      [academiaId]
     ),
   ])
 
@@ -196,6 +220,7 @@ export async function fetchGestoresPanel(
       totalConversoesAne,
       totalConversoesManual,
       totalConversoes: totalConversoesAne + totalConversoesManual,
+      conversoesManualAjusteTotal: ajusteTotal,
       clientesAlleAtivos: clientesAtivosByAcademia.get(a.id) ?? 0,
       treinada: treinadaByAcademia.get(a.id) ?? false,
       pendentesAssinatura: pendentesByAcademia.get(a.id) ?? 0,
