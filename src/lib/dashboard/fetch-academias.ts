@@ -1,5 +1,6 @@
 import { pool } from '@/lib/db/pool'
 import { seesAllAcademias, type UserProfile } from '@/lib/auth/profile'
+import { fetchConversaoStatusesIncluidos } from './fetch-conversao-status-settings'
 import type { Academia } from './types'
 
 export type AcademiaAdmin = {
@@ -23,6 +24,8 @@ export type AcademiaAdmin = {
 // /performance na visão "Todo período". Mesma lógica de
 // fetch-academia-performance.ts.
 export async function fetchAllAcademias(): Promise<AcademiaAdmin[]> {
+  const statusesConversao = await fetchConversaoStatusesIncluidos()
+
   const [{ rows }, { rows: conversoesPorDia }, { rows: manuais }, { rows: clientesAlleAtivos }] = await Promise.all([
     pool.query<{
       id: string
@@ -41,8 +44,20 @@ export async function fetchAllAcademias(): Promise<AcademiaAdmin[]> {
     pool.query<{ academia_id: string; conversoes_manual: number }>(
       `select academia_id, conversoes_manual from manual_data where conversoes_manual != 0`
     ),
+    // Quem converteu por fora do Ane com um dos status habilitados em
+    // /configuracoes (ver fetchConversaoStatusesIncluidos — ativo/pendente/
+    // reprovado sempre contam, sem_informacao/com_impedimentos/falta_documentos
+    // só se ligado) e ainda não tem uma linha em conversions apontando pra cá
+    // (cliente_alle_id, criada ao marcar o termo de adesão em /convertidos via
+    // definirStatusClienteConvertido). Sem essa exclusão essa pessoa contava duas
+    // vezes (uma em totalConversoesAne, outra aqui) — mesmo ajuste de
+    // fetch-funnel-counts.ts/fetch-academia-performance.ts.
     pool.query<{ academia_id: string; count: number }>(
-      `select academia_id, count(*) as count from clientes_alle where status = 'ativo' group by academia_id`
+      `select ca.academia_id, count(*) as count from clientes_alle ca
+       where ca.status = any($1::text[])
+         and not exists (select 1 from conversions c2 where c2.cliente_alle_id = ca.id)
+       group by ca.academia_id`,
+      [statusesConversao]
     ),
   ])
 

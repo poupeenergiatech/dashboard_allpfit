@@ -2,6 +2,7 @@
 
 import { pool } from '@/lib/db/pool'
 import { getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
+import { fetchConversaoStatusesIncluidos } from './fetch-conversao-status-settings'
 import { periodRange } from './period'
 import type { DailyFunnelPoint, DateRange, FunnelCounts, Period } from './types'
 
@@ -36,6 +37,7 @@ export async function fetchFunnelCounts(
 
   const academiaId = scopeAcademiaId(profile, requestedAcademiaId)
   const { from, toExclusive, fromDate, toDate, days } = periodRange(period, customRange ?? undefined)
+  const statusesConversao = await fetchConversaoStatusesIncluidos()
 
   const [
     { rows: academiaRows },
@@ -44,7 +46,7 @@ export async function fetchFunnelCounts(
     { rows: contatosPorDia },
     { rows: conversoesPorDia },
     {
-      rows: [{ count: clientesAlleCount }],
+      rows: [{ total: clientesAlleCount, exclusivo: clientesAlleExclusivoCount }],
     },
     {
       rows: [{ count: reprovadosIndividuaisCount }],
@@ -92,9 +94,25 @@ export async function fetchFunnelCounts(
        group by academia_id, day`,
         [from, academiaId, toExclusive]
       ),
-      pool.query<{ count: number }>(
-        `select count(*) from clientes_alle where status = 'ativo' and ($1::uuid is null or academia_id = $1)`,
-        [academiaId]
+      // `total` é o headcount real de ATIVOS (totalClientesAlle, último estágio do
+      // funil — quem não assinou o termo ainda não entra aqui). `exclusivo` é
+      // outra coisa: quem converteu por fora do Ane com um dos status habilitados
+      // em /configuracoes (ver fetchConversaoStatusesIncluidos — ativo/pendente/
+      // reprovado sempre contam, sem_informacao/com_impedimentos/falta_documentos
+      // só se ligado) e ainda não tem uma linha em conversions apontando pra cá
+      // (cliente_alle_id, criada ao marcar o termo de adesão em /convertidos via
+      // definirStatusClienteConvertido). Só `exclusivo` entra em
+      // totalConversoesManual (ver abaixo) — somar `total` ali contava essa
+      // pessoa duas vezes (uma em totalConversoesAne, outra aqui).
+      pool.query<{ total: number; exclusivo: number }>(
+        `select count(*) filter (where ca.status = 'ativo') as total,
+                count(*) filter (
+                  where ca.status = any($2::text[])
+                    and not exists (select 1 from conversions c2 where c2.cliente_alle_id = ca.id)
+                ) as exclusivo
+         from clientes_alle ca
+         where ($1::uuid is null or ca.academia_id = $1)`,
+        [academiaId, statusesConversao]
       ),
       // Reprovado/cancelado individualmente (Reprovar em /clientes-alle ou
       // /convertidos) — soma direta no total, sem filtro de data, mesmo ajuste que
@@ -178,13 +196,17 @@ export async function fetchFunnelCounts(
     conversoesAnePorDia.set(row.day, (conversoesAnePorDia.get(row.day) ?? 0) + row.count)
   }
 
-  // clientesAlleCount entra aqui além de alimentar totalClientesAlle: cliente Alle
-  // ativo é gente convertida por fora do lançamento diário (cadastro individual ou
-  // CSV em /clientes-alle), então também é conversão manual — só que sem data por
-  // linha (created_at é quando foi cadastrado no sistema, não quando converteu),
-  // por isso soma direto no total em vez de entrar no lançamento por dia
-  // (conversoesManualPorDia/series) como o resto do stream aditivo acima.
-  totalConversoesManual += clientesAlleCount
+  // clientesAlleExclusivoCount entra aqui: cliente Alle ativo cadastrado fora do
+  // lançamento diário (individual ou CSV em /clientes-alle) também é conversão
+  // manual — só que sem data por linha (created_at é quando foi cadastrado no
+  // sistema, não quando converteu), por isso soma direto no total em vez de
+  // entrar no lançamento por dia (conversoesManualPorDia/series) como o resto do
+  // stream aditivo acima. É o count "exclusivo" (não `clientesAlleCount` cheio)
+  // porque quem já tem conversão Ane vinculada (definirStatusClienteConvertido)
+  // já está contado em totalConversoesAne — somar o total cheio aqui contaria
+  // essa pessoa duas vezes. totalClientesAlle (último estágio do funil, headcount
+  // de verdade) continua usando o total cheio.
+  totalConversoesManual += clientesAlleExclusivoCount
   const totalConversoes = totalConversoesAne + totalConversoesManual
   const totalClientesAlle = clientesAlleCount
 

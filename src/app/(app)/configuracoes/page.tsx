@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { AgregadorWebhookLogTable } from '@/components/dashboard/agregador-webhook-log-table'
+import { IncluirStatusSecundariosToggle } from '@/components/dashboard/incluir-status-secundarios-toggle'
 import { ResetConversoesButton } from '@/components/dashboard/reset-conversoes-button'
 import { ScansWebhookLogTable } from '@/components/dashboard/scans-webhook-log-table'
 import { SyncAlleDocumentosButton } from '@/components/dashboard/sync-alle-documentos-button'
@@ -9,6 +10,7 @@ import { SyncedConversionsTable } from '@/components/dashboard/synced-conversion
 import { WebhookInfoCard } from '@/components/dashboard/webhook-info-card'
 import { fetchAgregadorWebhookLog } from '@/lib/dashboard/fetch-agregador-webhook-log'
 import { fetchAllAcademias } from '@/lib/dashboard/fetch-academias'
+import { fetchIncluirStatusSecundariosConversao } from '@/lib/dashboard/fetch-conversao-status-settings'
 import { fetchAutoSyncEnabled } from '@/lib/dashboard/fetch-sync-settings'
 import { fetchScansWebhookLog } from '@/lib/dashboard/fetch-scans-webhook-log'
 import { fetchSyncHistory } from '@/lib/dashboard/fetch-sync-history'
@@ -33,15 +35,23 @@ export default async function ConfiguracoesPage() {
     )
   }
 
-  const [academias, syncHistory, syncedConversions, autoSyncEnabled, agregadorWebhookLog, scansWebhookLog] =
-    await Promise.all([
-      fetchAllAcademias(),
-      fetchSyncHistory(),
-      fetchSyncedConversions(),
-      fetchAutoSyncEnabled(),
-      fetchAgregadorWebhookLog(),
-      fetchScansWebhookLog(),
-    ])
+  const [
+    academias,
+    syncHistory,
+    syncedConversions,
+    autoSyncEnabled,
+    incluirStatusSecundarios,
+    agregadorWebhookLog,
+    scansWebhookLog,
+  ] = await Promise.all([
+    fetchAllAcademias(),
+    fetchSyncHistory(),
+    fetchSyncedConversions(),
+    fetchAutoSyncEnabled(),
+    fetchIncluirStatusSecundariosConversao(),
+    fetchAgregadorWebhookLog(),
+    fetchScansWebhookLog(),
+  ])
 
   return (
     <div className="space-y-6">
@@ -97,6 +107,11 @@ export default async function ConfiguracoesPage() {
           .
         </p>
         <SyncedConversionsTable entries={syncedConversions} />
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Contagem de conversões</h3>
+        <IncluirStatusSecundariosToggle initialEnabled={incluirStatusSecundarios} />
       </div>
 
       <div>

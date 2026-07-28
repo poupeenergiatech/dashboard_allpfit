@@ -1,5 +1,6 @@
 import { pool } from '@/lib/db/pool'
 import { scopeAcademiaId, type UserProfile } from '@/lib/auth/profile'
+import { fetchConversaoStatusesIncluidos } from './fetch-conversao-status-settings'
 import { periodRange } from './period'
 import type { DateRange, Period } from './types'
 
@@ -39,6 +40,7 @@ export async function fetchAcademiaPerformance(
   const scopedAcademiaId = scopeAcademiaId(profile, requestedAcademiaId ?? null)
 
   const range = period === 'todos' ? null : periodRange(period, customRange ?? undefined)
+  const statusesConversao = await fetchConversaoStatusesIncluidos()
 
   const [
     { rows: academias },
@@ -82,14 +84,31 @@ export async function fetchAcademiaPerformance(
            and ($3::date is null or data <= $3)`,
         [scopedAcademiaId, range?.fromDate ?? null, range?.toDate ?? null]
       ),
-      // Sem filtro de data — cliente Alle ativo é conversão manual sem data por
-      // linha (created_at é cadastro, não conversão), então conta pra qualquer
-      // período igual ao card "Clientes Alle" (ver fetch-funnel-counts.ts).
-      pool.query<{ academia_id: string; count: number }>(
-        `select academia_id, count(*) as count from clientes_alle
-         where status = 'ativo' and ($1::uuid is null or academia_id = $1)
-         group by academia_id`,
-        [scopedAcademiaId]
+      // Sem filtro de data — cliente Alle é conversão manual sem data por linha
+      // (created_at é cadastro, não conversão), então conta pra qualquer período
+      // igual ao card "Clientes Alle" (ver fetch-funnel-counts.ts). `total` é o
+      // headcount real de ATIVOS (exibido na coluna "Clientes Alle ativos" — quem
+      // não assinou o termo ainda, ex. status 'pendente', não entra aqui).
+      // `exclusivo` é outra coisa: quem converteu por fora do Ane com um dos
+      // status habilitados em /configuracoes (ver fetchConversaoStatusesIncluidos
+      // — ativo/pendente/reprovado sempre contam, sem_informacao/com_impedimentos/
+      // falta_documentos só se ligado) E ainda não tem uma linha em conversions
+      // apontando pra cá (cliente_alle_id) — o caminho de "marcar termo de
+      // adesão" em /convertidos (definirStatusClienteConvertido, ver actions.ts)
+      // cria/vincula um clientes_alle a partir de uma conversão Ane já existente,
+      // e essa pessoa já está contada em totalConversoesAne. Só `exclusivo` entra
+      // em totalConversoesManual.
+      pool.query<{ academia_id: string; total: number; exclusivo: number }>(
+        `select ca.academia_id,
+                count(*) filter (where ca.status = 'ativo') as total,
+                count(*) filter (
+                  where ca.status = any($2::text[])
+                    and not exists (select 1 from conversions c2 where c2.cliente_alle_id = ca.id)
+                ) as exclusivo
+         from clientes_alle ca
+         where ($1::uuid is null or ca.academia_id = $1)
+         group by ca.academia_id`,
+        [scopedAcademiaId, statusesConversao]
       ),
     ])
 
@@ -128,7 +147,8 @@ export async function fetchAcademiaPerformance(
   // lançamentos diários em manual_data), então só faz sentido somar na visão "Todo
   // período" — em qualquer filtro de data, um valor fixo "vazaria" pra dentro de um
   // intervalo que não tem nada a ver com ele.
-  const clientesAlleAtivosByAcademia = new Map(clientesAlleAtivos.map((r) => [r.academia_id, r.count]))
+  const clientesAlleAtivosByAcademia = new Map(clientesAlleAtivos.map((r) => [r.academia_id, r.total]))
+  const clientesAlleExclusivosByAcademia = new Map(clientesAlleAtivos.map((r) => [r.academia_id, r.exclusivo]))
 
   return academias.map((a) => {
     const conversoesManualAjusteTotal = period === 'todos' ? a.conversoes_manual_ajuste_total : 0
@@ -136,7 +156,7 @@ export async function fetchAcademiaPerformance(
     const totalConversoesManual =
       (totalConversoesManualByAcademia.get(a.id) ?? 0) +
       conversoesManualAjusteTotal +
-      (clientesAlleAtivosByAcademia.get(a.id) ?? 0)
+      (clientesAlleExclusivosByAcademia.get(a.id) ?? 0)
     return {
       academiaId: a.id,
       nome: a.nome,

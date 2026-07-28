@@ -42,6 +42,30 @@ export async function setAutoSyncEnabled(enabled: boolean) {
   revalidatePath('/configuracoes')
 }
 
+// Liga/desliga sem_informacao/com_impedimentos/falta_documentos contarem como
+// conversão no total (ver fetch-conversao-status-settings.ts) — ativo/pendente/
+// reprovado sempre contam, isso só afeta os outros três. Muda o total
+// retroativamente em qualquer período (o cálculo é sempre ao vivo a partir do
+// status atual, não um snapshot), por isso revalida todo lugar que mostra
+// totalConversoes.
+export async function setIncluirStatusSecundariosConversao(enabled: boolean) {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canManageUsers(profile.role)) {
+    throw new Error('Apenas Super Admin pode alterar essa configuração.')
+  }
+
+  await pool.query(
+    'update conversao_status_settings set incluir_status_secundarios = $1, updated_at = now() where id = 1',
+    [enabled]
+  )
+
+  revalidatePath('/configuracoes')
+  revalidatePath('/performance')
+  revalidatePath('/academias')
+  revalidatePath('/gestores')
+  revalidatePath('/')
+}
+
 export type ResetConversoesResult = {
   conversoesAneRemovidas: number
   diasManuaisZerados: number

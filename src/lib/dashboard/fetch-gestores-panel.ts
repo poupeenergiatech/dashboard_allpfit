@@ -2,6 +2,7 @@
 
 import { pool } from '@/lib/db/pool'
 import { canAccessPainelGestores, getCurrentUserProfile } from '@/lib/auth/profile'
+import { fetchConversaoStatusesIncluidos } from './fetch-conversao-status-settings'
 import { periodRange } from './period'
 import type { DateRange, Period } from './types'
 
@@ -58,6 +59,7 @@ export async function fetchGestoresPanel(
 
   const range = period === 'todos' ? null : periodRange(period, customRange ?? undefined)
   const hoje = periodRange('hoje')
+  const statusesConversao = await fetchConversaoStatusesIncluidos()
 
   const [
     { rows: academias },
@@ -102,8 +104,26 @@ export async function fetchGestoresPanel(
       `select academia_id, total_scans from manual_data where data = $1`,
       [hoje.fromDate]
     ),
-    pool.query<{ academia_id: string; count: number }>(
-      `select academia_id, count(*) as count from clientes_alle where status = 'ativo' group by academia_id`
+    // `total` é o headcount real de ATIVOS (exibido como "Clientes Alle ativos"
+    // no painel — quem não assinou o termo ainda não entra aqui). `exclusivo` é
+    // outra coisa: quem converteu por fora do Ane com um dos status habilitados
+    // em /configuracoes (ver fetchConversaoStatusesIncluidos — ativo/pendente/
+    // reprovado sempre contam, sem_informacao/com_impedimentos/falta_documentos
+    // só se ligado) e ainda não tem uma linha em conversions apontando pra cá
+    // (cliente_alle_id, criada ao marcar o termo de adesão em /convertidos via
+    // definirStatusClienteConvertido). Só `exclusivo` entra em
+    // totalConversoesManual (ver abaixo) — somar `total` ali contava essa pessoa
+    // duas vezes (uma em totalConversoesAne, outra aqui).
+    pool.query<{ academia_id: string; total: number; exclusivo: number }>(
+      `select ca.academia_id,
+              count(*) filter (where ca.status = 'ativo') as total,
+              count(*) filter (
+                where ca.status = any($1::text[])
+                  and not exists (select 1 from conversions c2 where c2.cliente_alle_id = ca.id)
+              ) as exclusivo
+       from clientes_alle ca
+       group by ca.academia_id`,
+      [statusesConversao]
     ),
     pool.query<{ academia_id: string; treinada: boolean | null }>('select academia_id, treinada from trained_academias'),
     // Mesma composição de fetch-pendencias-assinatura.ts: último lançamento manual
@@ -148,7 +168,8 @@ export async function fetchGestoresPanel(
   }
 
   const totalScansHojeByAcademia = new Map(manualHoje.map((r) => [r.academia_id, r.total_scans ?? 0]))
-  const clientesAtivosByAcademia = new Map(clientesAtivos.map((r) => [r.academia_id, r.count]))
+  const clientesAtivosByAcademia = new Map(clientesAtivos.map((r) => [r.academia_id, r.total]))
+  const clientesAtivosExclusivosByAcademia = new Map(clientesAtivos.map((r) => [r.academia_id, r.exclusivo]))
   const treinadaByAcademia = new Map(treinadas.map((r) => [r.academia_id, r.treinada ?? false]))
   const pendentesByAcademia = new Map(
     pendentes.map((r) => [r.academia_id, (r.quantidade_manual ?? 0) + r.clientes_pendentes])
@@ -161,7 +182,9 @@ export async function fetchGestoresPanel(
     const ajusteTotal = period === 'todos' ? a.conversoes_manual_ajuste_total : 0
     const totalConversoesAne = totalConversoesAneByAcademia.get(a.id) ?? 0
     const totalConversoesManual =
-      (totalConversoesManualLancadoByAcademia.get(a.id) ?? 0) + ajusteTotal + (clientesAtivosByAcademia.get(a.id) ?? 0)
+      (totalConversoesManualLancadoByAcademia.get(a.id) ?? 0) +
+      ajusteTotal +
+      (clientesAtivosExclusivosByAcademia.get(a.id) ?? 0)
 
     return {
       academiaId: a.id,
