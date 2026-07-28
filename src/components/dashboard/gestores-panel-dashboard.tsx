@@ -131,14 +131,17 @@ export function GestoresPanelDashboard({ academias }: { academias: Academia[] })
 
       {loading && !data ? (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="skeleton h-28 rounded-2xl" />
             ))}
           </div>
           <div className="skeleton h-64 rounded-2xl" />
           <div className="skeleton h-80 rounded-2xl" />
-          <div className="skeleton h-96 rounded-2xl" />
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <div className="skeleton h-80 rounded-2xl" />
+            <div className="skeleton h-80 rounded-2xl" />
+          </div>
         </>
       ) : (
         data && (
@@ -146,8 +149,15 @@ export function GestoresPanelDashboard({ academias }: { academias: Academia[] })
             <GestoresPanelSummaryCards data={data} />
             <GestoresPodium rows={data.rows} />
             <GestoresRankingTable rows={data.rows} />
-            <GestoresScansChart rows={data.rows} />
-            <AcademiaPerformanceChart rows={data.rows} />
+            {/* Os dois gráficos por academia lado a lado (empilham no mobile) —
+                mesma altura de linha (grid estica por padrão); items-start evita
+                que a carta mais curta fique com espaço vazio embaixo só porque a
+                vizinha é mais alta (alturas diferem: scans varia com o nº de
+                academias, o de performance é fixo). */}
+            <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+              <GestoresScansChart rows={data.rows} />
+              <AcademiaPerformanceChart rows={data.rows} />
+            </div>
           </>
         )
       )}

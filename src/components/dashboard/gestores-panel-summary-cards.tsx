@@ -6,7 +6,7 @@ export function GestoresPanelSummaryCards({ data }: { data: GestoresPanelData })
   const { totals } = data
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       <FunnelCard
         label="Scans no período"
         value={totals.totalScansPeriodo}
@@ -36,12 +36,6 @@ export function GestoresPanelSummaryCards({ data }: { data: GestoresPanelData })
         value={totals.pendentesAssinatura}
         icon={<Icon name="pen" className="h-[18px] w-[18px]" />}
         accent="rose"
-      />
-      <FunnelCard
-        label={`Academias treinadas de ${totals.academiasTotal}`}
-        value={totals.academiasTreinadas}
-        icon={<Icon name="building" className="h-[18px] w-[18px]" />}
-        accent="blue"
       />
     </div>
   )

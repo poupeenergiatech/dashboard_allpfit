@@ -19,8 +19,10 @@ export default function PreviewGestoresPage() {
       <GestoresPanelSummaryCards data={MOCK_GESTORES_PANEL} />
       <GestoresPodium rows={MOCK_GESTORES_PANEL.rows} />
       <GestoresRankingTable rows={MOCK_GESTORES_PANEL.rows} />
-      <GestoresScansChart rows={MOCK_GESTORES_PANEL.rows} />
-      <AcademiaPerformanceChart rows={MOCK_GESTORES_PANEL.rows} />
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+        <GestoresScansChart rows={MOCK_GESTORES_PANEL.rows} />
+        <AcademiaPerformanceChart rows={MOCK_GESTORES_PANEL.rows} />
+      </div>
     </div>
   )
 }
