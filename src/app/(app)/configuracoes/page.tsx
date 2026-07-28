@@ -1,15 +1,18 @@
+import Link from 'next/link'
 import { headers } from 'next/headers'
 import { AgregadorWebhookLogTable } from '@/components/dashboard/agregador-webhook-log-table'
 import { ResetConversoesButton } from '@/components/dashboard/reset-conversoes-button'
 import { ScansWebhookLogTable } from '@/components/dashboard/scans-webhook-log-table'
 import { SyncAlleDocumentosButton } from '@/components/dashboard/sync-alle-documentos-button'
 import { SyncHistoryTable } from '@/components/dashboard/sync-history-table'
+import { SyncedConversionsTable } from '@/components/dashboard/synced-conversions-table'
 import { WebhookInfoCard } from '@/components/dashboard/webhook-info-card'
 import { fetchAgregadorWebhookLog } from '@/lib/dashboard/fetch-agregador-webhook-log'
 import { fetchAllAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchAutoSyncEnabled } from '@/lib/dashboard/fetch-sync-settings'
 import { fetchScansWebhookLog } from '@/lib/dashboard/fetch-scans-webhook-log'
 import { fetchSyncHistory } from '@/lib/dashboard/fetch-sync-history'
+import { fetchSyncedConversions } from '@/lib/dashboard/fetch-synced-conversions'
 import { canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
 
 function getWebhookUrl(path: string): string {
@@ -30,13 +33,15 @@ export default async function ConfiguracoesPage() {
     )
   }
 
-  const [academias, syncHistory, autoSyncEnabled, agregadorWebhookLog, scansWebhookLog] = await Promise.all([
-    fetchAllAcademias(),
-    fetchSyncHistory(),
-    fetchAutoSyncEnabled(),
-    fetchAgregadorWebhookLog(),
-    fetchScansWebhookLog(),
-  ])
+  const [academias, syncHistory, syncedConversions, autoSyncEnabled, agregadorWebhookLog, scansWebhookLog] =
+    await Promise.all([
+      fetchAllAcademias(),
+      fetchSyncHistory(),
+      fetchSyncedConversions(),
+      fetchAutoSyncEnabled(),
+      fetchAgregadorWebhookLog(),
+      fetchScansWebhookLog(),
+    ])
 
   return (
     <div className="space-y-6">
@@ -79,6 +84,19 @@ export default async function ConfiguracoesPage() {
       <div>
         <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Histórico de sincronizações</h3>
         <SyncHistoryTable entries={syncHistory} />
+      </div>
+
+      <div>
+        <h3 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Clientes sincronizados</h3>
+        <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+          Últimos {syncedConversions.length} clientes inseridos via sync do Alle Documentos — nome, telefone,
+          unidade e data. Gestão completa (status, edição, exclusão) em{' '}
+          <Link href="/convertidos" className="font-medium text-brand-700 dark:text-brand-300 hover:underline">
+            /convertidos
+          </Link>
+          .
+        </p>
+        <SyncedConversionsTable entries={syncedConversions} />
       </div>
 
       <div>
