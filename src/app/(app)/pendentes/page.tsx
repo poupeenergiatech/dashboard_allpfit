@@ -10,7 +10,7 @@ import {
   fetchPendenciasPorAcademia,
   fetchPendenciasTrend,
 } from '@/lib/dashboard/fetch-pendencias-assinatura'
-import { canManageUsers, canWrite, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
+import { canManagePendencias, canManageUsers, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 
 export default async function PendentesPage({
   searchParams,
@@ -24,7 +24,9 @@ export default async function PendentesPage({
     profile ? fetchPendenciasPorAcademia(profile, requestedAcademiaId) : Promise.resolve([]),
     profile ? fetchPendenciasTrend(profile, requestedAcademiaId) : Promise.resolve([]),
     fetchActiveAcademias(profile),
-    profile && canWrite(profile.role) ? fetchPendenciasHistory(profile, requestedAcademiaId) : Promise.resolve([]),
+    // Leitura do histórico é liberada pra qualquer role (mesmo padrão de dados
+    // manuais, ver canManagePendencias) — só lançar/editar fica restrito.
+    profile ? fetchPendenciasHistory(profile, requestedAcademiaId) : Promise.resolve([]),
   ])
 
   return (
@@ -44,13 +46,16 @@ export default async function PendentesPage({
       <PendenciasPorAcademiaChart rows={porAcademia} />
       <PendenciasTrendChart series={trend} />
 
-      {profile && canWrite(profile.role) && (
+      {profile && (
         <div>
-          <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Lançar pendências</h3>
+          {canManagePendencias(profile.role) && (
+            <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Lançar pendências</h3>
+          )}
           <PendenciaSection
             academias={academias}
             fixedAcademiaId={seesAllAcademias(profile.role) ? null : profile.academiaId}
             history={history}
+            editable={canManagePendencias(profile.role)}
           />
         </div>
       )}

@@ -67,6 +67,16 @@ export function canManageTraining(role: UserRole): boolean {
   return role === 'super_admin' || role === 'gestor'
 }
 
+// Lançar/editar pendências de assinatura (/pendentes) fica restrito ao Super
+// Admin — mais estrito que canManageManualData (que inclui gestor): esse
+// número alimenta comparações entre unidades (card "Pendentes de assinatura"
+// no Dashboard), então centralizar o lançamento numa role só evita divergência
+// de critério entre quem preenche. Leitura do histórico continua liberada pra
+// qualquer role, mesmo padrão de canManageManualData.
+export function canManagePendencias(role: UserRole): boolean {
+  return role === 'super_admin'
+}
+
 export function canManageUsers(role: UserRole): boolean {
   return role === 'super_admin'
 }

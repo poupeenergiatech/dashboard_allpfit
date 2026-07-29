@@ -2,11 +2,11 @@
 
 import { revalidatePath } from 'next/cache'
 import { pool } from '@/lib/db/pool'
-import { canManageUsers, canWrite, getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
+import { canManagePendencias, canManageUsers, getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
 
 export async function savePendenciaAssinatura(formData: FormData) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canWrite(profile.role)) {
+  if (!profile || !canManagePendencias(profile.role)) {
     throw new Error('Sem permissão para editar pendências de assinatura.')
   }
 

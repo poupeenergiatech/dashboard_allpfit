@@ -10,29 +10,33 @@ export function PendenciaSection({
   academias,
   fixedAcademiaId,
   history,
+  editable = true,
   onSave,
 }: {
   academias: Academia[]
   fixedAcademiaId: string | null
   history: PendenciaEntry[]
+  editable?: boolean
   onSave?: (formData: FormData) => Promise<void>
 }) {
   const [editing, setEditing] = useState<PendenciaEntry | null>(null)
 
   return (
     <div className="space-y-4">
-      <PendenciaForm
-        academias={academias}
-        fixedAcademiaId={fixedAcademiaId}
-        history={history}
-        editing={editing}
-        onCancelEdit={() => setEditing(null)}
-        {...(onSave ? { onSave } : {})}
-      />
+      {editable && (
+        <PendenciaForm
+          academias={academias}
+          fixedAcademiaId={fixedAcademiaId}
+          history={history}
+          editing={editing}
+          onCancelEdit={() => setEditing(null)}
+          {...(onSave ? { onSave } : {})}
+        />
+      )}
 
       <div>
         <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Histórico de lançamentos</h4>
-        <PendenciaHistoryTable entries={history} onEdit={setEditing} />
+        <PendenciaHistoryTable entries={history} {...(editable ? { onEdit: setEditing } : {})} />
       </div>
     </div>
   )

@@ -9,7 +9,7 @@ export function PendenciaHistoryTable({
   onEdit,
 }: {
   entries: PendenciaEntry[]
-  onEdit: (entry: PendenciaEntry) => void
+  onEdit?: (entry: PendenciaEntry) => void
 }) {
   if (entries.length === 0) {
     return <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhum lançamento ainda.</div>
@@ -23,7 +23,7 @@ export function PendenciaHistoryTable({
             <th className="px-4 py-3">Academia</th>
             <th className="px-4 py-3">Data</th>
             <th className="px-4 py-3 text-right">Alunos pendentes</th>
-            <th className="px-4 py-3" />
+            {onEdit && <th className="px-4 py-3" />}
           </tr>
         </thead>
         <tbody>
@@ -32,15 +32,17 @@ export function PendenciaHistoryTable({
               <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{entry.academiaNome}</td>
               <td className="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">{formatDate(entry.data)}</td>
               <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">{entry.quantidade}</td>
-              <td className="px-4 py-3 text-right">
-                <button
-                  type="button"
-                  onClick={() => onEdit(entry)}
-                  className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
-                >
-                  Editar
-                </button>
-              </td>
+              {onEdit && (
+                <td className="px-4 py-3 text-right">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(entry)}
+                    className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300"
+                  >
+                    Editar
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
