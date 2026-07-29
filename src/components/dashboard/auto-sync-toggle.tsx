@@ -35,10 +35,10 @@ export function AutoSyncToggle({
   return (
     <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-4 py-3">
       <div>
-        <p className="text-sm font-medium text-slate-900 dark:text-white">Sincronização automática diária</p>
+        <p className="text-sm font-medium text-slate-900 dark:text-white">Sincronização automática</p>
         <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-          Roda sozinha por volta de meia-noite (horário de Brasília), sem precisar clicar em &quot;Buscar convertidos
-          agora&quot;.
+          Roda sozinha por volta das 12h, 18h e 23h (horário de Brasília), sem precisar clicar em &quot;Buscar
+          convertidos agora&quot;.
         </p>
       </div>
       <button

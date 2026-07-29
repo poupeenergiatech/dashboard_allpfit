@@ -42,24 +42,26 @@ que o ambiente onde estou não tem o Docker disponível para buildar a imagem de
 8. Configurar CI/CD: push na branch de produção → deploy automático (GitHub + EasyPanel,
    conforme o documento de sprints).
 
-## Sync automático diário do Alle Documentos
+## Sync automático do Alle Documentos
 
 Duas formas de automatizar, independentes uma da outra:
 
 **Opção A — scheduler embutido (recomendado, não precisa de infra externa).** Em
-`/configuracoes`, o toggle "Sincronização automática diária" liga um scheduler que roda
+`/configuracoes`, o toggle "Sincronização automática" liga um scheduler que roda
 dentro do próprio processo do servidor (`src/lib/dashboard/sync-scheduler.ts`, ligado em
 `src/instrumentation.ts` quando o servidor sobe — exige
 `experimental.instrumentationHook: true`, já configurado em `next.config.mjs`). A cada 15
-min ele checa se está na janela da meia-noite (horário de Brasília, `America/Sao_Paulo` —
-calculado explicitamente, não depende do fuso do container) e se ainda não rodou
-automaticamente hoje (pela última linha `automatico` em `alle_documentos_sync_log`); só
-dispara se as duas forem verdade, o que dá até 4 tentativas dentro da hora 0 (00:00, 00:15,
-00:30, 00:45). Se o container estiver fora do ar durante a hora inteira, o sync daquele dia
-fica pra próxima meia-noite — sem perda de dado, porque o sync sempre processa tudo que
-ainda não foi importado (dedup por `alle_documento_id`), não só "o dia de hoje". Funciona
-porque o container roda um processo Node de vida longa (não é serverless). Nenhuma env var
-nem cron externo necessário; só o toggle.
+min ele checa se está em uma das janelas-alvo — **12h, 18h ou 23h** (horário de Brasília,
+`America/Sao_Paulo` — calculado explicitamente, não depende do fuso do container) — e se
+ainda não rodou automaticamente *nessa janela* hoje (pela última linha `automatico` em
+`alle_documentos_sync_log`, comparando dia e hora); só dispara se as duas forem verdade, o
+que dá até 4 tentativas dentro de cada hora-alvo (ex.: 12:00, 12:15, 12:30, 12:45). Dedup é
+por janela, não por dia inteiro, então rodar em uma janela não bloqueia as demais no mesmo
+dia. Se uma janela inteira for perdida (container fora do ar a hora toda), o sync daquela
+janela fica pra próxima — sem perda de dado, porque o sync sempre processa tudo que ainda
+não foi importado (dedup por `alle_documento_id`), não só "o dia de hoje". Funciona porque o
+container roda um processo Node de vida longa (não é serverless). Nenhuma env var nem cron
+externo necessário; só o toggle.
 
 **Opção B — cron externo (`/api/sync-alle-documentos`).** O EasyPanel não roda cron dentro do
 container por conta própria — é preciso um disparador externo batendo em

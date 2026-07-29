@@ -3,7 +3,7 @@ import { runAlleDocumentosSync } from './sync-alle-documentos'
 
 const CHECK_INTERVAL_MS = 15 * 60 * 1000
 const TIMEZONE = 'America/Sao_Paulo'
-const TARGET_HOUR = 0 // meia-noite, horário de Brasília
+const TARGET_HOURS = [23, 18, 12] // três janelas diárias, horário de Brasília
 
 function dateInTimezone(date: Date): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -31,19 +31,23 @@ function hourInTimezone(date: Date): number {
 
 let running = false
 
-// Roda só na janela da meia-noite em horário de Brasília (America/Sao_Paulo, não
-// UTC — o container pode estar em qualquer fuso) — não "a qualquer hora, desde que
-// ainda não tenha rodado hoje" como antes. A checagem a cada 15 min dá 4 chances
-// dentro da hora 0 (00:00, 00:15, 00:30, 00:45) pra pegar o horário mesmo se uma
-// checagem específica for perdida. Se a janela inteira for perdida (container fora
-// do ar a hora toda), o sync só volta a rodar na meia-noite seguinte — sem perda de
-// dado, porque runAlleDocumentosSync sempre processa tudo que ainda não foi
-// importado (dedup por alle_documento_id), não só "o dia de hoje".
+// Roda só nas janelas de horário configuradas em TARGET_HOURS, em horário de
+// Brasília (America/Sao_Paulo, não UTC — o container pode estar em qualquer
+// fuso) — não "a qualquer hora, desde que ainda não tenha rodado nesta janela
+// hoje" como antes de virar múltiplas janelas. A checagem a cada 15 min dá 4
+// chances dentro de cada hora-alvo (ex.: 23:00, 23:15, 23:30, 23:45) pra pegar o
+// horário mesmo se uma checagem específica for perdida. Dedup é por (dia,
+// hora-alvo) — não só por dia — senão uma janela bloquearia as demais no mesmo
+// dia. Se uma janela inteira for perdida (container fora do ar a hora toda), o
+// sync só volta a rodar na próxima janela — sem perda de dado, porque
+// runAlleDocumentosSync sempre processa tudo que ainda não foi importado (dedup
+// por alle_documento_id), não só "o dia de hoje".
 async function checkAndRun(): Promise<void> {
   if (running) return
 
   const now = new Date()
-  if (hourInTimezone(now) !== TARGET_HOUR) return
+  const currentHour = hourInTimezone(now)
+  if (!TARGET_HOURS.includes(currentHour)) return
 
   const { rows: settingsRows } = await pool.query<{ enabled: boolean }>(
     'select enabled from alle_documentos_sync_settings where id = 1'
@@ -56,12 +60,16 @@ async function checkAndRun(): Promise<void> {
      order by created_at desc
      limit 1`
   )
-  const lastRunDate = lastRunRows[0] ? dateInTimezone(new Date(lastRunRows[0].created_at)) : null
+  const lastRun = lastRunRows[0] ? new Date(lastRunRows[0].created_at) : null
+  const alreadyRanThisWindow =
+    lastRun !== null &&
+    dateInTimezone(lastRun) === dateInTimezone(now) &&
+    hourInTimezone(lastRun) === currentHour
 
-  if (lastRunDate === dateInTimezone(now)) return
+  if (alreadyRanThisWindow) return
 
   running = true
-  console.log('[sync-scheduler] sincronização automática diária (00h, horário de Brasília) iniciando...')
+  console.log(`[sync-scheduler] sincronização automática (${currentHour}h, horário de Brasília) iniciando...`)
   try {
     // Sucesso ou erro, runAlleDocumentosSync já grava em alle_documentos_sync_log —
     // não precisamos tratar o resultado aqui, só deixar rodar.
@@ -83,7 +91,7 @@ export function startAutoSyncScheduler(): void {
   if (globalForScheduler.alleDocumentosSyncSchedulerStarted) return
   globalForScheduler.alleDocumentosSyncSchedulerStarted = true
 
-  console.log('[sync-scheduler] scheduler do sync automático diário iniciado (roda por volta de 00h, horário de Brasília)')
+  console.log('[sync-scheduler] scheduler do sync automático iniciado (roda por volta de 23h, 18h e 12h, horário de Brasília)')
   checkAndRun().catch((err) => console.error('[sync-scheduler] erro na checagem inicial:', err))
   setInterval(() => {
     checkAndRun().catch((err) => console.error('[sync-scheduler] erro na checagem periódica:', err))
