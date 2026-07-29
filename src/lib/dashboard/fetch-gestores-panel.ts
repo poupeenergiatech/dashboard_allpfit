@@ -18,6 +18,7 @@ export type GestoresPanelRow = {
   totalConversoesAne: number
   totalConversoesManual: number
   totalConversoes: number
+  totalConversoesHoje: number
   // Superset de AcademiaPerformance (fetch-academia-performance.ts) — inclui esse
   // campo só pra poder reaproveitar AcademiaPerformanceChart aqui direto, sem
   // adaptar as linhas. Não aparece em nenhum card/coluna própria do painel.
@@ -34,6 +35,7 @@ export type GestoresPanelData = {
     totalScansPeriodo: number
     totalScansHoje: number
     totalConversoes: number
+    totalConversoesHoje: number
     clientesAlleAtivos: number
     pendentesAssinatura: number
     academiasTreinadas: number
@@ -79,6 +81,8 @@ export async function fetchGestoresPanel(
     { rows: conversoesPorDia },
     { rows: manualPeriodo },
     { rows: manualHoje },
+    { rows: conversoesAneHoje },
+    { rows: clientesExclusivosHoje },
     { rows: clientesAtivos },
     { rows: treinadas },
     { rows: pendentes },
@@ -115,35 +119,66 @@ export async function fetchGestoresPanel(
          and ($3::uuid is null or academia_id = $3)`,
       [range?.fromDate ?? null, range?.toDate ?? null, academiaId]
     ),
-    // Scans "de hoje" ficam fixos no dia corrente, independente do período
-    // selecionado no filtro — é a referência rápida que o gestor quer bater o olho
-    // e comparar com o total do período ao lado, no mesmo gráfico.
-    pool.query<{ academia_id: string; total_scans: number }>(
-      `select academia_id, total_scans from manual_data
+    // Scans e conversões manuais "de hoje" ficam fixos no dia corrente,
+    // independente do período selecionado no filtro — é a referência rápida que o
+    // gestor quer bater o olho e comparar com o total do período ao lado.
+    pool.query<{ academia_id: string; total_scans: number; conversoes_manual: number }>(
+      `select academia_id, total_scans, conversoes_manual from manual_data
        where data = $1 and ($2::uuid is null or academia_id = $2)`,
       [hoje.fromDate, academiaId]
     ),
+    // Conversões Ane "de hoje", mesma lógica de conversoesPorDia mas fixada no dia
+    // corrente.
+    pool.query<{ academia_id: string; count: number }>(
+      `select academia_id, count(*) as count from conversions
+       where created_at >= $1 and created_at < $2 and ($3::uuid is null or academia_id = $3)
+       group by academia_id`,
+      [hoje.from, hoje.toExclusive, academiaId]
+    ),
+    // "Exclusivo" de hoje (ver query clientesAtivos abaixo) — mesmo critério, mas
+    // escopado no dia corrente em vez do período selecionado, pra alimentar o card
+    // fixo "Conversões hoje".
+    pool.query<{ academia_id: string; exclusivo: number }>(
+      `select ca.academia_id,
+              count(*) filter (
+                where ca.status = any($1::text[])
+                  and not exists (select 1 from conversions c2 where c2.cliente_alle_id = ca.id)
+                  and ca.created_at >= $2 and ca.created_at < $3
+              ) as exclusivo
+       from clientes_alle ca
+       where ($4::uuid is null or ca.academia_id = $4)
+       group by ca.academia_id`,
+      [statusesConversao, hoje.from, hoje.toExclusive, academiaId]
+    ),
     // `total` é o headcount real de ATIVOS (exibido como "Clientes Alle ativos"
-    // no painel — quem não assinou o termo ainda não entra aqui). `exclusivo` é
-    // outra coisa: quem converteu por fora do Ane com um dos status habilitados
-    // em /configuracoes (ver fetchConversaoStatusesIncluidos — ativo/pendente/
-    // reprovado sempre contam, sem_informacao/com_impedimentos/falta_documentos
-    // só se ligado) e ainda não tem uma linha em conversions apontando pra cá
-    // (cliente_alle_id, criada ao marcar o termo de adesão em /convertidos via
-    // definirStatusClienteConvertido). Só `exclusivo` entra em
-    // totalConversoesManual (ver abaixo) — somar `total` ali contava essa pessoa
-    // duas vezes (uma em totalConversoesAne, outra aqui).
+    // no painel — quem não assinou o termo ainda não entra aqui, e não é escopado
+    // por período: é uma foto do estado atual, igual clientesAlleAtivos em
+    // fetch-academia-performance.ts). `exclusivo` é outra coisa: quem converteu
+    // por fora do Ane com um dos status habilitados em /configuracoes (ver
+    // fetchConversaoStatusesIncluidos — ativo/pendente/reprovado sempre contam,
+    // sem_informacao/com_impedimentos/falta_documentos só se ligado) e ainda não
+    // tem uma linha em conversions apontando pra cá (cliente_alle_id, criada ao
+    // marcar o termo de adesão em /convertidos via definirStatusClienteConvertido).
+    // Só `exclusivo` entra em totalConversoesManual (ver abaixo) — somar `total`
+    // ali contava essa pessoa duas vezes (uma em totalConversoesAne, outra aqui).
+    // Diferente de `total`, `exclusivo` é escopado por created_at quando o período
+    // não for "todos" — sem isso, o pódio/ranking não refletiam o filtro de
+    // hoje/ontem/data específica: esse número (cadastro manual, não passa pelo
+    // Ane) costuma ser bem maior que o volume diário real de conversões, "afogando"
+    // a diferença entre períodos e fazendo o ranking parecer travado.
     pool.query<{ academia_id: string; total: number; exclusivo: number }>(
       `select ca.academia_id,
               count(*) filter (where ca.status = 'ativo') as total,
               count(*) filter (
                 where ca.status = any($1::text[])
                   and not exists (select 1 from conversions c2 where c2.cliente_alle_id = ca.id)
+                  and ($3::timestamptz is null or ca.created_at >= $3)
+                  and ($4::timestamptz is null or ca.created_at < $4)
               ) as exclusivo
        from clientes_alle ca
        where ($2::uuid is null or ca.academia_id = $2)
        group by ca.academia_id`,
-      [statusesConversao, academiaId]
+      [statusesConversao, academiaId, range?.from ?? null, range?.toExclusive ?? null]
     ),
     pool.query<{ academia_id: string; treinada: boolean | null }>(
       `select academia_id, treinada from trained_academias where ($1::uuid is null or academia_id = $1)`,
@@ -192,6 +227,13 @@ export async function fetchGestoresPanel(
   }
 
   const totalScansHojeByAcademia = new Map(manualHoje.map((r) => [r.academia_id, r.total_scans ?? 0]))
+  const totalConversoesManualHojeByAcademia = new Map(
+    manualHoje.map((r) => [r.academia_id, r.conversoes_manual ?? 0])
+  )
+  const totalConversoesAneHojeByAcademia = new Map(conversoesAneHoje.map((r) => [r.academia_id, r.count]))
+  const totalConversoesExclusivoHojeByAcademia = new Map(
+    clientesExclusivosHoje.map((r) => [r.academia_id, r.exclusivo])
+  )
   const clientesAtivosByAcademia = new Map(clientesAtivos.map((r) => [r.academia_id, r.total]))
   const clientesAtivosExclusivosByAcademia = new Map(clientesAtivos.map((r) => [r.academia_id, r.exclusivo]))
   const treinadaByAcademia = new Map(treinadas.map((r) => [r.academia_id, r.treinada ?? false]))
@@ -220,6 +262,10 @@ export async function fetchGestoresPanel(
       totalConversoesAne,
       totalConversoesManual,
       totalConversoes: totalConversoesAne + totalConversoesManual,
+      totalConversoesHoje:
+        (totalConversoesAneHojeByAcademia.get(a.id) ?? 0) +
+        (totalConversoesManualHojeByAcademia.get(a.id) ?? 0) +
+        (totalConversoesExclusivoHojeByAcademia.get(a.id) ?? 0),
       conversoesManualAjusteTotal: ajusteTotal,
       clientesAlleAtivos: clientesAtivosByAcademia.get(a.id) ?? 0,
       treinada: treinadaByAcademia.get(a.id) ?? false,
@@ -234,6 +280,7 @@ export async function fetchGestoresPanel(
       totalScansPeriodo: acc.totalScansPeriodo + r.totalScansPeriodo,
       totalScansHoje: acc.totalScansHoje + r.totalScansHoje,
       totalConversoes: acc.totalConversoes + r.totalConversoes,
+      totalConversoesHoje: acc.totalConversoesHoje + r.totalConversoesHoje,
       clientesAlleAtivos: acc.clientesAlleAtivos + r.clientesAlleAtivos,
       pendentesAssinatura: acc.pendentesAssinatura + r.pendentesAssinatura,
       academiasTreinadas: acc.academiasTreinadas + (r.treinada ? 1 : 0),
@@ -243,6 +290,7 @@ export async function fetchGestoresPanel(
       totalScansPeriodo: 0,
       totalScansHoje: 0,
       totalConversoes: 0,
+      totalConversoesHoje: 0,
       clientesAlleAtivos: 0,
       pendentesAssinatura: 0,
       academiasTreinadas: 0,
