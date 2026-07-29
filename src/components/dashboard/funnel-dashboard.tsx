@@ -8,6 +8,7 @@ import { FunnelShapeChart } from './funnel-shape-chart'
 import { FunnelStagesChart } from './funnel-stages-chart'
 import { FunnelTrendChart } from './funnel-trend-chart'
 import { LiveIndicator } from './live-indicator'
+import { ManualDataHistoryTable } from './manual-data-history-table'
 import { ManualDataSection } from './manual-data-section'
 import { Icon } from '@/components/ui/icons'
 import { useAcademiaFilter } from '@/lib/dashboard/use-academia-filter'
@@ -18,13 +19,11 @@ import type { ManualDataEntry } from '@/lib/dashboard/fetch-manual-data-history'
 export function FunnelDashboard({
   academias,
   initialAcademiaId,
-  canEditManualData,
   isSuperAdmin,
   manualDataHistory,
 }: {
   academias: Academia[]
   initialAcademiaId: string | null
-  canEditManualData: boolean
   isSuperAdmin: boolean
   manualDataHistory: ManualDataEntry[]
 }) {
@@ -100,41 +99,53 @@ export function FunnelDashboard({
         )
       )}
 
-      <div>
-        {/* Fechado por padrão: é a seção mais densa da página (formulário +
-            2 tabelas de histórico) e a maioria de quem só quer ver os números do
-            funil nunca precisa abrir — mas fica um clique de distância pra quem
-            precisa lançar ou conferir um dado manual. */}
-        <button
-          type="button"
-          onClick={() => setShowManualData((v) => !v)}
-          aria-expanded={showManualData}
-          className="flex w-full items-center justify-between gap-3 rounded-xl px-1 py-1 text-left"
-        >
-          <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Dados manuais</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Lançamentos feitos à mão (scans, ajustes e conversões fora da Ane) — a maioria dos números do funil
-              já é automática, não precisa abrir isso pra acompanhar o dia a dia.
-            </p>
-          </div>
-          <Icon
-            name="chevron-down"
-            strokeWidth={2.5}
-            className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 dark:text-slate-500 ${showManualData ? 'rotate-180' : ''}`}
-          />
-        </button>
-        {showManualData && (
-          <div className="mt-3">
-            <ManualDataSection
-              academias={academias}
-              fixedAcademiaId={initialAcademiaId}
-              history={manualDataHistory}
-              editable={canEditManualData}
+      {isSuperAdmin ? (
+        <div>
+          {/* Fechado por padrão: é a seção mais densa da página (formulário +
+              tabela de histórico) e a maioria de quem só quer ver os números do
+              funil nunca precisa abrir — mas fica um clique de distância pra quem
+              precisa lançar ou conferir um dado manual. */}
+          <button
+            type="button"
+            onClick={() => setShowManualData((v) => !v)}
+            aria-expanded={showManualData}
+            className="flex w-full items-center justify-between gap-3 rounded-xl px-1 py-1 text-left"
+          >
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Dados manuais</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Lançamentos feitos à mão (scans, ajustes e conversões fora da Ane) — a maioria dos números do funil
+                já é automática, não precisa abrir isso pra acompanhar o dia a dia.
+              </p>
+            </div>
+            <Icon
+              name="chevron-down"
+              strokeWidth={2.5}
+              className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-150 dark:text-slate-500 ${showManualData ? 'rotate-180' : ''}`}
             />
-          </div>
-        )}
-      </div>
+          </button>
+          {showManualData && (
+            <div className="mt-3">
+              <ManualDataSection
+                academias={academias}
+                fixedAcademiaId={initialAcademiaId}
+                history={manualDataHistory}
+              />
+            </div>
+          )}
+        </div>
+      ) : (
+        // Sem permissão pra lançar/editar (ver canManageUsers) — só a leitura do
+        // histórico fica disponível, sempre visível (sem o toggle "Dados manuais",
+        // que é sobre lançar, não sobre consultar).
+        <div>
+          <h3 className="panel-title mb-1">Histórico de lançamentos</h3>
+          <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+            Lançamentos manuais (scans, ajustes e conversões fora da Ane) por academia e dia.
+          </p>
+          <ManualDataHistoryTable entries={manualDataHistory} />
+        </div>
+      )}
     </div>
   )
 }

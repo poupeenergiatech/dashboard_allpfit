@@ -6,7 +6,7 @@ import { PeriodFilterLinks } from '@/components/dashboard/period-filter-links'
 import { fetchAcademiaPerformance, type PerformancePeriod } from '@/lib/dashboard/fetch-academia-performance'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchManualDataHistory } from '@/lib/dashboard/fetch-manual-data-history'
-import { canManageManualData, canManageUsers, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
+import { canManageUsers, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 import type { DateRange } from '@/lib/dashboard/types'
 
 const VALID_PERIODS: PerformancePeriod[] = ['todos', 'hoje', 'ontem', '7dias', '30dias', '90dias', '1ano', 'personalizado']
@@ -41,9 +41,10 @@ export default async function PerformancePage({
   const [rows, academias, history] = await Promise.all([
     profile ? fetchAcademiaPerformance(profile, period, customRange, requestedAcademiaId) : Promise.resolve([]),
     fetchActiveAcademias(profile),
-    // Diferente do Funil/Dashboard (onde Dados manuais é visível em modo leitura pra
-    // qualquer role — ver canManageManualData), aqui em /performance a seção fica
-    // restrita a Super Admin de propósito: só busca o histórico se for exibir.
+    // Diferente do Funil/Dashboard (onde o histórico de dados manuais é visível em
+    // modo leitura pra qualquer role, só lançar/editar fica restrito), aqui em
+    // /performance a seção inteira fica restrita a Super Admin de propósito: só
+    // busca o histórico se for exibir.
     isSuperAdmin ? fetchManualDataHistory(profile) : Promise.resolve([]),
   ])
 
@@ -85,7 +86,6 @@ export default async function PerformancePage({
             academias={academias}
             fixedAcademiaId={seesAllAcademias(profile.role) ? null : profile.academiaId}
             history={history}
-            editable={canManageManualData(profile.role)}
           />
         </div>
       )}
