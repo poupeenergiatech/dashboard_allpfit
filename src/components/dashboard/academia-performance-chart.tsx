@@ -92,7 +92,7 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
 
   return (
     <div className="card p-6">
-      <p className="mb-4 text-sm font-medium text-slate-500 dark:text-slate-400">Alunos, contatos e clientes Alle ativos por academia</p>
+      <p className="panel-title mb-4">Alunos, contatos e clientes Alle ativos por academia</p>
       <div className="overflow-x-auto">
         <div style={{ height: 460, minWidth }}>
           <ResponsiveContainer width="100%" height="100%">

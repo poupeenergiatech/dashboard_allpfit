@@ -55,7 +55,7 @@ export function FunnelCard({
           {icon}
         </span>
       </div>
-      <p className="mt-3 text-3xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
+      <p className="mt-3 text-3xl font-extrabold tabular-nums tracking-tight text-slate-900 dark:text-white">
         <AnimatedNumber value={value} />
       </p>
       {conversionRate != null && (

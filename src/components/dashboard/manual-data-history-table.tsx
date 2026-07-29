@@ -35,7 +35,7 @@ export function ManualDataHistoryTable({
             </th>
             {onEdit && <th className="px-4 py-1.5" />}
           </tr>
-          <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/60 text-left text-[11px] font-bold uppercase tracking-[0.06em] text-slate-500 dark:text-slate-400">
             <th className="px-4 py-3">Academia</th>
             <th className="px-4 py-3">Data</th>
             <th className="px-4 py-3 text-right">Scans</th>

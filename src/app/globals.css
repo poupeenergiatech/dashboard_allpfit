@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #f5f5f8;
+  --foreground: #17181d;
   --brand-50: #faf5fc;
   --brand-600: #7b00ae;
   --brand-700: #6a0096;
@@ -12,15 +12,15 @@
 }
 
 .dark {
-  --background: #0b1120;
-  --foreground: #f1f5f9;
+  --background: #0e0f14;
+  --foreground: #f2f2f5;
   color-scheme: dark;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 * {
@@ -60,7 +60,7 @@ body {
 @layer components {
   /* Cards */
   .card {
-    @apply rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.2)];
+    @apply rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_2px_rgba(20,20,40,0.05)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-[0_1px_2px_rgba(0,0,0,0.4)];
   }
   .card-interactive {
     @apply card transition hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(15,23,42,0.08)] dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)];
@@ -113,10 +113,17 @@ body {
 
   /* Page header */
   .page-title {
-    @apply text-xl font-bold tracking-tight text-slate-900 dark:text-white;
+    @apply text-[26px] font-extrabold tracking-[-0.01em] text-slate-900 dark:text-white;
   }
   .page-subtitle {
     @apply mt-0.5 text-sm text-slate-500 dark:text-slate-400;
+  }
+
+  /* Panel title — usado no topo de gráficos/tabelas (funil, tendência,
+     ranking, pódio etc.), 16px/800; antes cada painel reusava o estilo de
+     eyebrow (13px/500 muted) que hoje é só pra rótulos secundários. */
+  .panel-title {
+    @apply text-base font-extrabold text-slate-900 dark:text-white;
   }
 }
 

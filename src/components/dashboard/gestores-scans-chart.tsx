@@ -35,9 +35,7 @@ export function GestoresScansChart({ rows }: { rows: GestoresPanelRow[] }) {
 
   return (
     <div className="card p-5">
-      <p className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-400">
-        Scans QR por academia — total no período e hoje
-      </p>
+      <p className="panel-title mb-3">Scans QR por academia — total no período e hoje</p>
       <div style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 0 }} barGap={4}>

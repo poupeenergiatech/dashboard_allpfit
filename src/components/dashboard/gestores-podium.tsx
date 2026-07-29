@@ -2,28 +2,33 @@ import { Avatar } from '@/components/ui/avatar'
 import { Icon } from '@/components/ui/icons'
 import type { GestoresPanelRow } from '@/lib/dashboard/fetch-gestores-panel'
 
+// Ouro/prata/bronze nos hex exatos do handoff de redesign (2026-07-29): gold
+// #e8a721, silver #b9bfce, bronze #e08a44 — cada um com um degradê sutil (tom
+// mais claro em cima) derivado desse hex, não os amber/slate/orange padrão do
+// Tailwind (slate em particular foi remapeado pro sistema de tokens do handoff,
+// então usar a paleta slate aqui pro "prata" ia herdar a cor errada).
 const PLACE = [
   {
     order: 'sm:order-2',
-    riser: 'h-24 sm:h-28 bg-gradient-to-b from-amber-400 to-amber-500 dark:from-amber-500 dark:to-amber-600',
-    ring: 'ring-amber-300 dark:ring-amber-500/50',
-    badge: 'bg-amber-400 text-amber-950',
+    riser: 'h-[140px] sm:h-[190px] bg-gradient-to-b from-[#f0bb4d] to-[#e8a721] dark:from-[#e8a721] dark:to-[#c98f18]',
+    ring: 'ring-[#f3d78f] dark:ring-[#e8a721]/50',
+    badge: 'bg-[#e8a721] text-[#4a3405]',
     nameSize: 'text-base',
     valueSize: 'text-3xl',
   },
   {
     order: 'sm:order-1',
-    riser: 'h-16 sm:h-20 bg-gradient-to-b from-slate-300 to-slate-400 dark:from-slate-500 dark:to-slate-600',
-    ring: 'ring-slate-300 dark:ring-slate-600',
-    badge: 'bg-slate-300 text-slate-800 dark:bg-slate-500 dark:text-slate-950',
+    riser: 'h-[100px] sm:h-[130px] bg-gradient-to-b from-[#cdd2dc] to-[#b9bfce] dark:from-[#b9bfce] dark:to-[#9aa0ac]',
+    ring: 'ring-[#dde1e8] dark:ring-[#b9bfce]/50',
+    badge: 'bg-[#b9bfce] text-[#2a2d38]',
     nameSize: 'text-sm',
     valueSize: 'text-2xl',
   },
   {
     order: 'sm:order-3',
-    riser: 'h-10 sm:h-12 bg-gradient-to-b from-orange-300 to-orange-400 dark:from-orange-500 dark:to-orange-600',
-    ring: 'ring-orange-300 dark:ring-orange-500/50',
-    badge: 'bg-orange-300 text-orange-950 dark:bg-orange-400',
+    riser: 'h-[78px] sm:h-[100px] bg-gradient-to-b from-[#e79f66] to-[#e08a44] dark:from-[#e08a44] dark:to-[#c06f30]',
+    ring: 'ring-[#f0c19f] dark:ring-[#e08a44]/50',
+    badge: 'bg-[#e08a44] text-[#432405]',
     nameSize: 'text-sm',
     valueSize: 'text-2xl',
   },
@@ -44,9 +49,7 @@ export function GestoresPodium({ rows }: { rows: GestoresPanelRow[] }) {
 
   return (
     <div className="card p-5 sm:p-6">
-      <p className="mb-6 text-sm font-medium text-slate-500 dark:text-slate-400">
-        Pódio de conversões — top 3 academias no período
-      </p>
+      <p className="panel-title mb-6">Pódio de conversões — top 3 academias no período</p>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-center sm:gap-4">
         {top3.map((row, i) => {
           const style = PLACE[i]

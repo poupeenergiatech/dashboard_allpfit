@@ -83,7 +83,7 @@ export function FunnelDashboard({
             <FunnelShapeChart counts={counts} />
             <FunnelTrendChart series={counts.series} />
             <div>
-              <h3 className="mb-1 text-sm font-semibold text-slate-900 dark:text-white">Histórico diário</h3>
+              <h3 className="panel-title mb-1">Histórico diário</h3>
               <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
                 Um resumo por dia do período selecionado acima — quantos scans, contatos, conversões e reprovados
                 cada dia teve, somando todas as academias no filtro.

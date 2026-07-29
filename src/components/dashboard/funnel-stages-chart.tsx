@@ -4,13 +4,14 @@ import { computeMaxLog, toWeight } from '@/lib/dashboard/log-scale'
 import { useIsDark } from '@/lib/dashboard/use-is-dark'
 import type { FunnelCounts } from '@/lib/dashboard/types'
 
-// Ordinal (uma cor, degradê) — o que importa aqui é a posição no funil, não a
-// identidade de cada etapa. Steps validados com validate_palette.js --ordinal:
-// monótono, e o degrau mais claro ainda contrasta com o fundo (>= 2:1). O degradê
-// claro->escuro do tema claro perderia contraste num card escuro (#1e3a8a quase
-// some no slate-900), por isso o modo escuro usa uma escala mais clara/saturada.
-const STAGE_COLORS = ['#60a5fa', '#3b82f6', '#1d4ed8', '#1e3a8a', '#172554']
-const STAGE_COLORS_DARK = ['#bfdbfe', '#93c5fd', '#60a5fa', '#3b82f6', '#2563eb']
+// Ordinal (uma cor, degradê violeta — mesma identidade do brand roxo, ver
+// tailwind.config.ts) — o que importa aqui é a posição no funil, não a
+// identidade de cada etapa. Degrau mais claro ainda contrasta com o fundo. O
+// degradê claro->escuro do tema claro perderia contraste num card escuro (o
+// brand-800 quase some no slate-900), por isso o modo escuro usa uma escala
+// mais clara/saturada (brand-100..500).
+const STAGE_COLORS = ['#c894dd', '#ab5ccb', '#9029bb', '#7b00ae', '#59007d']
+const STAGE_COLORS_DARK = ['#f2e6f7', '#dfc2ec', '#c894dd', '#ab5ccb', '#9029bb']
 
 function formatNumber(value: number): string {
   return value.toLocaleString('pt-BR')
@@ -69,7 +70,7 @@ export function FunnelStagesChart({ counts }: { counts: FunnelCounts }) {
   return (
     <div className="card p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Funil de conversão</p>
+        <p className="panel-title">Funil de conversão</p>
         {overallRate != null && (
           <span className="inline-flex items-center rounded-full bg-accent-50 dark:bg-accent-500/10 px-2.5 py-0.5 text-xs font-semibold text-accent-600 dark:text-accent-400">
             Conversão geral: {formatRate(overallRate)}%

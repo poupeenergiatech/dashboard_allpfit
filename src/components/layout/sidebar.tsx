@@ -3,17 +3,31 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Icon } from '@/components/ui/icons'
-import { NAV_ITEMS } from '@/lib/dashboard/nav-items'
+import { NAV_ITEMS, type NavGroup, type NavItem } from '@/lib/dashboard/nav-items'
 import { useMobileNav } from './nav-context'
 import type { UserRole } from '@/lib/auth/profile'
 
-function Logo() {
+const GROUP_ORDER: NavGroup[] = ['PRINCIPAL', 'OPERAÇÃO', 'GESTÃO', 'SISTEMA']
+
+function Logo({ collapsed }: { collapsed?: boolean }) {
   return (
-    <Link href="/" className="flex items-center gap-2.5">
+    <Link href="/" className="flex min-w-0 items-center gap-2.5">
       {/* eslint-disable-next-line @next/next/no-img-element -- asset local pequeno e fixo, sem next/image em nenhum outro lugar do app */}
-      <img src="/logo.png" alt="" className="h-9 w-9 shrink-0" />
-      <span className="text-[15px] font-bold leading-tight text-slate-900 dark:text-white">Dashboard Alle Energia</span>
+      <img src="/logo.png" alt="" className="h-[34px] w-[34px] shrink-0 rounded-[9px]" />
+      {!collapsed && (
+        <span className="truncate text-[13px] font-bold leading-tight text-slate-900 dark:text-white">
+          Dashboard
+          <br />
+          Alle Energia
+        </span>
+      )}
     </Link>
+  )
+}
+
+function groupItems(items: NavItem[]): { group: NavGroup; items: NavItem[] }[] {
+  return GROUP_ORDER.map((group) => ({ group, items: items.filter((item) => item.group === group) })).filter(
+    (g) => g.items.length > 0
   )
 }
 
@@ -21,40 +35,63 @@ function Logo() {
 // ("") e na rota de prévia com dados fictícios ("/preview").
 export function Sidebar({ role, basePath = '' }: { role: UserRole | null; basePath?: string }) {
   const pathname = usePathname()
-  const { open, setOpen, desktopCollapsed } = useMobileNav()
+  const { open, setOpen, desktopCollapsed, setDesktopCollapsed } = useMobileNav()
   const items = NAV_ITEMS.filter((item) => !item.roles || (role && item.roles.includes(role)))
+  const groups = groupItems(items)
 
-  function nav(onNavigate?: () => void) {
+  function nav(collapsed: boolean, onNavigate?: () => void) {
     return (
-      <nav className="flex-1 space-y-0.5 px-3 py-4">
-        {items.map((item) => {
-          const href = `${basePath}${item.href}` || '/'
-          const active = pathname === href
-          return (
-            <Link
-              key={item.href}
-              href={href}
-              onClick={onNavigate}
-              title={item.hint}
-              className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                active
-                  ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
-              }`}
-            >
-              <Icon
-                name={item.icon}
-                className={`h-[18px] w-[18px] shrink-0 transition ${
-                  active
-                    ? 'text-brand-600 dark:text-brand-400'
-                    : 'text-slate-400 group-hover:text-slate-500 dark:text-slate-500 dark:group-hover:text-slate-400'
-                }`}
-              />
-              <span className="truncate">{item.label}</span>
-              {active && <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-brand-600" />}
-            </Link>
-          )
-        })}
+      <nav className="flex-1 space-y-4 px-3 py-4">
+        {groups.map(({ group, items: groupItems }) => (
+          <div key={group}>
+            {!collapsed && (
+              <p className="mb-1 px-2.5 text-[11px] font-bold uppercase tracking-[0.06em] text-slate-400 dark:text-slate-500">
+                {group}
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {groupItems.map((item) => {
+                const href = `${basePath}${item.href}` || '/'
+                const active = pathname === href
+                const title = collapsed ? (item.hint ? `${item.label} — ${item.hint}` : item.label) : item.hint
+                return (
+                  <Link
+                    key={item.href}
+                    href={href}
+                    onClick={onNavigate}
+                    title={title}
+                    className={`group flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13.5px] font-medium transition ${
+                      collapsed ? 'justify-center' : ''
+                    } ${
+                      active
+                        ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/10 dark:text-brand-300 font-semibold'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
+                    }`}
+                  >
+                    <Icon
+                      name={item.icon}
+                      className={`h-[18px] w-[18px] shrink-0 transition ${
+                        active
+                          ? 'text-brand-600 dark:text-brand-400'
+                          : 'text-slate-400 group-hover:text-slate-500 dark:text-slate-500 dark:group-hover:text-slate-400'
+                      }`}
+                    />
+                    {!collapsed && (
+                      <>
+                        <span className="truncate">{item.label}</span>
+                        <span
+                          className={`ml-auto h-1.5 w-1.5 shrink-0 rounded-full ${
+                            active ? 'bg-brand-600 dark:bg-brand-400' : 'bg-slate-300 dark:bg-slate-600'
+                          }`}
+                        />
+                      </>
+                    )}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
     )
   }
@@ -62,16 +99,38 @@ export function Sidebar({ role, basePath = '' }: { role: UserRole | null; basePa
   return (
     <>
       <aside
-        className={`hidden shrink-0 flex-col overflow-hidden border-r border-slate-200/70 bg-white transition-[width] duration-200 md:flex dark:border-slate-800 dark:bg-slate-900 ${
-          desktopCollapsed ? 'md:w-0 md:border-r-0' : 'md:w-64'
+        className={`hidden shrink-0 flex-col overflow-hidden border-r border-slate-200/70 bg-white transition-[width] duration-[180ms] ease-out md:flex dark:border-slate-800 dark:bg-[#12131a] ${
+          desktopCollapsed ? 'md:w-[76px]' : 'md:w-[250px]'
         }`}
       >
-        <div className="flex h-16 w-64 shrink-0 items-center border-b border-slate-100 px-5 dark:border-slate-800">
-          <Logo />
+        <div
+          className={`flex h-16 shrink-0 items-center border-b border-slate-100 dark:border-slate-800 ${
+            desktopCollapsed ? 'justify-center px-2' : 'px-[22px]'
+          }`}
+        >
+          <Logo collapsed={desktopCollapsed} />
         </div>
-        <div className="w-64 flex-1 shrink-0 overflow-y-auto">{nav()}</div>
-        <div className="w-64 shrink-0 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
-          <p className="text-[11px] text-slate-400 dark:text-slate-500">Dashboard Alle Energia</p>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">{nav(desktopCollapsed)}</div>
+        <div className="shrink-0 border-t border-slate-100 p-3 dark:border-slate-800">
+          <button
+            type="button"
+            onClick={() => setDesktopCollapsed(!desktopCollapsed)}
+            title={desktopCollapsed ? 'Mostrar menu de navegação' : 'Esconder menu de navegação'}
+            className={`flex w-full items-center gap-2 rounded-[9px] border border-slate-200 px-3 py-2 text-[13px] font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 ${
+              desktopCollapsed ? 'justify-center' : ''
+            }`}
+          >
+            {desktopCollapsed ? (
+              <span aria-hidden="true" className="text-base leading-none">
+                »
+              </span>
+            ) : (
+              <>
+                <Icon name="chevron-down" strokeWidth={2.5} className="h-4 w-4 shrink-0 rotate-90" />
+                <span>Recolher menu</span>
+              </>
+            )}
+          </button>
         </div>
       </aside>
 
@@ -95,7 +154,7 @@ export function Sidebar({ role, basePath = '' }: { role: UserRole | null; basePa
                 <Icon name="close" className="h-5 w-5" strokeWidth={2} />
               </button>
             </div>
-            {nav(() => setOpen(false))}
+            {nav(false, () => setOpen(false))}
           </aside>
         </div>
       )}

@@ -8,15 +8,15 @@ import type { FunnelCounts } from '@/lib/dashboard/types'
 
 // Mesma paleta ordinal do FunnelStagesChart (barras) — ver o comentário lá pro porquê
 // do degradê e da versão escura ser mais clara.
-const STAGE_COLORS = ['#60a5fa', '#3b82f6', '#1d4ed8', '#1e3a8a', '#172554']
-const STAGE_COLORS_DARK = ['#bfdbfe', '#93c5fd', '#60a5fa', '#3b82f6', '#2563eb']
+const STAGE_COLORS = ['#c894dd', '#ab5ccb', '#9029bb', '#7b00ae', '#59007d']
+const STAGE_COLORS_DARK = ['#f2e6f7', '#dfc2ec', '#c894dd', '#ab5ccb', '#9029bb']
 
 // Cor do texto da taxa (dentro de cada bloco). No modo claro todos os tons já são
-// azuis saturados o bastante pra texto branco funcionar; no escuro, os 2 primeiros
+// roxos saturados o bastante pra texto branco funcionar; no escuro, os 3 primeiros
 // tons (STAGE_COLORS_DARK) são pastéis quase brancos e precisam de texto escuro —
-// os 3 seguintes já são saturados o bastante pra texto branco.
+// os 2 seguintes já são saturados o bastante pra texto branco.
 const RATE_TEXT_COLOR = ['#ffffff', '#ffffff', '#ffffff', '#ffffff', '#ffffff']
-const RATE_TEXT_COLOR_DARK = ['#1e3a8a', '#1e3a8a', '#ffffff', '#ffffff', '#ffffff']
+const RATE_TEXT_COLOR_DARK = ['#450061', '#450061', '#450061', '#ffffff', '#ffffff']
 
 function formatNumber(value: number): string {
   return value.toLocaleString('pt-BR')
@@ -128,7 +128,7 @@ export function FunnelShapeChart({ counts }: { counts: FunnelCounts }) {
   return (
     <div className="card p-5">
       <div className="mb-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Funil de conversão</p>
+        <p className="panel-title">Funil de conversão</p>
         {overallRate != null && (
           <span className="inline-flex items-center rounded-full bg-accent-50 dark:bg-accent-500/10 px-2.5 py-0.5 text-xs font-semibold text-accent-600 dark:text-accent-400">
             Conversão geral: {formatRate(overallRate)}%
