@@ -112,6 +112,7 @@ export const MOCK_PERFORMANCE: AcademiaPerformance[] = MOCK_ACADEMIAS.map((a, i)
     totalConversoes: totalConversoesAne + totalConversoesManual,
     conversoesManualAjusteTotal,
     clientesAlleAtivos: i === 0 ? 5 : 2,
+    pendentesAssinatura: 18 - i * 3,
   }
 })
 
@@ -337,11 +338,17 @@ export const MOCK_NUMEROS: NumeroGroup[] = [
   },
 ]
 
-export const MOCK_TREINADAS: TreinadaStatus[] = MOCK_ACADEMIAS.map((a, i) => ({
-  academiaId: a.id,
-  nome: a.nome,
-  treinada: i % 2 === 0,
-}))
+export const MOCK_TREINADAS: TreinadaStatus[] = [
+  ...MOCK_ACADEMIAS.map((a, i) => ({
+    academiaId: a.id,
+    nome: a.nome,
+    ativo: true,
+    treinada: i % 2 === 0,
+  })),
+  // Unidade desativada — ilustra que ela ainda aparece na lista, sempre como
+  // pendente e sem poder ser marcada como treinada (ver fetch-treinadas.ts).
+  { academiaId: '7', nome: 'Allp Fit - Unidade Desativada', ativo: false, treinada: false },
+]
 
 // Composto a partir dos outros mocks acima (mesmas academias/números já usados em
 // /preview/performance, /preview/scans, /preview/treinadas e /preview/pendentes) em

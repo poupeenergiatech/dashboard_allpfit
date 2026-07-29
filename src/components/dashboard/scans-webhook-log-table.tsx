@@ -1,9 +1,12 @@
 'use client'
 
-import { Fragment, useMemo, useState, useTransition } from 'react'
+import { Fragment, useEffect, useMemo, useState, useTransition } from 'react'
 import { createAcademiaAlias } from '@/app/(app)/academias/actions'
 import { useToast } from '@/components/ui/toast'
+import { Pagination } from './pagination'
 import type { ScansWebhookLogEntry } from '@/lib/dashboard/fetch-scans-webhook-log'
+
+const PAGE_SIZE = 10
 
 type CreateAliasAction = (academiaId: string, aliasNome: string) => Promise<void>
 
@@ -181,14 +184,22 @@ export function ScansWebhookLogTable({
 }) {
   const [status, setStatus] = useState<StatusFilter>('todos')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
 
   const filtered = useMemo(() => {
     return entries.filter((entry) => status === 'todos' || entry.status === status)
   }, [entries, status])
 
+  useEffect(() => {
+    setPage(1)
+  }, [status])
+
   if (entries.length === 0) {
     return <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhum payload de scans recebido ainda.</div>
   }
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const pageEntries = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <div className="space-y-3">
@@ -212,7 +223,7 @@ export function ScansWebhookLogTable({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((entry) => {
+              {pageEntries.map((entry) => {
                 const isExpanded = expandedId === entry.id
                 return (
                   <Fragment key={entry.id}>
@@ -267,6 +278,7 @@ export function ScansWebhookLogTable({
               })}
             </tbody>
           </table>
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       )}
     </div>

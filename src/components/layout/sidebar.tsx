@@ -105,10 +105,33 @@ export function Sidebar({ role, basePath = '' }: { role: UserRole | null; basePa
       >
         <div
           className={`flex h-16 shrink-0 items-center border-b border-slate-100 dark:border-slate-800 ${
-            desktopCollapsed ? 'justify-center px-2' : 'px-[22px]'
+            desktopCollapsed ? 'justify-center px-2' : 'justify-between px-[18px]'
           }`}
         >
-          <Logo collapsed={desktopCollapsed} />
+          {desktopCollapsed ? (
+            <button
+              type="button"
+              onClick={() => setDesktopCollapsed(false)}
+              aria-label="Mostrar menu de navegação"
+              title="Mostrar menu de navegação"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            >
+              <Icon name="menu" className="h-5 w-5" strokeWidth={2} />
+            </button>
+          ) : (
+            <>
+              <Logo />
+              <button
+                type="button"
+                onClick={() => setDesktopCollapsed(true)}
+                aria-label="Esconder menu de navegação"
+                title="Esconder menu de navegação"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-slate-500 transition hover:bg-slate-50 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              >
+                <Icon name="menu" className="h-5 w-5" strokeWidth={2} />
+              </button>
+            </>
+          )}
         </div>
         <div className="flex-1 overflow-y-auto overflow-x-hidden">{nav(desktopCollapsed)}</div>
         <div className="shrink-0 border-t border-slate-100 p-3 dark:border-slate-800">

@@ -9,9 +9,10 @@ import type { AcademiaPerformance } from '@/lib/dashboard/fetch-academia-perform
 // Alunos (azul, mesma cor da etapa "Alunos totais" no funil) -> Contatos (emerald,
 // inalterado, já validado antes) -> Clientes Alle ativos (laranja da marca — mesma
 // reserva de "resultado final" usada no card/etapa de conversões, ver
-// funnel-card.tsx). Validado com validate_palette.js: light e dark passam full (dark
-// usa accent-700 em vez de 600 — 600 caía fora da faixa de luminância do modo
-// escuro).
+// funnel-card.tsx) -> Pendentes de assinatura (rose, mesma cor de
+// pendencias-por-academia-chart.tsx, reservada em todo o app pra "ainda precisa de
+// ação"). Validado com validate_palette.js: light e dark passam full (dark usa
+// accent-700 em vez de 600 — 600 caía fora da faixa de luminância do modo escuro).
 const SERIES = {
   alunos: { key: 'totalAlunos' as const, weightKey: 'alunosWeight' as const, label: 'Alunos', light: '#3b82f6', dark: '#3b82f6' },
   contatos: { key: 'totalContatos' as const, weightKey: 'contatosWeight' as const, label: 'Contatos', light: '#059669', dark: '#059669' },
@@ -21,6 +22,13 @@ const SERIES = {
     label: 'Clientes Alle ativos',
     light: '#ef6700',
     dark: '#da5f00',
+  },
+  pendentes: {
+    key: 'pendentesAssinatura' as const,
+    weightKey: 'pendentesWeight' as const,
+    label: 'Pendentes de assinatura',
+    light: '#e11d48',
+    dark: '#e11d48',
   },
 }
 
@@ -73,13 +81,16 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
   const labelColor = isDark ? '#f8fafc' : '#0f172a'
 
   const shortNames = stripCommonPrefix(rows.map((r) => r.nome))
-  const maxLog = computeMaxLog(rows.flatMap((r) => [r.totalAlunos, r.totalContatos, r.clientesAlleAtivos]))
+  const maxLog = computeMaxLog(
+    rows.flatMap((r) => [r.totalAlunos, r.totalContatos, r.clientesAlleAtivos, r.pendentesAssinatura])
+  )
   const chartData = rows.map((r, i) => ({
     ...r,
     shortNome: shortNames[i],
     alunosWeight: toWeight(r.totalAlunos, maxLog),
     contatosWeight: toWeight(r.totalContatos, maxLog),
     clientesAlleWeight: toWeight(r.clientesAlleAtivos, maxLog),
+    pendentesWeight: toWeight(r.pendentesAssinatura, maxLog),
   }))
 
   // Largura mínima por academia (160px, era 130) — com muitas unidades, a
@@ -92,7 +103,7 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
 
   return (
     <div className="card p-6">
-      <p className="panel-title mb-4">Alunos, contatos e clientes Alle ativos por academia</p>
+      <p className="panel-title mb-4">Alunos, contatos, clientes Alle ativos e pendentes de assinatura por academia</p>
       <div className="overflow-x-auto">
         <div style={{ height: 460, minWidth }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -109,7 +120,12 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
                 labelFormatter={(_, payload) => payload?.[0]?.payload?.nome ?? ''}
                 formatter={(_, name, item) => {
                   const rawKey = (
-                    { Alunos: 'totalAlunos', Contatos: 'totalContatos', 'Clientes Alle ativos': 'clientesAlleAtivos' } as const
+                    {
+                      Alunos: 'totalAlunos',
+                      Contatos: 'totalContatos',
+                      'Clientes Alle ativos': 'clientesAlleAtivos',
+                      'Pendentes de assinatura': 'pendentesAssinatura',
+                    } as const
                   )[name as string]
                   const raw = rawKey ? (item.payload as AcademiaPerformance)[rawKey] : ''
                   return [formatNumber(Number(raw)), name]
@@ -150,6 +166,21 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
               >
                 <LabelList
                   dataKey={SERIES.clientesAlle.key}
+                  position="top"
+                  fill={labelColor}
+                  fontSize={11}
+                  formatter={(v) => formatNumber(Number(v))}
+                />
+              </Bar>
+              <Bar
+                dataKey={SERIES.pendentes.weightKey}
+                name={SERIES.pendentes.label}
+                fill={isDark ? SERIES.pendentes.dark : SERIES.pendentes.light}
+                radius={[4, 4, 0, 0]}
+                barSize={26}
+              >
+                <LabelList
+                  dataKey={SERIES.pendentes.key}
                   position="top"
                   fill={labelColor}
                   fontSize={11}

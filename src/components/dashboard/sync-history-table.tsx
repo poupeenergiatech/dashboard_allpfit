@@ -1,7 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Pagination } from './pagination'
 import type { SyncLogEntry } from '@/lib/dashboard/fetch-sync-history'
+
+const PAGE_SIZE = 10
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
@@ -53,6 +56,7 @@ function Pills<T extends string>({
 export function SyncHistoryTable({ entries }: { entries: SyncLogEntry[] }) {
   const [origem, setOrigem] = useState<OrigemFilter>('todos')
   const [status, setStatus] = useState<StatusFilter>('todos')
+  const [page, setPage] = useState(1)
 
   const filtered = useMemo(() => {
     return entries.filter((entry) => {
@@ -62,9 +66,16 @@ export function SyncHistoryTable({ entries }: { entries: SyncLogEntry[] }) {
     })
   }, [entries, origem, status])
 
+  useEffect(() => {
+    setPage(1)
+  }, [origem, status])
+
   if (entries.length === 0) {
     return <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">Nenhuma sincronização registrada ainda.</div>
   }
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const pageEntries = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <div className="space-y-3">
@@ -91,7 +102,7 @@ export function SyncHistoryTable({ entries }: { entries: SyncLogEntry[] }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((entry) => (
+              {pageEntries.map((entry) => (
                 <tr
                   key={entry.id}
                   className="border-b border-slate-50 dark:border-slate-800/60 align-top transition last:border-0 hover:bg-slate-50/70 dark:hover:bg-slate-800/70"
@@ -147,6 +158,7 @@ export function SyncHistoryTable({ entries }: { entries: SyncLogEntry[] }) {
               ))}
             </tbody>
           </table>
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>
       )}
     </div>

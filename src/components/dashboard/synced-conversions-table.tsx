@@ -1,10 +1,18 @@
+'use client'
+
+import { useState } from 'react'
+import { Pagination } from './pagination'
 import type { SyncedConversion } from '@/lib/dashboard/fetch-synced-conversions'
+
+const PAGE_SIZE = 10
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
 export function SyncedConversionsTable({ entries }: { entries: SyncedConversion[] }) {
+  const [page, setPage] = useState(1)
+
   if (entries.length === 0) {
     return (
       <div className="card-dashed text-sm text-slate-500 dark:text-slate-400">
@@ -12,6 +20,9 @@ export function SyncedConversionsTable({ entries }: { entries: SyncedConversion[
       </div>
     )
   }
+
+  const totalPages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE))
+  const pageEntries = entries.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <div className="card overflow-x-auto">
@@ -25,7 +36,7 @@ export function SyncedConversionsTable({ entries }: { entries: SyncedConversion[
           </tr>
         </thead>
         <tbody>
-          {entries.map((entry) => (
+          {pageEntries.map((entry) => (
             <tr
               key={entry.id}
               className="border-b border-slate-50 dark:border-slate-800/60 transition last:border-0 hover:bg-slate-50/70 dark:hover:bg-slate-800/70"
@@ -51,6 +62,7 @@ export function SyncedConversionsTable({ entries }: { entries: SyncedConversion[
           ))}
         </tbody>
       </table>
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   )
 }

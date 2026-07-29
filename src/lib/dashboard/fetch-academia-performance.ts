@@ -1,6 +1,7 @@
 import { pool } from '@/lib/db/pool'
 import { scopeAcademiaId, type UserProfile } from '@/lib/auth/profile'
 import { fetchConversaoStatusesIncluidos } from './fetch-conversao-status-settings'
+import { fetchPendenciasPorAcademia } from './fetch-pendencias-assinatura'
 import { periodRange } from './period'
 import type { DateRange, Period } from './types'
 
@@ -14,6 +15,7 @@ export type AcademiaPerformance = {
   totalConversoes: number
   conversoesManualAjusteTotal: number
   clientesAlleAtivos: number
+  pendentesAssinatura: number
 }
 
 export type PerformancePeriod = Period | 'todos'
@@ -48,6 +50,7 @@ export async function fetchAcademiaPerformance(
     { rows: conversoesPorDia },
     { rows: ajustes },
     { rows: clientesAlleAtivos },
+    pendenciasPorAcademia,
   ] = await Promise.all([
       pool.query<{ id: string; nome: string; total_alunos: number; conversoes_manual_ajuste_total: number }>(
         scopedAcademiaId
@@ -110,6 +113,10 @@ export async function fetchAcademiaPerformance(
          group by ca.academia_id`,
         [scopedAcademiaId, statusesConversao]
       ),
+      // Mesma composição de fetch-pendencias-assinatura.ts (backlog atual, não soma
+      // por período): último lançamento manual + clientes com termo de adesão
+      // pendente. Reusa a função em vez de duplicar a query aqui.
+      fetchPendenciasPorAcademia(profile, scopedAcademiaId),
     ])
 
   // Contatos: contagem automática, com ajuste (substitui) quando existir pra
@@ -149,6 +156,7 @@ export async function fetchAcademiaPerformance(
   // intervalo que não tem nada a ver com ele.
   const clientesAlleAtivosByAcademia = new Map(clientesAlleAtivos.map((r) => [r.academia_id, r.total]))
   const clientesAlleExclusivosByAcademia = new Map(clientesAlleAtivos.map((r) => [r.academia_id, r.exclusivo]))
+  const pendentesByAcademia = new Map(pendenciasPorAcademia.map((r) => [r.academiaId, r.quantidade]))
 
   return academias.map((a) => {
     const conversoesManualAjusteTotal = period === 'todos' ? a.conversoes_manual_ajuste_total : 0
@@ -167,6 +175,7 @@ export async function fetchAcademiaPerformance(
       totalConversoes: totalConversoesAne + totalConversoesManual,
       conversoesManualAjusteTotal,
       clientesAlleAtivos: clientesAlleAtivosByAcademia.get(a.id) ?? 0,
+      pendentesAssinatura: pendentesByAcademia.get(a.id) ?? 0,
     }
   })
 }

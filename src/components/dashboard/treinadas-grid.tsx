@@ -82,9 +82,11 @@ function TreinadaCard({
   const [treinada, setTreinadaState] = useState(row.treinada)
   const [pending, startTransition] = useTransition()
   const { showToast } = useToast()
+  // Academia inativa não pode virar "treinada" — ver comentário em fetch-treinadas.ts.
+  const editable = canEdit && row.ativo
 
   function toggle() {
-    if (!canEdit || pending) return
+    if (!editable || pending) return
     const next = !treinada
     setTreinadaState(next)
     startTransition(async () => {
@@ -103,13 +105,24 @@ function TreinadaCard({
     <div className="card-interactive flex items-center justify-between p-4">
       <div className="flex min-w-0 items-center gap-3">
         <Avatar name={row.nome} />
-        <span className="truncate text-sm font-medium text-slate-900 dark:text-white">{row.nome}</span>
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate text-sm font-medium text-slate-900 dark:text-white">{row.nome}</span>
+          {!row.ativo && (
+            <span
+              className="badge mt-0.5 w-fit bg-slate-100 dark:bg-slate-700/40 text-slate-500 dark:text-slate-400"
+              title="Academia inativa — reative em /academias pra poder marcar como treinada."
+            >
+              Inativa
+            </span>
+          )}
+        </div>
       </div>
       <button
         type="button"
         role="switch"
         aria-checked={treinada}
-        disabled={!canEdit || pending}
+        disabled={!editable || pending}
+        title={!row.ativo ? 'Academia inativa não pode ser marcada como treinada.' : undefined}
         onClick={toggle}
         className={`relative h-6 w-11 shrink-0 rounded-full transition disabled:opacity-50 ${
           treinada ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
