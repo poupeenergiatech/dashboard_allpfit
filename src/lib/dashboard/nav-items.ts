@@ -52,4 +52,12 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Academias', href: '/academias', roles: ['super_admin'], icon: 'building', group: 'GESTÃO' },
   { label: 'Usuários', href: '/usuarios', roles: ['super_admin'], icon: 'users', group: 'GESTÃO' },
   { label: 'Configurações', href: '/configuracoes', roles: ['super_admin'], icon: 'settings', group: 'SISTEMA' },
+  {
+    label: 'Auditoria de Login',
+    href: '/auditoria',
+    roles: ['super_admin'],
+    icon: 'shield',
+    hint: 'Histórico de tentativas de login — quem entrou, quando, de onde, e falhas de autenticação.',
+    group: 'SISTEMA',
+  },
 ]
