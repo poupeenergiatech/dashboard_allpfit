@@ -147,7 +147,15 @@ export function GestoresPanelDashboard({ academias }: { academias: Academia[] })
         data && (
           <>
             <GestoresPanelSummaryCards data={data} />
-            <GestoresPodium rows={data.rows} />
+            {/* 3 pódios lado a lado (empilham no mobile) — cada um já traz o
+                ranking das demais academias rolável dentro do próprio card,
+                então a tabela completa abaixo (com colunas sem pódio, como
+                Alunos/Treinada) continua existindo sem sobreposição de conteúdo. */}
+            <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+              <GestoresPodium rows={data.rows} metricKey="totalContatos" />
+              <GestoresPodium rows={data.rows} metricKey="totalConversoes" />
+              <GestoresPodium rows={data.rows} metricKey="totalScansPeriodo" />
+            </div>
             <GestoresRankingTable rows={data.rows} />
             {/* Os dois gráficos por academia lado a lado (empilham no mobile) —
                 mesma altura de linha (grid estica por padrão); items-start evita

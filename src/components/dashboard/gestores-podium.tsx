@@ -34,22 +34,35 @@ const PLACE = [
   },
 ]
 
-// Pódio das 3 academias com mais conversões no período — o placar principal da
-// "competição entre unidades" pedida: destaque visual rápido de quem está na
-// frente, sem precisar ler a tabela completa abaixo. `rows` já vem ordenado por
-// totalConversoes desc (ver fetchGestoresPanel). Degraus com altura real (não só
-// padding) formam o efeito de pódio físico — 1º mais alto e ao centro, 2º/3º mais
-// baixos nas laterais — com o avatar "em pé" sobre o degrau.
-export function GestoresPodium({ rows }: { rows: GestoresPanelRow[] }) {
-  const top3 = rows.slice(0, 3)
+export type PodiumMetricKey = 'totalContatos' | 'totalConversoes' | 'totalScansPeriodo'
+
+const METRICS: Record<PodiumMetricKey, { title: string; unitLabel: string }> = {
+  totalContatos: { title: 'Pódio de contatos', unitLabel: 'contatos' },
+  totalConversoes: { title: 'Pódio de conversões', unitLabel: 'conversões' },
+  totalScansPeriodo: { title: 'Pódio de scans de QR code', unitLabel: 'scans' },
+}
+
+// Pódio das 3 academias líderes numa métrica, com o ranking das demais logo
+// abaixo (rolável, pra não estourar a altura do card) — junta o que antes eram
+// dois blocos separados (pódio + tabela de ranking) num único card por métrica,
+// pra caber 3 lado a lado (contatos/conversões/scans) na mesma seção. Cada card
+// ordena `rows` pela sua própria métrica — diferente do pódio de conversões
+// original, não dá mais pra confiar na ordenação que já vem de fetchGestoresPanel,
+// já que agora duas das três métricas (contatos, scans) não são o critério de
+// ordenação padrão do servidor.
+export function GestoresPodium({ rows, metricKey }: { rows: GestoresPanelRow[]; metricKey: PodiumMetricKey }) {
+  const metric = METRICS[metricKey]
+  const sorted = [...rows].sort((a, b) => b[metricKey] - a[metricKey])
+  const top3 = sorted.slice(0, 3)
+  const rest = sorted.slice(3)
 
   if (top3.length === 0) {
     return null
   }
 
   return (
-    <div className="card p-5 sm:p-6">
-      <p className="panel-title mb-6">Pódio de conversões — top 3 academias no período</p>
+    <div className="card flex flex-col p-5 sm:p-6">
+      <p className="panel-title mb-6">{metric.title}</p>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-center sm:gap-4">
         {top3.map((row, i) => {
           const style = PLACE[i]
@@ -62,8 +75,10 @@ export function GestoresPodium({ rows }: { rows: GestoresPanelRow[] }) {
                 <div className="sm:mt-1">
                   <p className={`font-semibold text-slate-900 dark:text-white ${style.nameSize}`}>{row.nome}</p>
                   <p className={`font-bold tabular-nums tracking-tight text-slate-900 dark:text-white ${style.valueSize}`}>
-                    {row.totalConversoes.toLocaleString('pt-BR')}
-                    <span className="ml-1 text-xs font-medium text-slate-400 dark:text-slate-500">conversões</span>
+                    {row[metricKey].toLocaleString('pt-BR')}
+                    <span className="ml-1 text-xs font-medium text-slate-400 dark:text-slate-500">
+                      {metric.unitLabel}
+                    </span>
                   </p>
                 </div>
               </div>
@@ -83,6 +98,29 @@ export function GestoresPodium({ rows }: { rows: GestoresPanelRow[] }) {
           )
         })}
       </div>
+
+      {rest.length > 0 && (
+        <div className="mt-5 border-t border-slate-100 dark:border-slate-800 pt-2">
+          <div className="max-h-64 overflow-y-auto pr-1">
+            <ul className="divide-y divide-slate-50 dark:divide-slate-800/60">
+              {rest.map((row, i) => (
+                <li key={row.academiaId} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span className="w-5 shrink-0 text-center text-xs font-semibold text-slate-400 dark:text-slate-500">
+                      {i + 4}
+                    </span>
+                    <Avatar name={row.nome} className="h-6 w-6 text-[10px]" />
+                    <span className="truncate text-sm font-medium text-slate-700 dark:text-slate-200">{row.nome}</span>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-900 dark:text-white">
+                    {row[metricKey].toLocaleString('pt-BR')}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
