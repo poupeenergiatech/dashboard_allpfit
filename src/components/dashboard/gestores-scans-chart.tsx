@@ -36,45 +36,51 @@ export function GestoresScansChart({ rows }: { rows: GestoresPanelRow[] }) {
   return (
     <div className="card p-5">
       <p className="panel-title mb-3">Scans QR por academia — total no período e hoje</p>
-      <div style={{ height }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 0 }} barGap={4}>
-            <CartesianGrid stroke={chrome.grid} horizontal={false} />
-            <XAxis
-              type="number"
-              allowDecimals={false}
-              tick={{ fontSize: 12, fill: chrome.tick }}
-              tickLine={false}
-              axisLine={{ stroke: chrome.axisLine }}
-            />
-            <YAxis
-              type="category"
-              dataKey="nome"
-              width={140}
-              tick={{ fontSize: 12, fill: chrome.tooltipText }}
-              tickLine={false}
-              axisLine={false}
-              interval={0}
-            />
-            <Tooltip
-              contentStyle={{
-                borderRadius: 12,
-                borderColor: chrome.tooltipBorder,
-                backgroundColor: chrome.tooltipBg,
-                color: chrome.tooltipText,
-                fontSize: 13,
-              }}
-            />
-            <Legend
-              verticalAlign="top"
-              align="right"
-              height={32}
-              wrapperStyle={{ fontSize: 12, color: chrome.legend }}
-            />
-            <Bar dataKey="periodo" name="Total no período" fill={COLOR_PERIODO} radius={[0, 4, 4, 0]} maxBarSize={16} />
-            <Bar dataKey="hoje" name="Hoje" fill={colorHoje} radius={[0, 4, 4, 0]} maxBarSize={16} />
-          </BarChart>
-        </ResponsiveContainer>
+      {/* Altura da barra continua crescendo com o nº de academias (senão elas
+          espremem e ficam ilegíveis), mas o card fica travado em 460px — mesma
+          altura do gráfico vizinho (AcademiaPerformanceChart) — com scroll
+          vertical por dentro pra não estourar a linha quando há muitas unidades. */}
+      <div className="max-h-[460px] overflow-y-auto pr-1">
+        <div style={{ height }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 0 }} barGap={4}>
+              <CartesianGrid stroke={chrome.grid} horizontal={false} />
+              <XAxis
+                type="number"
+                allowDecimals={false}
+                tick={{ fontSize: 12, fill: chrome.tick }}
+                tickLine={false}
+                axisLine={{ stroke: chrome.axisLine }}
+              />
+              <YAxis
+                type="category"
+                dataKey="nome"
+                width={140}
+                tick={{ fontSize: 12, fill: chrome.tooltipText }}
+                tickLine={false}
+                axisLine={false}
+                interval={0}
+              />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: 12,
+                  borderColor: chrome.tooltipBorder,
+                  backgroundColor: chrome.tooltipBg,
+                  color: chrome.tooltipText,
+                  fontSize: 13,
+                }}
+              />
+              <Legend
+                verticalAlign="top"
+                align="right"
+                height={32}
+                wrapperStyle={{ fontSize: 12, color: chrome.legend }}
+              />
+              <Bar dataKey="periodo" name="Total no período" fill={COLOR_PERIODO} radius={[0, 4, 4, 0]} maxBarSize={16} />
+              <Bar dataKey="hoje" name="Hoje" fill={colorHoje} radius={[0, 4, 4, 0]} maxBarSize={16} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   )

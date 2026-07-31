@@ -2,39 +2,79 @@ import { Avatar } from '@/components/ui/avatar'
 import { Icon } from '@/components/ui/icons'
 import type { GestoresPanelRow } from '@/lib/dashboard/fetch-gestores-panel'
 
-// Ouro/prata/bronze nos hex exatos do handoff de redesign (2026-07-29): gold
-// #e8a721, silver #b9bfce, bronze #e08a44 — cada um com um degradê sutil (tom
-// mais claro em cima) derivado desse hex, não os amber/slate/orange padrão do
-// Tailwind (slate em particular foi remapeado pro sistema de tokens do handoff,
-// então usar a paleta slate aqui pro "prata" ia herdar a cor errada).
-const PLACE = [
-  {
-    order: 'sm:order-2',
-    riser: 'h-[140px] sm:h-[190px] bg-gradient-to-b from-[#f0bb4d] to-[#e8a721] dark:from-[#e8a721] dark:to-[#c98f18]',
-    ring: 'ring-[#f3d78f] dark:ring-[#e8a721]/50',
-    badge: 'bg-[#e8a721] text-[#4a3405]',
-    nameSize: 'text-base',
-    valueSize: 'text-3xl',
-  },
-  {
-    order: 'sm:order-1',
-    riser: 'h-[100px] sm:h-[130px] bg-gradient-to-b from-[#cdd2dc] to-[#b9bfce] dark:from-[#b9bfce] dark:to-[#9aa0ac]',
-    ring: 'ring-[#dde1e8] dark:ring-[#b9bfce]/50',
-    badge: 'bg-[#b9bfce] text-[#2a2d38]',
-    nameSize: 'text-sm',
-    valueSize: 'text-2xl',
-  },
-  {
-    order: 'sm:order-3',
-    riser: 'h-[78px] sm:h-[100px] bg-gradient-to-b from-[#e79f66] to-[#e08a44] dark:from-[#e08a44] dark:to-[#c06f30]',
-    ring: 'ring-[#f0c19f] dark:ring-[#e08a44]/50',
-    badge: 'bg-[#e08a44] text-[#432405]',
-    nameSize: 'text-sm',
-    valueSize: 'text-2xl',
-  },
+// Geometria do pódio (ordem visual, altura do degrau, tamanho de texto) — igual
+// pras 3 métricas, só a posição (1º/2º/3º) muda isso. Cor não mora mais aqui:
+// ver PLACE_COLORS abaixo, que agora varia por métrica em vez do ouro/prata/
+// bronze fixo que as 3 barras compartilhavam antes (elas ficavam idênticas de
+// um card pro outro, só o texto do título diferenciava).
+const PLACE_LAYOUT = [
+  { order: 'sm:order-2', height: 'h-[140px] sm:h-[190px]', nameSize: 'text-base', valueSize: 'text-3xl' },
+  { order: 'sm:order-1', height: 'h-[100px] sm:h-[130px]', nameSize: 'text-sm', valueSize: 'text-2xl' },
+  { order: 'sm:order-3', height: 'h-[78px] sm:h-[100px]', nameSize: 'text-sm', valueSize: 'text-2xl' },
 ]
 
 export type PodiumMetricKey = 'totalContatos' | 'totalConversoes' | 'totalScansPeriodo'
+
+type PlaceColor = { riser: string; ring: string; badge: string }
+
+// 3 tons de degrau por métrica (mais saturado no 1º lugar, mais claro no 3º) —
+// mesma cor de marca do ícone/borda do card (ver METRICS), então a barra reforça
+// a identidade da métrica em vez de repetir o ouro/prata/bronze genérico nos 3
+// cards. Ícone de troféu no 1º lugar vira branco (ver `text-white/90` abaixo)
+// porque o fundo aqui é bem mais saturado que o dourado original.
+const PLACE_COLORS: Record<PodiumMetricKey, PlaceColor[]> = {
+  totalContatos: [
+    {
+      riser: 'bg-gradient-to-b from-brand-400 to-brand-600 dark:from-brand-500 dark:to-brand-700',
+      ring: 'ring-brand-200 dark:ring-brand-500/50',
+      badge: '',
+    },
+    {
+      riser: 'bg-gradient-to-b from-brand-300 to-brand-400 dark:from-brand-400 dark:to-brand-500',
+      ring: 'ring-brand-100 dark:ring-brand-400/40',
+      badge: 'bg-brand-400 text-white dark:bg-brand-400',
+    },
+    {
+      riser: 'bg-gradient-to-b from-brand-200 to-brand-300 dark:from-brand-300 dark:to-brand-400',
+      ring: 'ring-brand-100 dark:ring-brand-300/40',
+      badge: 'bg-brand-200 text-brand-900 dark:bg-brand-300 dark:text-brand-950',
+    },
+  ],
+  totalConversoes: [
+    {
+      riser: 'bg-gradient-to-b from-accent-400 to-accent-600 dark:from-accent-500 dark:to-accent-700',
+      ring: 'ring-accent-200 dark:ring-accent-500/50',
+      badge: '',
+    },
+    {
+      riser: 'bg-gradient-to-b from-accent-300 to-accent-400 dark:from-accent-400 dark:to-accent-500',
+      ring: 'ring-accent-100 dark:ring-accent-400/40',
+      badge: 'bg-accent-400 text-white dark:bg-accent-400',
+    },
+    {
+      riser: 'bg-gradient-to-b from-accent-200 to-accent-300 dark:from-accent-300 dark:to-accent-400',
+      ring: 'ring-accent-100 dark:ring-accent-300/40',
+      badge: 'bg-accent-200 text-accent-900 dark:bg-accent-300 dark:text-accent-950',
+    },
+  ],
+  totalScansPeriodo: [
+    {
+      riser: 'bg-gradient-to-b from-violet-400 to-violet-600 dark:from-violet-500 dark:to-violet-700',
+      ring: 'ring-violet-200 dark:ring-violet-500/50',
+      badge: '',
+    },
+    {
+      riser: 'bg-gradient-to-b from-violet-300 to-violet-400 dark:from-violet-400 dark:to-violet-500',
+      ring: 'ring-violet-100 dark:ring-violet-400/40',
+      badge: 'bg-violet-400 text-white dark:bg-violet-400',
+    },
+    {
+      riser: 'bg-gradient-to-b from-violet-200 to-violet-300 dark:from-violet-300 dark:to-violet-400',
+      ring: 'ring-violet-100 dark:ring-violet-300/40',
+      badge: 'bg-violet-200 text-violet-900 dark:bg-violet-300 dark:text-violet-950',
+    },
+  ],
+}
 
 // Cada métrica reaproveita uma cor já associada a ela em outro lugar do
 // dashboard (violeta pro card "Scans no período", laranja de marca pra
@@ -78,6 +118,7 @@ const METRICS: Record<
 // ordenação padrão do servidor.
 export function GestoresPodium({ rows, metricKey }: { rows: GestoresPanelRow[]; metricKey: PodiumMetricKey }) {
   const metric = METRICS[metricKey]
+  const colors = PLACE_COLORS[metricKey]
   const sorted = [...rows].sort((a, b) => b[metricKey] - a[metricKey])
   const top3 = sorted.slice(0, 3)
   const rest = sorted.slice(3)
@@ -96,16 +137,17 @@ export function GestoresPodium({ rows, metricKey }: { rows: GestoresPanelRow[]; 
       </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-center sm:gap-4">
         {top3.map((row, i) => {
-          const style = PLACE[i]
+          const layout = PLACE_LAYOUT[i]
+          const color = colors[i]
           return (
-            <div key={row.academiaId} className={`flex flex-1 flex-col items-center sm:max-w-[220px] ${style.order}`}>
+            <div key={row.academiaId} className={`flex flex-1 flex-col items-center sm:max-w-[220px] ${layout.order}`}>
               <div className="flex items-center gap-3 sm:flex-col sm:gap-1.5 sm:text-center">
-                <span className={`ring-2 rounded-full ${style.ring}`}>
+                <span className={`ring-2 rounded-full ${color.ring}`}>
                   <Avatar name={row.nome} />
                 </span>
                 <div className="sm:mt-1">
-                  <p className={`font-semibold text-slate-900 dark:text-white ${style.nameSize}`}>{row.nome}</p>
-                  <p className={`font-bold tabular-nums tracking-tight text-slate-900 dark:text-white ${style.valueSize}`}>
+                  <p className={`font-semibold text-slate-900 dark:text-white ${layout.nameSize}`}>{row.nome}</p>
+                  <p className={`font-bold tabular-nums tracking-tight text-slate-900 dark:text-white ${layout.valueSize}`}>
                     {row[metricKey].toLocaleString('pt-BR')}
                     <span className="ml-1 text-xs font-medium text-slate-400 dark:text-slate-500">
                       {metric.unitLabel}
@@ -115,12 +157,12 @@ export function GestoresPodium({ rows, metricKey }: { rows: GestoresPanelRow[]; 
               </div>
 
               <div
-                className={`mt-3 flex w-full items-start justify-center rounded-t-xl pt-2 shadow-inner sm:mt-4 ${style.riser}`}
+                className={`mt-3 flex w-full items-start justify-center rounded-t-xl pt-2 shadow-inner sm:mt-4 ${layout.height} ${color.riser}`}
               >
                 {i === 0 ? (
-                  <Icon name="trophy" className="h-6 w-6 text-amber-950/70" />
+                  <Icon name="trophy" className="h-6 w-6 text-white/90" />
                 ) : (
-                  <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${style.badge}`}>
+                  <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${color.badge}`}>
                     {i + 1}
                   </span>
                 )}
