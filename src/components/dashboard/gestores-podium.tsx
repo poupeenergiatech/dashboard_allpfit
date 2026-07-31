@@ -36,10 +36,36 @@ const PLACE = [
 
 export type PodiumMetricKey = 'totalContatos' | 'totalConversoes' | 'totalScansPeriodo'
 
-const METRICS: Record<PodiumMetricKey, { title: string; unitLabel: string }> = {
-  totalContatos: { title: 'Pódio de contatos', unitLabel: 'contatos' },
-  totalConversoes: { title: 'Pódio de conversões', unitLabel: 'conversões' },
-  totalScansPeriodo: { title: 'Pódio de scans de QR code', unitLabel: 'scans' },
+// Cada métrica reaproveita uma cor já associada a ela em outro lugar do
+// dashboard (violeta pro card "Scans no período", laranja de marca pra
+// conversões — "resultado final" do funil, ver funnel-card.tsx) pra dar um
+// diferencial rápido entre os 3 cards, que de resto têm o mesmo layout e eram
+// fáceis de confundir à primeira vista.
+const METRICS: Record<
+  PodiumMetricKey,
+  { title: string; unitLabel: string; icon: 'chat' | 'trophy' | 'qr'; badge: string; topBorder: string }
+> = {
+  totalContatos: {
+    title: 'Pódio de contatos',
+    unitLabel: 'contatos',
+    icon: 'chat',
+    badge: 'bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-300',
+    topBorder: 'border-t-brand-400 dark:border-t-brand-500/70',
+  },
+  totalConversoes: {
+    title: 'Pódio de conversões',
+    unitLabel: 'conversões',
+    icon: 'trophy',
+    badge: 'bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-400',
+    topBorder: 'border-t-accent-400 dark:border-t-accent-500/70',
+  },
+  totalScansPeriodo: {
+    title: 'Pódio de scans de QR code',
+    unitLabel: 'scans',
+    icon: 'qr',
+    badge: 'bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400',
+    topBorder: 'border-t-violet-400 dark:border-t-violet-500/70',
+  },
 }
 
 // Pódio das 3 academias líderes numa métrica, com o ranking das demais logo
@@ -61,8 +87,13 @@ export function GestoresPodium({ rows, metricKey }: { rows: GestoresPanelRow[]; 
   }
 
   return (
-    <div className="card flex flex-col p-5 sm:p-6">
-      <p className="panel-title mb-6">{metric.title}</p>
+    <div className={`card flex flex-col border-t-4 p-5 sm:p-6 ${metric.topBorder}`}>
+      <div className="mb-6 flex items-center gap-2.5">
+        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${metric.badge}`}>
+          <Icon name={metric.icon} className="h-4 w-4" />
+        </span>
+        <p className="panel-title">{metric.title}</p>
+      </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-center sm:gap-4">
         {top3.map((row, i) => {
           const style = PLACE[i]
