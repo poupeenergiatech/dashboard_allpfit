@@ -23,6 +23,8 @@ export type IconName =
   | 'x-circle'
   | 'id-card'
   | 'shield'
+  | 'money'
+  | 'play'
 
 const PATHS: Record<IconName, React.ReactNode> = {
   chart: (
@@ -133,6 +135,20 @@ const PATHS: Record<IconName, React.ReactNode> = {
       strokeLinecap="round"
       strokeLinejoin="round"
       d="M12 3l7 3v5c0 4.5-3 8.25-7 9.5-4-1.25-7-5-7-9.5V6l7-3zm-3 9.5l2 2 4-4.5"
+    />
+  ),
+  money: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M4 7h16a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1zM9.5 12a2.5 2.5 0 115 0 2.5 2.5 0 01-5 0zM6.5 9.5v.01M6.5 14.5v.01M17.5 9.5v.01M17.5 14.5v.01"
+    />
+  ),
+  play: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM10 9l5 3-5 3V9z"
     />
   ),
 }

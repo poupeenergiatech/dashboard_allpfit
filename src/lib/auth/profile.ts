@@ -94,6 +94,20 @@ export function canAccessPainelGestores(role: UserRole): boolean {
   return role === 'super_admin' || role === 'gestor' || role === 'coordenador'
 }
 
+// Financeiro: mesmo escopo do Dashboard (canAccessPainelGestores) — dado sensível,
+// mas ainda de interesse de quem responde pela performance de uma unidade, não só
+// de quem administra o sistema. visualizador fica de fora.
+export function canAccessFinanceiro(role: UserRole): boolean {
+  return role === 'super_admin' || role === 'gestor' || role === 'coordenador'
+}
+
+// Anexar/remover PDF de nota fiscal no calendário de /financeiro — mais restrito que
+// canAccessFinanceiro (que também libera coordenador, só leitura): igual ao padrão de
+// canManageManualData/canManageTraining, só super_admin e gestor.
+export function canManageNotasFiscais(role: UserRole): boolean {
+  return role === 'super_admin' || role === 'gestor'
+}
+
 // Sem RLS, essa é a barreira real de escopo por academia — antes o Postgres do
 // Supabase filtrava/rejeitava sozinho qualquer linha fora da academia do usuário; agora
 // cada leitura/escrita que recebe um academiaId de fora (form, query param, argumento de

@@ -25,6 +25,7 @@ export const NAV_ITEMS: NavItem[] = [
     group: 'PRINCIPAL',
   },
   { label: 'Performance por Academia', href: '/performance', icon: 'bars', group: 'PRINCIPAL' },
+  { label: 'Webinar', href: '/webinar', icon: 'play', group: 'PRINCIPAL' },
   { label: 'Scans QR', href: '/scans', icon: 'qr', group: 'OPERAÇÃO' },
   {
     label: 'Clientes Convertidos',
@@ -46,6 +47,13 @@ export const NAV_ITEMS: NavItem[] = [
     href: '/clientes-alle',
     icon: 'id-card',
     hint: 'Cadastro de quem já é (ou foi) cliente Alle — ativo, pendente, reprovado etc. Alimenta o funil de conversão.',
+    group: 'GESTÃO',
+  },
+  {
+    label: 'Financeiro',
+    href: '/financeiro',
+    roles: ['super_admin', 'gestor', 'coordenador'],
+    icon: 'money',
     group: 'GESTÃO',
   },
   { label: 'Academias Treinadas', href: '/treinadas', icon: 'badge', group: 'GESTÃO' },
