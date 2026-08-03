@@ -45,9 +45,7 @@ export async function fetchFunnelCounts(
     { rows: manualRows },
     { rows: contatosPorDia },
     { rows: conversoesPorDia },
-    {
-      rows: [{ total: clientesAlleCount, exclusivo: clientesAlleExclusivoCount }],
-    },
+    { rows: clientesAlleRows },
     {
       rows: [{ count: reprovadosIndividuaisCount }],
     },
@@ -94,29 +92,28 @@ export async function fetchFunnelCounts(
        group by academia_id, day`,
         [from, academiaId, toExclusive]
       ),
-      // `total` é o headcount real de ATIVOS (totalClientesAlle, último estágio do
-      // funil — quem não assinou o termo ainda não entra aqui). `exclusivo` é
-      // outra coisa: quem converteu por fora do Ane com um dos status habilitados
-      // em /configuracoes (ver fetchConversaoStatusesIncluidos — ativo/pendente/
-      // reprovado sempre contam, sem_informacao/com_impedimentos/falta_documentos
-      // só se ligado) e ainda não tem uma linha em conversions apontando pra cá
-      // (cliente_alle_id, criada ao marcar o termo de adesão em /convertidos via
-      // definirStatusClienteConvertido). Só `exclusivo` entra em
-      // totalConversoesManual (ver abaixo) — somar `total` ali contava essa
-      // pessoa duas vezes (uma em totalConversoesAne, outra aqui).
-      pool.query<{ total: number; exclusivo: number }>(
-        `select count(*) filter (where ca.status = 'ativo') as total,
-                count(*) filter (
-                  where ca.status = any($2::text[])
-                    and not exists (select 1 from conversions c2 where c2.cliente_alle_id = ca.id)
-                ) as exclusivo
+      // Linha a linha (não agregado) porque cada uma alimenta dois números
+      // diferentes por dia: status = 'ativo' conta pro headcount de Clientes
+      // Alle ativos (totalClientesAlle), e sem_link_ane (sem conversão Ane
+      // vinculada) com um status habilitado em /configuracoes conta como
+      // conversão manual (totalConversoesManual). created_at é cadastro/
+      // importação, não a data real da conversão (ver migration 0014), mas
+      // filtramos por ele mesmo assim — sem isso, os dois números ficavam
+      // sempre iguais ao total histórico, ignorando o período escolhido no
+      // filtro (bug: card mostrava o total geral mesmo num dia sem nenhuma
+      // conversão nova).
+      pool.query<{ status: string; day: string; sem_link_ane: boolean }>(
+        `select ca.status,
+                date_trunc('day', ca.created_at)::date as day,
+                not exists (select 1 from conversions c2 where c2.cliente_alle_id = ca.id) as sem_link_ane
          from clientes_alle ca
-         where ($1::uuid is null or ca.academia_id = $1)`,
-        [academiaId, statusesConversao]
+         where ($1::uuid is null or ca.academia_id = $1)
+           and ca.created_at >= $2 and ca.created_at < $3`,
+        [academiaId, from, toExclusive]
       ),
       // Reprovado/cancelado individualmente (Reprovar em /clientes-alle ou
-      // /convertidos) — soma direta no total, sem filtro de data, mesmo ajuste que
-      // clientesAlleCount acima (ver totalConversoesManual mais abaixo).
+      // /convertidos) — soma direta no total, sem filtro de data (diferente da
+      // query de clientesAlleRows acima, que passou a filtrar por período).
       pool.query<{ count: number }>(
         `select
            (select count(*) from clientes_alle where status = 'reprovado' and ($1::uuid is null or academia_id = $1))
@@ -163,8 +160,8 @@ export async function fetchFunnelCounts(
   }
 
   // Reprovado/cancelado individualmente (clientes_alle.status ou conversions.status)
-  // não tem data própria pra entrar no lançamento por dia — soma só no total, mesmo
-  // ajuste de totalConversoesManual/clientesAlleCount abaixo.
+  // continua sem filtro de período (ver query acima) — soma só no total, sem entrar
+  // no lançamento por dia.
   totalReprovados += reprovadosIndividuaisCount
 
   // Contatos: por padrão é a contagem automática (contacts, por academia+dia); quando
@@ -196,19 +193,24 @@ export async function fetchFunnelCounts(
     conversoesAnePorDia.set(row.day, (conversoesAnePorDia.get(row.day) ?? 0) + row.count)
   }
 
-  // clientesAlleExclusivoCount entra aqui: cliente Alle ativo cadastrado fora do
-  // lançamento diário (individual ou CSV em /clientes-alle) também é conversão
-  // manual — só que sem data por linha (created_at é quando foi cadastrado no
-  // sistema, não quando converteu), por isso soma direto no total em vez de
-  // entrar no lançamento por dia (conversoesManualPorDia/series) como o resto do
-  // stream aditivo acima. É o count "exclusivo" (não `clientesAlleCount` cheio)
-  // porque quem já tem conversão Ane vinculada (definirStatusClienteConvertido)
-  // já está contado em totalConversoesAne — somar o total cheio aqui contaria
-  // essa pessoa duas vezes. totalClientesAlle (último estágio do funil, headcount
-  // de verdade) continua usando o total cheio.
-  totalConversoesManual += clientesAlleExclusivoCount
+  // Cliente Alle cadastrado fora do lançamento diário (individual ou CSV em
+  // /clientes-alle) também é conversão manual — entra no mesmo dia (created_at)
+  // e no mesmo total que o resto do stream aditivo acima, pra bater com o
+  // período escolhido no filtro (antes somava direto no total sem olhar pra
+  // data, então um dia sem lançamento nenhum mostrava o total histórico
+  // inteiro). "sem_link_ane" é o critério de exclusividade: quem já tem
+  // conversão Ane vinculada (definirStatusClienteConvertido) já está contado em
+  // totalConversoesAne — somar de novo aqui contaria essa pessoa duas vezes.
+  let totalClientesAlle = 0
+  for (const row of clientesAlleRows) {
+    if (row.status === 'ativo') totalClientesAlle++
+
+    if (row.sem_link_ane && statusesConversao.includes(row.status)) {
+      totalConversoesManual++
+      conversoesManualPorDia.set(row.day, (conversoesManualPorDia.get(row.day) ?? 0) + 1)
+    }
+  }
   const totalConversoes = totalConversoesAne + totalConversoesManual
-  const totalClientesAlle = clientesAlleCount
 
   // totalAlunos não varia por dia (é o total cadastrado agora, não um lançamento
   // histórico) — repete o mesmo valor em cada ponto da série.
