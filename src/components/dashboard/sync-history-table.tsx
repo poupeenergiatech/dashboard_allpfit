@@ -120,10 +120,22 @@ export function SyncHistoryTable({ entries }: { entries: SyncLogEntry[] }) {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    {entry.status === 'sucesso' ? (
-                      <span className="badge bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">Sucesso</span>
-                    ) : (
+                    {entry.status === 'erro' ? (
                       <span className="badge bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400">Erro</span>
+                    ) : entry.totalConvertidos === 0 ? (
+                      // "Sucesso" com 0 convertidos na tabela inteira do Supabase é raro ser
+                      // legítimo — o caso comum é RLS ligado na origem sem policy de leitura
+                      // pra role anon (a mesma chave que este client usa), que devolve lista
+                      // vazia em vez de erro (ver src/lib/supabase/readonly.ts). Sem esse
+                      // destaque, essa falha ficava indistinguível de um sync normal.
+                      <span
+                        className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                        title="Sincronizou sem erro, mas achou 0 convertidos na tabela inteira do Supabase. Suspeito de RLS bloqueando a leitura pra role anon — confira as policies de alle_documentos_clientes no Supabase."
+                      >
+                        Sucesso (0 resultados)
+                      </span>
+                    ) : (
+                      <span className="badge bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">Sucesso</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">

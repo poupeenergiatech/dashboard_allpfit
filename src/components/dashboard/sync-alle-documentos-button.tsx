@@ -66,6 +66,21 @@ export function SyncAlleDocumentosButton({
             antes.
           </p>
 
+          {result.totalConvertidos === 0 && (
+            <p className="mt-2 text-amber-700 dark:text-amber-400">
+              <span className="font-semibold">0 convertidos encontrados</span> na tabela inteira do Supabase — raro
+              ser legítimo. Motivo mais comum: RLS ligado em{' '}
+              <code className="rounded bg-white/70 dark:bg-slate-900/70 px-1 py-0.5">alle_documentos_clientes</code>{' '}
+              sem policy de leitura pra role{' '}
+              <code className="rounded bg-white/70 dark:bg-slate-900/70 px-1 py-0.5">anon</code> (a mesma chave que
+              este dashboard usa) — RLS sem policy devolve lista vazia, não erro. Confira no SQL Editor do Supabase:{' '}
+              <code className="rounded bg-white/70 dark:bg-slate-900/70 px-1 py-0.5">
+                select * from pg_policies where tablename = &apos;alle_documentos_clientes&apos;
+              </code>
+              .
+            </p>
+          )}
+
           {result.semUnidade > 0 && (
             <p className="mt-2 text-amber-700 dark:text-amber-400">
               <span className="font-semibold">{result.semUnidade}</span> convertido(s) com unidade em branco no Alle
