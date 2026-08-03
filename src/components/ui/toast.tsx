@@ -27,7 +27,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+      {/* bottom-24 (não bottom-4): dá espaço pro botão flutuante de suporte no
+          WhatsApp (WhatsappSupportButton, mesmo canto) sem sobrepor as duas coisas. */}
+      <div className="pointer-events-none fixed bottom-24 right-4 z-50 flex flex-col gap-2">
         {toasts.map((t) => (
           <div
             key={t.id}

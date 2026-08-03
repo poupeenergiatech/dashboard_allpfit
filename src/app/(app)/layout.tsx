@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { MobileNavProvider } from '@/components/layout/nav-context'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Topbar } from '@/components/layout/topbar'
+import { WhatsappSupportButton } from '@/components/layout/whatsapp-support-button'
 import { ToastProvider } from '@/components/ui/toast'
 import { getSessionUserId } from '@/lib/auth/session'
 import { getCurrentUserProfile } from '@/lib/auth/profile'
@@ -31,6 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             </main>
           </div>
         </div>
+        <WhatsappSupportButton />
       </MobileNavProvider>
     </ToastProvider>
   )
