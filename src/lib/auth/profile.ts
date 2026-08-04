@@ -135,10 +135,11 @@ export function canManageNotasFiscais(role: UserRole): boolean {
   return role === 'super_admin' || role === 'direcao' || role === 'gestor'
 }
 
-// Cadastrar/remover link de webinar em /webinar — Super Admin e Direção (pedido
-// explícito; Gestor fica de fora, mesmo padrão de canManageNotasFiscais não se
-// aplica aqui). Leitura da lista continua aberta a qualquer role autenticada.
-export function canManageWebinars(role: UserRole): boolean {
+// Cadastrar/remover material (aula, vídeo, marketing, treinamento, instrução) em
+// /central-marketing — Super Admin e Direção (pedido explícito; Gestor fica de
+// fora, mesmo padrão de canManageNotasFiscais não se aplica aqui). Leitura da
+// lista continua aberta a qualquer role autenticada.
+export function canManageMateriaisMarketing(role: UserRole): boolean {
   return role === 'super_admin' || role === 'direcao'
 }
 

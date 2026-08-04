@@ -25,7 +25,7 @@ export const NAV_ITEMS: NavItem[] = [
     group: 'PRINCIPAL',
   },
   { label: 'Performance por Academia', href: '/performance', icon: 'bars', group: 'PRINCIPAL' },
-  { label: 'Webinar', href: '/webinar', icon: 'play', group: 'PRINCIPAL' },
+  { label: 'Central de Marketing', href: '/central-marketing', icon: 'file', group: 'PRINCIPAL' },
   { label: 'Scans QR', href: '/scans', icon: 'qr', group: 'OPERAÇÃO' },
   {
     label: 'Clientes Convertidos',

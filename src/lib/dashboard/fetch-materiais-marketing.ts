@@ -2,7 +2,7 @@
 
 import { pool } from '@/lib/db/pool'
 
-export type WebinarEntry = {
+export type MaterialEntry = {
   id: string
   titulo: string
   url: string
@@ -11,10 +11,10 @@ export type WebinarEntry = {
   createdAt: string
 }
 
-// Sem escopo por academia/role — webinar é conteúdo geral, visível pra qualquer
-// usuário autenticado (só o cadastro em /webinar fica restrito, ver
-// canManageWebinars em src/lib/auth/profile.ts).
-export async function fetchWebinars(): Promise<WebinarEntry[]> {
+// Sem escopo por academia/role — material de marketing é conteúdo geral, visível
+// pra qualquer usuário autenticado (só o cadastro em /central-marketing fica
+// restrito, ver canManageMateriaisMarketing em src/lib/auth/profile.ts).
+export async function fetchMateriais(): Promise<MaterialEntry[]> {
   const { rows } = await pool.query<{
     id: string
     titulo: string
@@ -23,10 +23,10 @@ export async function fetchWebinars(): Promise<WebinarEntry[]> {
     created_by_email: string | null
     created_at: string
   }>(
-    `select w.id, w.titulo, w.url, w.descricao, u.email as created_by_email, w.created_at
-     from webinars w
-     left join users u on u.id = w.created_by
-     order by w.created_at desc`
+    `select m.id, m.titulo, m.url, m.descricao, u.email as created_by_email, m.created_at
+     from materiais_marketing m
+     left join users u on u.id = m.created_by
+     order by m.created_at desc`
   )
 
   return rows.map((row) => ({

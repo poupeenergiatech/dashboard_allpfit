@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { pool } from '@/lib/db/pool'
-import { canManageWebinars, getCurrentUserProfile } from '@/lib/auth/profile'
+import { canManageMateriaisMarketing, getCurrentUserProfile } from '@/lib/auth/profile'
 
 function normalizeUrl(value: string): string {
   const trimmed = value.trim()
@@ -12,10 +12,10 @@ function normalizeUrl(value: string): string {
   return trimmed
 }
 
-export async function createWebinar(formData: FormData) {
+export async function createMaterial(formData: FormData) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageWebinars(profile.role)) {
-    throw new Error('Sem permissão para cadastrar webinars.')
+  if (!profile || !canManageMateriaisMarketing(profile.role)) {
+    throw new Error('Sem permissão para cadastrar materiais.')
   }
 
   const titulo = String(formData.get('titulo') ?? '').trim()
@@ -33,21 +33,21 @@ export async function createWebinar(formData: FormData) {
   }
 
   await pool.query(
-    `insert into webinars (titulo, url, descricao, created_by) values ($1, $2, $3, $4)`,
+    `insert into materiais_marketing (titulo, url, descricao, created_by) values ($1, $2, $3, $4)`,
     [titulo, url, descricao || null, profile.userId]
   )
 
-  revalidatePath('/webinar')
+  revalidatePath('/central-marketing')
 }
 
-export async function deleteWebinar(id: string) {
+export async function deleteMaterial(id: string) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageWebinars(profile.role)) {
-    throw new Error('Sem permissão para excluir webinars.')
+  if (!profile || !canManageMateriaisMarketing(profile.role)) {
+    throw new Error('Sem permissão para excluir materiais.')
   }
 
-  const { rowCount } = await pool.query('delete from webinars where id = $1', [id])
-  if (rowCount === 0) throw new Error('Webinar não encontrado.')
+  const { rowCount } = await pool.query('delete from materiais_marketing where id = $1', [id])
+  if (rowCount === 0) throw new Error('Material não encontrado.')
 
-  revalidatePath('/webinar')
+  revalidatePath('/central-marketing')
 }

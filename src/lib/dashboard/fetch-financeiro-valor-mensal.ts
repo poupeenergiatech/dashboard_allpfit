@@ -41,30 +41,47 @@ async function recalcularMes(profile: UserProfile, ano: number, mes: number): Pr
   )
 }
 
-// Últimos `meses` (padrão 12, incluindo o atual), do mais antigo pro mais recente.
-function ultimosMeses(quantidade: number): { ano: number; mes: number }[] {
+// Início da série histórica: antes de julho/2026 os dados de conversão por
+// academia+mês eram inconsistentes (valores "estranhos" reportados em produção
+// remetendo a set/2025), então em vez de uma janela rolante de N meses pra trás,
+// a série sempre começa nessa âncora fixa e cresce mês a mês a partir dela — mês
+// atual em diante, nunca antes.
+const ANO_INICIO_HISTORICO = 2026
+const MES_INICIO_HISTORICO = 7
+
+// Da âncora (ano/mês acima) até o mês corrente, inclusive nas duas pontas, mais
+// antigo primeiro.
+function mesesDesdeAncora(): { ano: number; mes: number }[] {
   const now = new Date()
-  return Array.from({ length: quantidade }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (quantidade - 1 - i), 1)
-    return { ano: d.getFullYear(), mes: d.getMonth() + 1 }
-  })
+  const anoAtual = now.getFullYear()
+  const mesAtual = now.getMonth() + 1
+
+  const meses: { ano: number; mes: number }[] = []
+  let ano = ANO_INICIO_HISTORICO
+  let mes = MES_INICIO_HISTORICO
+  while (ano < anoAtual || (ano === anoAtual && mes <= mesAtual)) {
+    meses.push({ ano, mes })
+    mes++
+    if (mes > 12) {
+      mes = 1
+      ano++
+    }
+  }
+  return meses
 }
 
-// Recalcula os últimos `meses` meses (em paralelo — cada mês é independente) e
-// devolve o histórico já atualizado, mais antigo primeiro, agrupável por academia ou
-// por competência no componente que consome. Chamado a cada carregamento de
-// /financeiro: sem isso o histórico nunca apareceria na primeira visita (tabela
-// nasce vazia) nem refletiria uma correção feita depois numa conversão de um mês já
-// fechado.
-export async function fetchHistoricoValorMensal(
-  profile: UserProfile,
-  meses = 12
-): Promise<ValorMensalUnidade[]> {
-  const targets = ultimosMeses(meses)
+// Recalcula todo mês desde a âncora até o corrente (em paralelo — cada mês é
+// independente) e devolve o histórico já atualizado, mais antigo primeiro,
+// agrupável por academia ou por competência no componente que consome. Chamado a
+// cada carregamento de /financeiro: sem isso o histórico nunca apareceria na
+// primeira visita (tabela nasce vazia) nem refletiria uma correção feita depois
+// numa conversão de um mês já fechado.
+export async function fetchHistoricoValorMensal(profile: UserProfile): Promise<ValorMensalUnidade[]> {
+  const targets = mesesDesdeAncora()
   await Promise.all(targets.map(({ ano, mes }) => recalcularMes(profile, ano, mes)))
 
   const scopedAcademiaId = scopeAcademiaId(profile, null)
-  const competenciaMinima = targets[0].ano * 100 + targets[0].mes
+  const competenciaMinima = ANO_INICIO_HISTORICO * 100 + MES_INICIO_HISTORICO
 
   const { rows } = await pool.query<{
     academia_id: string
