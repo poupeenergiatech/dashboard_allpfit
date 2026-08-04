@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { pool } from '@/lib/db/pool'
-import { canManagePendencias, canManageUsers, getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
+import { canManageConfiguracoes, canManagePendencias, getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
 
 export async function savePendenciaAssinatura(formData: FormData) {
   const profile = await getCurrentUserProfile()
@@ -51,7 +51,7 @@ export type ResetPendenciasResult = {
 // as academias, restrita a Super Admin.
 export async function resetPendencias(): Promise<ResetPendenciasResult> {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
+  if (!profile || !canManageConfiguracoes(profile.role)) {
     throw new Error('Apenas Super Admin pode resetar pendências.')
   }
 

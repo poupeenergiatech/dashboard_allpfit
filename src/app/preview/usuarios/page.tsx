@@ -8,13 +8,14 @@ export default function PreviewUsuariosPage() {
     <div className="space-y-6">
       <div>
         <h2 className="page-title">Usuários</h2>
-        <p className="page-subtitle">Gestão de acesso — restrito a Super Admin.</p>
+        <p className="page-subtitle">Gestão de acesso — restrito a Super Admin e Direção.</p>
       </div>
 
       <UsersTable
         users={MOCK_USERS}
         academias={MOCK_ACADEMIAS}
         currentUserId={MOCK_USERS[0].id}
+        currentUserRole="super_admin"
         onResetPassword={mockResetPassword}
         onUpdate={mockSave}
         onDelete={mockConfirm}
@@ -22,7 +23,7 @@ export default function PreviewUsuariosPage() {
 
       <div>
         <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Criar usuário</h3>
-        <InviteUserForm academias={MOCK_ACADEMIAS} onCreate={mockInvite} />
+        <InviteUserForm academias={MOCK_ACADEMIAS} currentUserRole="super_admin" onCreate={mockInvite} />
       </div>
     </div>
   )

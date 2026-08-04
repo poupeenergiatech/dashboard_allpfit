@@ -7,8 +7,7 @@ import { parseCsv } from '@/lib/dashboard/csv'
 import { buildAcademiaNomeResolver } from '@/lib/dashboard/resolve-academia-by-nome'
 import type { ClienteAlleStatus } from '@/lib/dashboard/fetch-clientes-alle'
 
-// Diferente de manual_data (performance/actions.ts, super_admin/gestor):
-// clientes_alle fica restrito a Super Admin — gestor, coordenador e
+// clientes_alle fica restrito a Super Admin e Direção — gestor, coordenador e
 // visualizador só enxergam a tabela (leitura), sem editar/reprovar/excluir/
 // selecionar em massa nem cadastrar/importar (ver canManageUsers).
 function resolveAcademiaId(profile: UserProfile | null, requestedAcademiaId: string) {
@@ -157,9 +156,9 @@ export type ImportClientesAlleResult = {
 // duplicar, e nome novo vira registro novo. O nome da unidade no CSV passa pelo mesmo
 // resolvedor tolerante a acento/hífen/alias do sync do Alle Documentos e do webhook do
 // agregador (buildAcademiaNomeResolver) — é texto livre de fora, não bate sempre igual ao
-// cadastro. scopedAcademiaId é sempre null aqui (canManageUsers = só super_admin, que
-// sempre enxerga todas as academias) — o filtro abaixo fica só como rede de segurança
-// caso essa permissão volte a incluir uma role escopada no futuro.
+// cadastro. scopedAcademiaId é sempre null aqui (canManageUsers = super_admin/direção,
+// que sempre enxergam todas as academias) — o filtro abaixo fica só como rede de
+// segurança caso essa permissão volte a incluir uma role escopada no futuro.
 //
 // Linha com telefone que já apareceu numa conversão da Ane (conversions, vindo do
 // Supabase/Alle Documentos) não entra — essa pessoa já está contada como convertida
@@ -275,9 +274,9 @@ export async function importClientesAlleCsv(formData: FormData): Promise<ImportC
 }
 
 // Ações em massa (seleção múltipla na tabela) — mesmo guard das ações individuais
-// acima. Sem checagem de escopo por academia: canManageUsers já é restrito a
-// super_admin, que sempre enxerga todas as academias (seesAllAcademias), então
-// não existe cliente "de outra unidade" fora do alcance.
+// acima. Sem checagem de escopo por academia: canManageUsers é super_admin/direção,
+// que sempre enxergam todas as academias (seesAllAcademias), então não existe
+// cliente "de outra unidade" fora do alcance.
 export async function bulkUpdateClientesAlleStatus(clienteIds: string[], status: ClienteAlleStatus) {
   const profile = await getCurrentUserProfile()
   if (!profile || !canManageUsers(profile.role)) {

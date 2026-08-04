@@ -11,7 +11,7 @@ export default async function AcademiasPage() {
   if (!profile || !canManageUsers(profile.role)) {
     return (
       <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 p-6 text-sm font-medium text-amber-800 dark:text-amber-300">
-        Acesso restrito ao Super Admin.
+        Acesso restrito a Super Admin e Direção.
       </div>
     )
   }
@@ -22,7 +22,7 @@ export default async function AcademiasPage() {
     <div className="space-y-6">
       <div>
         <h2 className="page-title">Academias</h2>
-        <p className="page-subtitle">Unidades cadastradas — gestão restrita a Super Admin.</p>
+        <p className="page-subtitle">Unidades cadastradas — gestão restrita a Super Admin e Direção.</p>
       </div>
 
       <AcademiasTable academias={academias} />

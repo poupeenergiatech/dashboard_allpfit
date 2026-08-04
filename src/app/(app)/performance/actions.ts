@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { pool } from '@/lib/db/pool'
-import { canManageUsers, getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
+import { canLaunchManualScans, getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
 
 // FormData sempre manda string ('' quando o campo fica em branco) — converte pra
 // null nesse caso, que é como a coluna de ajuste sinaliza "sem correção manual,
@@ -16,7 +16,7 @@ function parseOptionalInt(value: FormDataEntryValue | null): number | null {
 
 export async function saveManualData(formData: FormData) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
+  if (!profile || !canLaunchManualScans(profile.role)) {
     throw new Error('Sem permissão para editar dados manuais.')
   }
 

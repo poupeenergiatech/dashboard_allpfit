@@ -10,7 +10,7 @@ import {
   fetchPendenciasPorAcademia,
   fetchPendenciasTrend,
 } from '@/lib/dashboard/fetch-pendencias-assinatura'
-import { canManagePendencias, canManageUsers, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
+import { canManageConfiguracoes, canManagePendencias, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 
 export default async function PendentesPage({
   searchParams,
@@ -60,7 +60,7 @@ export default async function PendentesPage({
         </div>
       )}
 
-      {profile && canManageUsers(profile.role) && (
+      {profile && canManageConfiguracoes(profile.role) && (
         <div>
           <h3 className="mb-3 text-sm font-semibold text-red-700 dark:text-red-400">Zona de risco</h3>
           <ResetPendenciasButton />

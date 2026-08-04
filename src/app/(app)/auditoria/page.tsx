@@ -8,7 +8,7 @@ export default async function AuditoriaPage() {
   if (!profile || !canManageUsers(profile.role)) {
     return (
       <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 p-6 text-sm font-medium text-amber-800 dark:text-amber-300">
-        Acesso restrito ao Super Admin.
+        Acesso restrito a Super Admin e Direção.
       </div>
     )
   }
@@ -20,7 +20,7 @@ export default async function AuditoriaPage() {
       <div>
         <h2 className="page-title">Auditoria de Login</h2>
         <p className="page-subtitle">
-          Histórico de tentativas de login (sucesso e falha) — acesso restrito a Super Admin.
+          Histórico de tentativas de login (sucesso e falha) — acesso restrito a Super Admin e Direção.
         </p>
       </div>
 

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { pool } from '@/lib/db/pool'
-import { canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
+import { canManageConfiguracoes, getCurrentUserProfile } from '@/lib/auth/profile'
 import { runAlleDocumentosSync, type SyncAlleDocumentosResult } from '@/lib/dashboard/sync-alle-documentos'
 
 export type { SyncAlleDocumentosResult }
@@ -16,7 +16,7 @@ export type { SyncAlleDocumentosResult }
 // as origens.
 export async function syncAlleDocumentosConvertidos(): Promise<SyncAlleDocumentosResult> {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
+  if (!profile || !canManageConfiguracoes(profile.role)) {
     throw new Error('Apenas Super Admin pode sincronizar conversões.')
   }
 
@@ -31,7 +31,7 @@ export async function syncAlleDocumentosConvertidos(): Promise<SyncAlleDocumento
 
 export async function setAutoSyncEnabled(enabled: boolean) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
+  if (!profile || !canManageConfiguracoes(profile.role)) {
     throw new Error('Apenas Super Admin pode ativar/desativar a sincronização automática.')
   }
 
@@ -50,7 +50,7 @@ export async function setAutoSyncEnabled(enabled: boolean) {
 // totalConversoes.
 export async function setIncluirStatusSecundariosConversao(enabled: boolean) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
+  if (!profile || !canManageConfiguracoes(profile.role)) {
     throw new Error('Apenas Super Admin pode alterar essa configuração.')
   }
 
@@ -81,7 +81,7 @@ export type ResetConversoesResult = {
 // verdade — não tem de onde vir de volta.
 export async function resetAllConversoes(): Promise<ResetConversoesResult> {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
+  if (!profile || !canManageConfiguracoes(profile.role)) {
     throw new Error('Apenas Super Admin pode resetar conversões.')
   }
 

@@ -6,7 +6,7 @@ import { PeriodFilterLinks } from '@/components/dashboard/period-filter-links'
 import { fetchAcademiaPerformance, type PerformancePeriod } from '@/lib/dashboard/fetch-academia-performance'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchManualDataHistory } from '@/lib/dashboard/fetch-manual-data-history'
-import { canManageUsers, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
+import { canLaunchManualScans, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 import type { DateRange } from '@/lib/dashboard/types'
 
 const VALID_PERIODS: PerformancePeriod[] = ['todos', 'hoje', 'ontem', '7dias', '30dias', '90dias', '1ano', 'personalizado']
@@ -36,7 +36,7 @@ export default async function PerformancePage({
       : null
   const requestedAcademiaId = searchParams.academia ?? null
 
-  const isSuperAdmin = !!profile && canManageUsers(profile.role)
+  const isSuperAdmin = !!profile && canLaunchManualScans(profile.role)
 
   const [rows, academias, history] = await Promise.all([
     profile ? fetchAcademiaPerformance(profile, period, customRange, requestedAcademiaId) : Promise.resolve([]),

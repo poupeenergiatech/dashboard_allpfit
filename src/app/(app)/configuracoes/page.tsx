@@ -15,7 +15,7 @@ import { fetchAutoSyncEnabled } from '@/lib/dashboard/fetch-sync-settings'
 import { fetchScansWebhookLog } from '@/lib/dashboard/fetch-scans-webhook-log'
 import { fetchSyncHistory } from '@/lib/dashboard/fetch-sync-history'
 import { fetchSyncedConversions } from '@/lib/dashboard/fetch-synced-conversions'
-import { canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
+import { canManageConfiguracoes, getCurrentUserProfile } from '@/lib/auth/profile'
 
 function getWebhookUrl(path: string): string {
   const requestHeaders = headers()
@@ -27,7 +27,7 @@ function getWebhookUrl(path: string): string {
 export default async function ConfiguracoesPage() {
   const profile = await getCurrentUserProfile().catch(() => null)
 
-  if (!profile || !canManageUsers(profile.role)) {
+  if (!profile || !canManageConfiguracoes(profile.role)) {
     return (
       <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 p-6 text-sm font-medium text-amber-800 dark:text-amber-300">
         Acesso restrito ao Super Admin.

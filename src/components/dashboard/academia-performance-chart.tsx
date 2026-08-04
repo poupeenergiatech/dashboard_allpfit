@@ -6,29 +6,31 @@ import { computeMaxLog, toWeight } from '@/lib/dashboard/log-scale'
 import { useIsDark } from '@/lib/dashboard/use-is-dark'
 import type { AcademiaPerformance } from '@/lib/dashboard/fetch-academia-performance'
 
-// Alunos (azul, mesma cor da etapa "Alunos totais" no funil) -> Contatos (emerald,
-// inalterado, já validado antes) -> Clientes Alle ativos (laranja da marca — mesma
-// reserva de "resultado final" usada no card/etapa de conversões, ver
-// funnel-card.tsx) -> Pendentes de assinatura (rose, mesma cor de
-// pendencias-por-academia-chart.tsx, reservada em todo o app pra "ainda precisa de
-// ação"). Validado com validate_palette.js: light e dark passam full (dark usa
-// accent-700 em vez de 600 — 600 caía fora da faixa de luminância do modo escuro).
+// Alunos/Contatos/Clientes Alle ativos são as 3 etapas em ordem decrescente de
+// volume (um funil por academia) — mesma família de cor (azul), do passo mais
+// claro pro mais escuro, pra ler como "o mesmo tipo de coisa, em estágios
+// diferentes" em vez de 3 categorias soltas. Pendentes de assinatura é o único
+// que pede ação, por isso fica com uma cor à parte (âmbar) que já é a linguagem
+// de "atenção" no resto do app. Validado com validate_palette.js: rampa azul
+// passa --ordinal em light e dark; âmbar passa CVD/normal-vision contra as 3
+// tonalidades de azul em ambos os modos (ΔE > 27 no pior caso, bem acima do
+// piso de 15).
 const SERIES = {
-  alunos: { key: 'totalAlunos' as const, weightKey: 'alunosWeight' as const, label: 'Alunos', light: '#3b82f6', dark: '#3b82f6' },
-  contatos: { key: 'totalContatos' as const, weightKey: 'contatosWeight' as const, label: 'Contatos', light: '#059669', dark: '#059669' },
+  alunos: { key: 'totalAlunos' as const, weightKey: 'alunosWeight' as const, label: 'Alunos', light: '#60a5fa', dark: '#60a5fa' },
+  contatos: { key: 'totalContatos' as const, weightKey: 'contatosWeight' as const, label: 'Contatos', light: '#2563eb', dark: '#3b82f6' },
   clientesAlle: {
     key: 'clientesAlleAtivos' as const,
     weightKey: 'clientesAlleWeight' as const,
     label: 'Clientes Alle ativos',
-    light: '#ef6700',
-    dark: '#da5f00',
+    light: '#1e40af',
+    dark: '#1d4ed8',
   },
   pendentes: {
     key: 'pendentesAssinatura' as const,
     weightKey: 'pendentesWeight' as const,
     label: 'Pendentes de assinatura',
-    light: '#e11d48',
-    dark: '#e11d48',
+    light: '#f59e0b',
+    dark: '#f59e0b',
   },
 }
 
@@ -103,7 +105,7 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
 
   return (
     <div className="card p-6">
-      <p className="panel-title mb-4">Alunos, contatos, clientes Alle ativos e pendentes de assinatura por academia</p>
+      <p className="panel-title mb-4">Alunos e clientes por academia</p>
       <div className="overflow-x-auto">
         <div style={{ height: 460, minWidth }}>
           <ResponsiveContainer width="100%" height="100%">
@@ -138,7 +140,17 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
                   fontSize: 13,
                 }}
               />
-              <Legend iconType="circle" iconSize={8} verticalAlign="top" wrapperStyle={{ fontSize: 13, color: chrome.legend, paddingBottom: 8 }} />
+              {/* itemSorter=null: o default do Recharts ordena a legenda alfabeticamente
+                  pelo label ("Alunos" < "Clientes Alle ativos" < "Contatos" < "Pendentes..."),
+                  o que embaralha a leitura da rampa ordinal (Alunos -> Contatos -> Clientes
+                  Alle ativos). Sem sort, a legenda segue a ordem de declaração dos <Bar>. */}
+              <Legend
+                iconType="circle"
+                iconSize={8}
+                verticalAlign="top"
+                wrapperStyle={{ fontSize: 13, color: chrome.legend, paddingBottom: 8 }}
+                itemSorter={null}
+              />
               <Bar
                 dataKey={SERIES.alunos.weightKey}
                 name={SERIES.alunos.label}

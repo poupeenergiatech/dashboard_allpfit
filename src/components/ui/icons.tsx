@@ -25,6 +25,8 @@ export type IconName =
   | 'shield'
   | 'money'
   | 'play'
+  | 'file'
+  | 'upload'
 
 const PATHS: Record<IconName, React.ReactNode> = {
   chart: (
@@ -151,6 +153,14 @@ const PATHS: Record<IconName, React.ReactNode> = {
       d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM10 9l5 3-5 3V9z"
     />
   ),
+  file: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M8 3h6l5 5v11a2 2 0 01-2 2H8a2 2 0 01-2-2V5a2 2 0 012-2zM14 3v5h5"
+    />
+  ),
+  upload: <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12M7 9l5-5 5 5M5 20h14" />,
 }
 
 export function Icon({

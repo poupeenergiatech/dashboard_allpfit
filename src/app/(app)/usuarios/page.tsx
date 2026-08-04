@@ -9,7 +9,7 @@ export default async function UsuariosPage() {
   if (!profile || !canManageUsers(profile.role)) {
     return (
       <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 p-6 text-sm font-medium text-amber-800 dark:text-amber-300">
-        Acesso restrito ao Super Admin.
+        Acesso restrito a Super Admin e Direção.
       </div>
     )
   }
@@ -45,14 +45,19 @@ export default async function UsuariosPage() {
     <div className="space-y-6">
       <div>
         <h2 className="page-title">Usuários</h2>
-        <p className="page-subtitle">Gestão de acesso — restrito a Super Admin.</p>
+        <p className="page-subtitle">Gestão de acesso — restrito a Super Admin e Direção.</p>
       </div>
 
-      <UsersTable users={userRows} academias={academias} currentUserId={profile.userId} />
+      <UsersTable
+        users={userRows}
+        academias={academias}
+        currentUserId={profile.userId}
+        currentUserRole={profile.role}
+      />
 
       <div>
         <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Criar usuário</h3>
-        <InviteUserForm academias={academias} />
+        <InviteUserForm academias={academias} currentUserRole={profile.role} />
       </div>
     </div>
   )

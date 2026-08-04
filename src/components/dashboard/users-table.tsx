@@ -17,7 +17,7 @@ export type UserRow = {
   academiaNome: string | null
 }
 
-type RoleFilter = 'todos' | 'super_admin' | 'gestor' | 'coordenador' | 'visualizador'
+type RoleFilter = 'todos' | 'super_admin' | 'direcao' | 'gestor' | 'coordenador' | 'visualizador'
 type ResetPasswordAction = (userId: string, formData: FormData) => Promise<PasswordResult>
 type UpdateAction = (userId: string, formData: FormData) => Promise<void>
 type DeleteAction = (userId: string) => Promise<void>
@@ -26,6 +26,7 @@ type RowMode = { id: string; type: 'edit' | 'reset' } | null
 const ROLE_OPTIONS: { value: RoleFilter; label: string }[] = [
   { value: 'todos', label: 'Todos' },
   { value: 'super_admin', label: 'Super Admin' },
+  { value: 'direcao', label: 'Direção' },
   { value: 'gestor', label: 'Gestor' },
   { value: 'coordenador', label: 'Coordenador' },
   { value: 'visualizador', label: 'Visualizador' },
@@ -39,6 +40,7 @@ export function UsersTable({
   users,
   academias,
   currentUserId,
+  currentUserRole,
   onResetPassword = resetUserPassword,
   onUpdate = updateUser,
   onDelete = deleteUser,
@@ -46,10 +48,16 @@ export function UsersTable({
   users: UserRow[]
   academias: Academia[]
   currentUserId: string
+  currentUserRole: UserRole
   onResetPassword?: ResetPasswordAction
   onUpdate?: UpdateAction
   onDelete?: DeleteAction
 }) {
+  // Direção não pode editar/redefinir senha/excluir uma conta Super Admin (ver
+  // canManageUserAccount em profile.ts) — some as ações da linha em vez de deixar
+  // clicar e levar o erro da action.
+  const canManageTarget = (targetRole: string | null) =>
+    currentUserRole === 'super_admin' || targetRole !== 'super_admin'
   const [search, setSearch] = useState('')
   const [role, setRole] = useState<RoleFilter>('todos')
   const [activeRow, setActiveRow] = useState<RowMode>(null)
@@ -129,6 +137,7 @@ export function UsersTable({
                       key={u.id}
                       user={u}
                       academias={academias}
+                      currentUserRole={currentUserRole}
                       onUpdate={onUpdate}
                       onCancel={() => setActiveRow(null)}
                       onSaved={() => setActiveRow(null)}
@@ -153,35 +162,44 @@ export function UsersTable({
                       )}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                      {u.academiaNome ?? (u.role === 'super_admin' || u.role === 'gestor' ? 'Todas' : '—')}
+                      {u.academiaNome ?? (u.role === 'super_admin' || u.role === 'direcao' || u.role === 'gestor' ? 'Todas' : '—')}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-3 text-xs font-medium">
-                        <button
-                          type="button"
-                          onClick={() => setActiveRow({ id: u.id, type: 'edit' })}
-                          className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActiveRow({ id: u.id, type: 'reset' })}
-                          className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-                        >
-                          Redefinir senha
-                        </button>
-                        {u.id !== currentUserId && (
+                      {canManageTarget(u.role) ? (
+                        <div className="flex items-center gap-3 text-xs font-medium">
                           <button
                             type="button"
-                            disabled={deleting}
-                            onClick={() => handleDelete(u)}
-                            className="text-rose-600 dark:text-rose-400 hover:text-rose-800 disabled:opacity-50"
+                            onClick={() => setActiveRow({ id: u.id, type: 'edit' })}
+                            className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
                           >
-                            Excluir
+                            Editar
                           </button>
-                        )}
-                      </div>
+                          <button
+                            type="button"
+                            onClick={() => setActiveRow({ id: u.id, type: 'reset' })}
+                            className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                          >
+                            Redefinir senha
+                          </button>
+                          {u.id !== currentUserId && (
+                            <button
+                              type="button"
+                              disabled={deleting}
+                              onClick={() => handleDelete(u)}
+                              className="text-rose-600 dark:text-rose-400 hover:text-rose-800 disabled:opacity-50"
+                            >
+                              Excluir
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span
+                          className="text-xs text-slate-400 dark:text-slate-500"
+                          title="Apenas Super Admin pode gerenciar outra conta Super Admin."
+                        >
+                          Somente Super Admin
+                        </span>
+                      )}
                     </td>
                   </tr>
                 )
@@ -197,12 +215,14 @@ export function UsersTable({
 function UserEditRow({
   user,
   academias,
+  currentUserRole,
   onUpdate,
   onCancel,
   onSaved,
 }: {
   user: UserRow
   academias: Academia[]
+  currentUserRole: UserRole
   onUpdate: UpdateAction
   onCancel: () => void
   onSaved: () => void
@@ -211,6 +231,12 @@ function UserEditRow({
   const [pending, startTransition] = useTransition()
   const { showToast } = useToast()
   const needsAcademia = role === 'coordenador' || role === 'visualizador'
+  // Direção não pode promover ninguém a Super Admin (ver canManageUserAccount em
+  // profile.ts) — a opção nem aparece no dropdown.
+  const availableRoles =
+    currentUserRole === 'direcao'
+      ? (['direcao', 'gestor', 'coordenador', 'visualizador'] as const)
+      : (['super_admin', 'direcao', 'gestor', 'coordenador', 'visualizador'] as const)
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -256,7 +282,7 @@ function UserEditRow({
               onChange={(e) => setRole(e.target.value)}
               className="select"
             >
-              {(['super_admin', 'gestor', 'coordenador', 'visualizador'] as const).map((r) => (
+              {availableRoles.map((r) => (
                 <option key={r} value={r}>
                   {ROLE_LABEL[r]}
                 </option>
