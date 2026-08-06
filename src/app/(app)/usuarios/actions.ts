@@ -8,17 +8,6 @@ import { canManageUserAccount, canManageUsers, getCurrentUserProfile, type UserR
 const VALID_ROLES: UserRole[] = ['super_admin', 'direcao', 'gestor', 'coordenador', 'visualizador']
 const MIN_PASSWORD_LENGTH = 8
 
-// Reusado por updateUser/deleteUser/resetUserPassword pra saber o role ATUAL do
-// alvo antes de agir — é isso que canManageUserAccount usa pra barrar Direção
-// mexendo numa conta Super Admin (ver profile.ts).
-async function getTargetRole(userId: string): Promise<UserRole | null> {
-  const { rows } = await pool.query<{ role: UserRole | null }>(
-    'select role from user_profiles where user_id = $1',
-    [userId]
-  )
-  return rows[0]?.role ?? null
-}
-
 export type PasswordResult = { password: string; generated: boolean }
 
 // Senha em branco no formulário = gera uma aleatória (comportamento original);
@@ -63,6 +52,9 @@ export async function createUser(formData: FormData): Promise<PasswordResult> {
   if (!profile || !canManageUsers(profile.role)) {
     throw new Error('Apenas Super Admin pode gerenciar usuários.')
   }
+  if (!canManageUserAccount(profile.role)) {
+    throw new Error('Apenas Super Admin pode criar usuários.')
+  }
 
   const email = String(formData.get('email') ?? '').trim()
   const role = String(formData.get('role') ?? '') as UserRole
@@ -70,10 +62,6 @@ export async function createUser(formData: FormData): Promise<PasswordResult> {
 
   if (!email || !VALID_ROLES.includes(role)) {
     throw new Error('Dados inválidos.')
-  }
-
-  if (!canManageUserAccount(profile.role, role)) {
-    throw new Error('Apenas Super Admin pode criar uma conta Super Admin.')
   }
 
   const needsAcademia = role === 'coordenador' || role === 'visualizador'
@@ -127,8 +115,8 @@ export async function resetUserPassword(userId: string, formData: FormData): Pro
     throw new Error('Apenas Super Admin pode gerenciar usuários.')
   }
 
-  if (!canManageUserAccount(profile.role, await getTargetRole(userId))) {
-    throw new Error('Apenas Super Admin pode redefinir a senha de outro Super Admin.')
+  if (!canManageUserAccount(profile.role)) {
+    throw new Error('Apenas Super Admin pode redefinir senha de usuário.')
   }
 
   const result = resolvePassword(formData)
@@ -164,12 +152,8 @@ export async function updateUser(userId: string, formData: FormData) {
     throw new Error('Dados inválidos.')
   }
 
-  const currentRole = await getTargetRole(userId)
-  if (!canManageUserAccount(profile.role, currentRole)) {
-    throw new Error('Apenas Super Admin pode editar outra conta Super Admin.')
-  }
-  if (!canManageUserAccount(profile.role, role)) {
-    throw new Error('Apenas Super Admin pode promover alguém a Super Admin.')
+  if (!canManageUserAccount(profile.role)) {
+    throw new Error('Apenas Super Admin pode editar usuário.')
   }
 
   const needsAcademia = role === 'coordenador' || role === 'visualizador'
@@ -231,8 +215,8 @@ export async function deleteUser(userId: string) {
     throw new Error('Você não pode excluir sua própria conta.')
   }
 
-  if (!canManageUserAccount(profile.role, await getTargetRole(userId))) {
-    throw new Error('Apenas Super Admin pode excluir outra conta Super Admin.')
+  if (!canManageUserAccount(profile.role)) {
+    throw new Error('Apenas Super Admin pode excluir usuário.')
   }
 
   await assertNotLastSuperAdmin(userId, 'Não é possível excluir o único Super Admin restante — promova outro usuário antes.')

@@ -7,7 +7,7 @@ import { canManageTraining, getCurrentUserProfile } from '@/lib/auth/profile'
 export async function setTrained(academiaId: string, treinada: boolean) {
   const profile = await getCurrentUserProfile()
   if (!profile || !canManageTraining(profile.role)) {
-    throw new Error('Apenas Super Admin e Direção podem alterar o status de treinamento.')
+    throw new Error('Apenas Super Admin pode alterar o status de treinamento.')
   }
 
   await pool.query(

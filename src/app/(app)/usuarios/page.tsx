@@ -1,7 +1,7 @@
 import { InviteUserForm } from '@/components/dashboard/invite-user-form'
 import { UsersTable, type UserRow } from '@/components/dashboard/users-table'
 import { pool } from '@/lib/db/pool'
-import { canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
+import { canManageUserAccount, canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
 
 export default async function UsuariosPage() {
   const profile = await getCurrentUserProfile().catch(() => null)
@@ -45,7 +45,10 @@ export default async function UsuariosPage() {
     <div className="space-y-6">
       <div>
         <h2 className="page-title">Usuários</h2>
-        <p className="page-subtitle">Gestão de acesso — restrito a Super Admin e Direção.</p>
+        <p className="page-subtitle">
+          Gestão de acesso — visualização liberada a Super Admin e Direção; criar, editar e excluir contas é
+          exclusivo de Super Admin.
+        </p>
       </div>
 
       <UsersTable
@@ -55,10 +58,12 @@ export default async function UsuariosPage() {
         currentUserRole={profile.role}
       />
 
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Criar usuário</h3>
-        <InviteUserForm academias={academias} currentUserRole={profile.role} />
-      </div>
+      {canManageUserAccount(profile.role) && (
+        <div>
+          <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Criar usuário</h3>
+          <InviteUserForm academias={academias} />
+        </div>
+      )}
     </div>
   )
 }

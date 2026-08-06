@@ -20,11 +20,13 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 
 export function AcademiasTable({
   academias,
+  editable = true,
   onToggleActive = setAcademiaActive,
   onUpdate = updateAcademia,
   onDelete = deleteAcademia,
 }: {
   academias: AcademiaAdmin[]
+  editable?: boolean
   onToggleActive?: ToggleAction
   onUpdate?: UpdateAction
   onDelete?: DeleteAction
@@ -71,12 +73,12 @@ export function AcademiasTable({
                 <th className="px-4 py-3 text-right">Total de conversões</th>
                 <th className="px-4 py-3 text-right">Conversões manuais</th>
                 <th className="px-4 py-3">Ativa</th>
-                <th className="px-4 py-3">Ações</th>
+                {editable && <th className="px-4 py-3">Ações</th>}
               </tr>
             </thead>
             <tbody>
               {filtered.map((a) =>
-                editingId === a.id ? (
+                editable && editingId === a.id ? (
                   <AcademiaEditRow
                     key={a.id}
                     academia={a}
@@ -88,6 +90,7 @@ export function AcademiasTable({
                   <AcademiaRow
                     key={a.id}
                     academia={a}
+                    editable={editable}
                     onToggleActive={onToggleActive}
                     onDelete={onDelete}
                     onEdit={() => setEditingId(a.id)}
@@ -104,11 +107,13 @@ export function AcademiasTable({
 
 function AcademiaRow({
   academia,
+  editable,
   onToggleActive,
   onDelete,
   onEdit,
 }: {
   academia: AcademiaAdmin
+  editable: boolean
   onToggleActive: ToggleAction
   onDelete: DeleteAction
   onEdit: () => void
@@ -176,38 +181,46 @@ function AcademiaRow({
         )}
       </td>
       <td className="px-4 py-3">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={ativo}
-          disabled={pending}
-          onClick={toggle}
-          className={`relative h-6 w-11 shrink-0 rounded-full transition disabled:opacity-50 ${
-            ativo ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
-          }`}
-        >
-          <span
-            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white dark:bg-slate-900 shadow transition-all ${
-              ativo ? 'left-5' : 'left-0.5'
-            }`}
-          />
-        </button>
-      </td>
-      <td className="px-4 py-3">
-        <div className="flex items-center gap-3 text-xs font-medium">
-          <button type="button" onClick={onEdit} className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
-            Editar
-          </button>
+        {editable ? (
           <button
             type="button"
-            disabled={deleting}
-            onClick={handleDelete}
-            className="text-rose-600 dark:text-rose-400 hover:text-rose-800 disabled:opacity-50"
+            role="switch"
+            aria-checked={ativo}
+            disabled={pending}
+            onClick={toggle}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition disabled:opacity-50 ${
+              ativo ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
+            }`}
           >
-            {deleting ? 'Excluindo…' : 'Excluir'}
+            <span
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white dark:bg-slate-900 shadow transition-all ${
+                ativo ? 'left-5' : 'left-0.5'
+              }`}
+            />
           </button>
-        </div>
+        ) : ativo ? (
+          <span className="badge bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">Ativa</span>
+        ) : (
+          <span className="badge bg-slate-100 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">Inativa</span>
+        )}
       </td>
+      {editable && (
+        <td className="px-4 py-3">
+          <div className="flex items-center gap-3 text-xs font-medium">
+            <button type="button" onClick={onEdit} className="text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
+              Editar
+            </button>
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={handleDelete}
+              className="text-rose-600 dark:text-rose-400 hover:text-rose-800 disabled:opacity-50"
+            >
+              {deleting ? 'Excluindo…' : 'Excluir'}
+            </button>
+          </div>
+        </td>
+      )}
     </tr>
   )
 }

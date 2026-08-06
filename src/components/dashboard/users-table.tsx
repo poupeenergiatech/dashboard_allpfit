@@ -53,11 +53,10 @@ export function UsersTable({
   onUpdate?: UpdateAction
   onDelete?: DeleteAction
 }) {
-  // Direção não pode editar/redefinir senha/excluir uma conta Super Admin (ver
-  // canManageUserAccount em profile.ts) — some as ações da linha em vez de deixar
-  // clicar e levar o erro da action.
-  const canManageTarget = (targetRole: string | null) =>
-    currentUserRole === 'super_admin' || targetRole !== 'super_admin'
+  // Direção só visualiza — nenhuma conta pode ser editada/ter senha redefinida/
+  // excluída por ela (ver canManageUserAccount em profile.ts). Some as ações da
+  // linha em vez de deixar clicar e levar o erro da action.
+  const canManageAccounts = currentUserRole === 'super_admin'
   const [search, setSearch] = useState('')
   const [role, setRole] = useState<RoleFilter>('todos')
   const [activeRow, setActiveRow] = useState<RowMode>(null)
@@ -137,7 +136,6 @@ export function UsersTable({
                       key={u.id}
                       user={u}
                       academias={academias}
-                      currentUserRole={currentUserRole}
                       onUpdate={onUpdate}
                       onCancel={() => setActiveRow(null)}
                       onSaved={() => setActiveRow(null)}
@@ -165,7 +163,7 @@ export function UsersTable({
                       {u.academiaNome ?? (u.role === 'super_admin' || u.role === 'direcao' || u.role === 'gestor' ? 'Todas' : '—')}
                     </td>
                     <td className="px-4 py-3">
-                      {canManageTarget(u.role) ? (
+                      {canManageAccounts ? (
                         <div className="flex items-center gap-3 text-xs font-medium">
                           <button
                             type="button"
@@ -195,7 +193,7 @@ export function UsersTable({
                       ) : (
                         <span
                           className="text-xs text-slate-400 dark:text-slate-500"
-                          title="Apenas Super Admin pode gerenciar outra conta Super Admin."
+                          title="Apenas Super Admin pode gerenciar contas de usuário."
                         >
                           Somente Super Admin
                         </span>
@@ -215,14 +213,12 @@ export function UsersTable({
 function UserEditRow({
   user,
   academias,
-  currentUserRole,
   onUpdate,
   onCancel,
   onSaved,
 }: {
   user: UserRow
   academias: Academia[]
-  currentUserRole: UserRole
   onUpdate: UpdateAction
   onCancel: () => void
   onSaved: () => void
@@ -231,12 +227,10 @@ function UserEditRow({
   const [pending, startTransition] = useTransition()
   const { showToast } = useToast()
   const needsAcademia = role === 'coordenador' || role === 'visualizador'
-  // Direção não pode promover ninguém a Super Admin (ver canManageUserAccount em
-  // profile.ts) — a opção nem aparece no dropdown.
-  const availableRoles =
-    currentUserRole === 'direcao'
-      ? (['direcao', 'gestor', 'coordenador', 'visualizador'] as const)
-      : (['super_admin', 'direcao', 'gestor', 'coordenador', 'visualizador'] as const)
+  // Chega aqui só quando currentUserRole === 'super_admin' (única role com
+  // canManageAccounts = true na tabela acima), então todas as roles ficam
+  // disponíveis pro dropdown sem restrição extra.
+  const availableRoles = ['super_admin', 'direcao', 'gestor', 'coordenador', 'visualizador'] as const
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()

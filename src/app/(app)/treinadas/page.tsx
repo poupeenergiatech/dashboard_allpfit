@@ -14,7 +14,7 @@ export default async function TreinadasPage() {
         <p className="page-subtitle">
           {canEdit
             ? 'Marque as unidades que já passaram pelo treinamento.'
-            : 'Somente Super Admin e Direção podem alterar esse status.'}
+            : 'Somente Super Admin pode alterar esse status.'}
         </p>
       </div>
 

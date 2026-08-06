@@ -51,46 +51,65 @@ export const getCurrentUserProfile = cache(async (): Promise<UserProfile | null>
 })
 
 export function canWrite(role: UserRole): boolean {
-  return role !== 'visualizador'
+  return role !== 'visualizador' && role !== 'direcao'
 }
 
 // Editar/reprovar/excluir e definir status (termo de adesão) em /convertidos —
-// Super Admin e Direção (Gestor fica só com leitura, pedido explícito do usuário).
+// exclusivo de Super Admin. Direção enxerga tudo (ver seesAllAcademias) mas só
+// em modo leitura: pedido explícito do usuário é que Direção nunca crie, edite
+// ou exclua nada, em nenhuma área do sistema — ver também canManageTraining,
+// canManagePendencias, canManageUserAccount, canManageAcademias,
+// canManageClientesAlle, canManageNotasFiscais e canManageMateriaisMarketing,
+// que seguem a mesma regra.
 export function canManageManualData(role: UserRole): boolean {
-  return role === 'super_admin' || role === 'direcao'
+  return role === 'super_admin'
 }
 
-// Marcar/desmarcar academia como treinada em /treinadas — Super Admin e Direção
-// (Gestor fica só com leitura, pedido explícito do usuário).
+// Marcar/desmarcar academia como treinada em /treinadas — exclusivo de Super
+// Admin (ver nota em canManageManualData sobre Direção ser só leitura).
 export function canManageTraining(role: UserRole): boolean {
-  return role === 'super_admin' || role === 'direcao'
+  return role === 'super_admin'
 }
 
-// Lançar/editar pendências de assinatura (/pendentes) — Super Admin e Direção.
-// Leitura do histórico continua liberada pra qualquer role, mesmo padrão de
-// canManageManualData. O reset em massa ("zona de risco") é mais restrito, ver
-// canManageConfiguracoes.
+// Lançar/editar pendências de assinatura (/pendentes) — exclusivo de Super
+// Admin (ver nota em canManageManualData). Leitura do histórico continua
+// liberada pra qualquer role. O reset em massa ("zona de risco") é mais
+// restrito ainda, ver canManageConfiguracoes.
 export function canManagePendencias(role: UserRole): boolean {
-  return role === 'super_admin' || role === 'direcao'
+  return role === 'super_admin'
 }
 
-// Gate geral de "administração de cadastro": /usuarios (ver também
-// canManageUserAccount, que protege contas Super Admin dentro dessa tela),
-// /academias, /auditoria e /clientes-alle. Direção tem o mesmo acesso que Super
-// Admin nessas quatro áreas (pedido explícito do usuário).
+// Gate de VISUALIZAÇÃO das páginas /academias, /usuarios e /auditoria — Super
+// Admin e Direção enxergam essas telas por inteiro. Escrita em cada uma delas é
+// exclusiva de Super Admin: ver canManageAcademias (academias) e
+// canManageUserAccount (usuarios); /auditoria é só leitura pra quem entra,
+// não tem ação de escrita nenhuma.
 export function canManageUsers(role: UserRole): boolean {
   return role === 'super_admin' || role === 'direcao'
 }
 
-// Trava fina dentro de /usuarios: Direção pode ver, criar e editar qualquer
-// conta, MENOS criar/promover/editar/excluir uma conta Super Admin — isso fica
-// exclusivo de quem já é Super Admin (pedido explícito do usuário). `targetRole`
-// é o role atual da conta sendo editada/excluída, ou o role sendo atribuído na
-// criação/promoção; null (conta nova sem user_profiles) não tem restrição extra.
-export function canManageUserAccount(actorRole: UserRole, targetRole: UserRole | null): boolean {
-  if (actorRole === 'super_admin') return true
-  if (actorRole === 'direcao') return targetRole !== 'super_admin'
-  return false
+// Cadastrar/editar/ativar-desativar/excluir academias, vincular/remover nomes
+// alternativos e importar CSV em /academias — exclusivo de Super Admin (ver
+// nota em canManageManualData; canManageUsers acima continua liberando a
+// visualização da página pra Direção).
+export function canManageAcademias(role: UserRole): boolean {
+  return role === 'super_admin'
+}
+
+// Cadastrar/editar/reprovar/excluir/importar (inclusive ações em massa) em
+// /clientes-alle — exclusivo de Super Admin (ver nota em canManageManualData).
+// A página em si é aberta pra qualquer role autenticada, sem gate; esta função
+// controla só a escrita.
+export function canManageClientesAlle(role: UserRole): boolean {
+  return role === 'super_admin'
+}
+
+// Trava dentro de /usuarios: criar, editar, redefinir senha ou excluir QUALQUER
+// conta — exclusivo de Super Admin (pedido explícito do usuário: Direção só
+// visualiza a lista de usuários, nunca gerencia nenhuma conta, nem mesmo as que
+// não são Super Admin).
+export function canManageUserAccount(actorRole: UserRole): boolean {
+  return actorRole === 'super_admin'
 }
 
 // Configurações do sistema (/configuracoes: sync do Alle Documentos, webhooks,
@@ -123,24 +142,26 @@ export function canAccessPainelGestores(role: UserRole): boolean {
 }
 
 // Financeiro: Super Admin, Direção e Gestor — dado sensível o bastante pra ficar
-// de fora do alcance de coordenador (pedido explícito do usuário).
+// de fora do alcance de coordenador (pedido explícito do usuário). Gate de
+// VISUALIZAÇÃO só; escrita (anexar nota fiscal) é canManageNotasFiscais.
 export function canAccessFinanceiro(role: UserRole): boolean {
   return role === 'super_admin' || role === 'direcao' || role === 'gestor'
 }
 
-// Anexar/remover PDF de nota fiscal no calendário de /financeiro — mesmo escopo
-// de canAccessFinanceiro menos coordenador (que só lê): Super Admin, Direção e
-// Gestor.
+// Anexar/remover PDF de nota fiscal no calendário de /financeiro — Super Admin
+// e Gestor. Direção enxerga o financeiro inteiro (canAccessFinanceiro) mas só
+// em leitura, mesma regra de canManageManualData; Gestor mantém a escrita que
+// já tinha, sem mudança.
 export function canManageNotasFiscais(role: UserRole): boolean {
-  return role === 'super_admin' || role === 'direcao' || role === 'gestor'
+  return role === 'super_admin' || role === 'gestor'
 }
 
 // Cadastrar/remover material (aula, vídeo, marketing, treinamento, instrução) em
-// /central-marketing — Super Admin e Direção (pedido explícito; Gestor fica de
-// fora, mesmo padrão de canManageNotasFiscais não se aplica aqui). Leitura da
-// lista continua aberta a qualquer role autenticada.
+// /central-marketing — exclusivo de Super Admin (ver nota em
+// canManageManualData; Gestor já ficava de fora antes). Leitura da lista
+// continua aberta a qualquer role autenticada.
 export function canManageMateriaisMarketing(role: UserRole): boolean {
-  return role === 'super_admin' || role === 'direcao'
+  return role === 'super_admin'
 }
 
 // Sem RLS, essa é a barreira real de escopo por academia — antes o Postgres do

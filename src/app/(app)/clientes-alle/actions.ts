@@ -2,14 +2,15 @@
 
 import { revalidatePath } from 'next/cache'
 import { pool } from '@/lib/db/pool'
-import { canManageUsers, getCurrentUserProfile, scopeAcademiaId, type UserProfile } from '@/lib/auth/profile'
+import { canManageClientesAlle, getCurrentUserProfile, scopeAcademiaId, type UserProfile } from '@/lib/auth/profile'
 import { parseCsv } from '@/lib/dashboard/csv'
 import { buildAcademiaNomeResolver } from '@/lib/dashboard/resolve-academia-by-nome'
 import type { ClienteAlleStatus } from '@/lib/dashboard/fetch-clientes-alle'
 
-// clientes_alle fica restrito a Super Admin e Direção — gestor, coordenador e
-// visualizador só enxergam a tabela (leitura), sem editar/reprovar/excluir/
-// selecionar em massa nem cadastrar/importar (ver canManageUsers).
+// Escrita em clientes_alle fica restrita a Super Admin — Direção, gestor,
+// coordenador e visualizador só enxergam a tabela (leitura), sem editar/
+// reprovar/excluir/selecionar em massa nem cadastrar/importar (ver
+// canManageClientesAlle).
 function resolveAcademiaId(profile: UserProfile | null, requestedAcademiaId: string) {
   if (!profile) throw new Error('Sem sessão válida.')
   const academiaId = scopeAcademiaId(profile, requestedAcademiaId)
@@ -37,7 +38,7 @@ function digitsOnly(value: string): string {
 
 export async function createClienteAlle(formData: FormData) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
+  if (!profile || !canManageClientesAlle(profile.role)) {
     throw new Error('Sem permissão para cadastrar clientes Alle.')
   }
 
@@ -75,7 +76,7 @@ export async function createClienteAlle(formData: FormData) {
 
 export async function updateClienteAlle(clienteId: string, formData: FormData) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
+  if (!profile || !canManageClientesAlle(profile.role)) {
     throw new Error('Sem permissão para editar clientes Alle.')
   }
 
@@ -110,7 +111,7 @@ export async function updateClienteAlle(clienteId: string, formData: FormData) {
 // formulário inteiro — mesmo efeito de editar e trocar o status pra 'reprovado'.
 export async function reprovarClienteAlle(clienteId: string) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
+  if (!profile || !canManageClientesAlle(profile.role)) {
     throw new Error('Sem permissão para reprovar clientes Alle.')
   }
 
@@ -129,7 +130,7 @@ export async function reprovarClienteAlle(clienteId: string) {
 
 export async function deleteClienteAlle(clienteId: string) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
+  if (!profile || !canManageClientesAlle(profile.role)) {
     throw new Error('Sem permissão para excluir clientes Alle.')
   }
 
@@ -156,8 +157,8 @@ export type ImportClientesAlleResult = {
 // duplicar, e nome novo vira registro novo. O nome da unidade no CSV passa pelo mesmo
 // resolvedor tolerante a acento/hífen/alias do sync do Alle Documentos e do webhook do
 // agregador (buildAcademiaNomeResolver) — é texto livre de fora, não bate sempre igual ao
-// cadastro. scopedAcademiaId é sempre null aqui (canManageUsers = super_admin/direção,
-// que sempre enxergam todas as academias) — o filtro abaixo fica só como rede de
+// cadastro. scopedAcademiaId é sempre null aqui (canManageClientesAlle = super_admin,
+// que sempre enxerga todas as academias) — o filtro abaixo fica só como rede de
 // segurança caso essa permissão volte a incluir uma role escopada no futuro.
 //
 // Linha com telefone que já apareceu numa conversão da Ane (conversions, vindo do
@@ -166,7 +167,7 @@ export type ImportClientesAlleResult = {
 // as duas origens (ver o split Ane/manual explicado em /clientes-alle e no funil).
 export async function importClientesAlleCsv(formData: FormData): Promise<ImportClientesAlleResult> {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
+  if (!profile || !canManageClientesAlle(profile.role)) {
     throw new Error('Sem permissão para importar clientes Alle.')
   }
 
@@ -274,12 +275,12 @@ export async function importClientesAlleCsv(formData: FormData): Promise<ImportC
 }
 
 // Ações em massa (seleção múltipla na tabela) — mesmo guard das ações individuais
-// acima. Sem checagem de escopo por academia: canManageUsers é super_admin/direção,
-// que sempre enxergam todas as academias (seesAllAcademias), então não existe
+// acima. Sem checagem de escopo por academia: canManageClientesAlle é super_admin,
+// que sempre enxerga todas as academias (seesAllAcademias), então não existe
 // cliente "de outra unidade" fora do alcance.
 export async function bulkUpdateClientesAlleStatus(clienteIds: string[], status: ClienteAlleStatus) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
+  if (!profile || !canManageClientesAlle(profile.role)) {
     throw new Error('Sem permissão para editar clientes Alle.')
   }
   if (clienteIds.length === 0) return
@@ -296,7 +297,7 @@ export async function bulkUpdateClientesAlleStatus(clienteIds: string[], status:
 
 export async function bulkDeleteClientesAlle(clienteIds: string[]) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
+  if (!profile || !canManageClientesAlle(profile.role)) {
     throw new Error('Sem permissão para excluir clientes Alle.')
   }
   if (clienteIds.length === 0) return

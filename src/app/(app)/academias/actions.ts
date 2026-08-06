@@ -2,13 +2,13 @@
 
 import { revalidatePath } from 'next/cache'
 import { pool } from '@/lib/db/pool'
-import { canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
+import { canManageAcademias, getCurrentUserProfile } from '@/lib/auth/profile'
 import { parseCsv } from '@/lib/dashboard/csv'
 
 export async function createAcademia(formData: FormData) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
-    throw new Error('Apenas Super Admin e Direção podem cadastrar academias.')
+  if (!profile || !canManageAcademias(profile.role)) {
+    throw new Error('Apenas Super Admin pode cadastrar academias.')
   }
 
   const nome = String(formData.get('nome') ?? '').trim()
@@ -35,8 +35,8 @@ export async function createAcademia(formData: FormData) {
 // unidade já tiver movimento.
 export async function setAcademiaActive(academiaId: string, ativo: boolean) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
-    throw new Error('Apenas Super Admin e Direção podem ativar/desativar academias.')
+  if (!profile || !canManageAcademias(profile.role)) {
+    throw new Error('Apenas Super Admin pode ativar/desativar academias.')
   }
 
   await pool.query('update academias set ativo = $1 where id = $2', [ativo, academiaId])
@@ -47,8 +47,8 @@ export async function setAcademiaActive(academiaId: string, ativo: boolean) {
 
 export async function updateAcademia(academiaId: string, formData: FormData) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
-    throw new Error('Apenas Super Admin e Direção podem editar academias.')
+  if (!profile || !canManageAcademias(profile.role)) {
+    throw new Error('Apenas Super Admin pode editar academias.')
   }
 
   const nome = String(formData.get('nome') ?? '').trim()
@@ -79,8 +79,8 @@ function isForeignKeyViolation(err: unknown): boolean {
 // em vez de excluir, que é o caminho que preserva o histórico.
 export async function deleteAcademia(academiaId: string) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
-    throw new Error('Apenas Super Admin e Direção podem excluir academias.')
+  if (!profile || !canManageAcademias(profile.role)) {
+    throw new Error('Apenas Super Admin pode excluir academias.')
   }
 
   try {
@@ -107,8 +107,8 @@ export async function deleteAcademia(academiaId: string) {
 // resolver os itens de `naoEncontradas` do sync sem precisar renomear a academia.
 export async function createAcademiaAlias(academiaId: string, aliasNome: string) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
-    throw new Error('Apenas Super Admin e Direção podem vincular nomes alternativos.')
+  if (!profile || !canManageAcademias(profile.role)) {
+    throw new Error('Apenas Super Admin pode vincular nomes alternativos.')
   }
 
   const nome = aliasNome.trim()
@@ -129,8 +129,8 @@ export async function createAcademiaAlias(academiaId: string, aliasNome: string)
 
 export async function deleteAcademiaAlias(aliasId: string) {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
-    throw new Error('Apenas Super Admin e Direção podem remover nomes alternativos.')
+  if (!profile || !canManageAcademias(profile.role)) {
+    throw new Error('Apenas Super Admin pode remover nomes alternativos.')
   }
 
   await pool.query('delete from academia_aliases where id = $1', [aliasId])
@@ -146,8 +146,8 @@ export type ImportAcademiasResult = { criadas: number; atualizadas: number; igno
 // linha nova. Não há delete — uma unidade que sai do CSV simplesmente não é tocada.
 export async function importAcademiasCsv(formData: FormData): Promise<ImportAcademiasResult> {
   const profile = await getCurrentUserProfile()
-  if (!profile || !canManageUsers(profile.role)) {
-    throw new Error('Apenas Super Admin e Direção podem importar academias.')
+  if (!profile || !canManageAcademias(profile.role)) {
+    throw new Error('Apenas Super Admin pode importar academias.')
   }
 
   const file = formData.get('csv')

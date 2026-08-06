@@ -3,7 +3,7 @@ import { AcademiasTable } from '@/components/dashboard/academias-table'
 import { CreateAcademiaForm } from '@/components/dashboard/create-academia-form'
 import { ImportAcademiasForm } from '@/components/dashboard/import-academias-form'
 import { fetchAcademiaAliases, fetchAllAcademias } from '@/lib/dashboard/fetch-academias'
-import { canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
+import { canManageAcademias, canManageUsers, getCurrentUserProfile } from '@/lib/auth/profile'
 
 export default async function AcademiasPage() {
   const profile = await getCurrentUserProfile().catch(() => null)
@@ -16,28 +16,37 @@ export default async function AcademiasPage() {
     )
   }
 
+  const editable = canManageAcademias(profile.role)
+
   const [academias, aliases] = await Promise.all([fetchAllAcademias(), fetchAcademiaAliases()])
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="page-title">Academias</h2>
-        <p className="page-subtitle">Unidades cadastradas — gestão restrita a Super Admin e Direção.</p>
+        <p className="page-subtitle">
+          Unidades cadastradas — visualização liberada a Super Admin e Direção; cadastro, edição e exclusão são
+          exclusivos de Super Admin.
+        </p>
       </div>
 
-      <AcademiasTable academias={academias} />
+      <AcademiasTable academias={academias} editable={editable} />
 
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Cadastrar academia</h3>
-        <CreateAcademiaForm />
-      </div>
+      {editable && (
+        <>
+          <div>
+            <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Cadastrar academia</h3>
+            <CreateAcademiaForm />
+          </div>
 
-      <div>
-        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Importar em lote (CSV)</h3>
-        <ImportAcademiasForm />
-      </div>
+          <div>
+            <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Importar em lote (CSV)</h3>
+            <ImportAcademiasForm />
+          </div>
+        </>
+      )}
 
-      <AcademiaAliasesSection aliases={aliases} />
+      <AcademiaAliasesSection aliases={aliases} editable={editable} />
     </div>
   )
 }

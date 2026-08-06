@@ -23,7 +23,7 @@ export default function PreviewUsuariosPage() {
 
       <div>
         <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Criar usuário</h3>
-        <InviteUserForm academias={MOCK_ACADEMIAS} currentUserRole="super_admin" onCreate={mockInvite} />
+        <InviteUserForm academias={MOCK_ACADEMIAS} onCreate={mockInvite} />
       </div>
     </div>
   )

@@ -4,7 +4,6 @@ import { useState, useTransition } from 'react'
 import { createUser, type PasswordResult } from '@/app/(app)/usuarios/actions'
 import { useToast } from '@/components/ui/toast'
 import type { Academia } from '@/lib/dashboard/types'
-import type { UserRole } from '@/lib/auth/profile'
 
 const ROLES: { value: string; label: string }[] = [
   { value: 'super_admin', label: 'Super Admin' },
@@ -18,19 +17,16 @@ function randomPassword(): string {
   return crypto.randomUUID().replace(/-/g, '').slice(0, 12)
 }
 
+// Renderizado só pra Super Admin (ver usuarios/page.tsx — Direção só visualiza
+// a lista, não ganha esse formulário), então não precisa filtrar nenhuma role
+// do dropdown.
 export function InviteUserForm({
   academias,
-  currentUserRole,
   onCreate = createUser,
 }: {
   academias: Academia[]
-  currentUserRole: UserRole
   onCreate?: (formData: FormData) => Promise<PasswordResult>
 }) {
-  // Direção não pode criar conta Super Admin (ver canManageUserAccount em
-  // profile.ts) — some a opção do dropdown pra não deixar tentar e levar o erro
-  // da action.
-  const availableRoles = currentUserRole === 'direcao' ? ROLES.filter((r) => r.value !== 'super_admin') : ROLES
   const [role, setRole] = useState('coordenador')
   const [password, setPassword] = useState('')
   const [pending, startTransition] = useTransition()
@@ -85,7 +81,7 @@ export function InviteUserForm({
             Role
           </label>
           <select id="role" name="role" value={role} onChange={(e) => setRole(e.target.value)} className="select">
-            {availableRoles.map((r) => (
+            {ROLES.map((r) => (
               <option key={r.value} value={r.value}>
                 {r.label}
               </option>
