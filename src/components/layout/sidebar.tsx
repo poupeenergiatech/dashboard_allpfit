@@ -7,7 +7,7 @@ import { NAV_ITEMS, type NavGroup, type NavItem } from '@/lib/dashboard/nav-item
 import { useMobileNav } from './nav-context'
 import type { UserRole } from '@/lib/auth/profile'
 
-const GROUP_ORDER: NavGroup[] = ['PRINCIPAL', 'OPERAÇÃO', 'GESTÃO', 'SISTEMA']
+const GROUP_ORDER: NavGroup[] = ['PRINCIPAL', 'MARKETING', 'OPERAÇÃO', 'GESTÃO', 'SISTEMA']
 
 function Logo({ collapsed }: { collapsed?: boolean }) {
   return (

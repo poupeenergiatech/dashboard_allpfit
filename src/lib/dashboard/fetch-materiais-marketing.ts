@@ -1,16 +1,7 @@
 'use server'
 
 import { pool } from '@/lib/db/pool'
-
-export type MaterialEntry = {
-  id: string
-  titulo: string
-  url: string
-  descricao: string | null
-  imagemUrl: string | null
-  createdByEmail: string | null
-  createdAt: string
-}
+import type { MaterialEntry } from './types'
 
 // Sem escopo por academia/role — material de marketing é conteúdo geral, visível
 // pra qualquer usuário autenticado (só o cadastro em /central-marketing fica

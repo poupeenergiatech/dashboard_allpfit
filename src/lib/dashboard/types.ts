@@ -11,6 +11,20 @@ export type Academia = {
   nome: string
 }
 
+// Compartilhado entre /central-marketing e /treinamentos-webinar — mesma forma de
+// conteúdo (link externo + prévia extraída automaticamente, ver
+// src/lib/dashboard/link-preview.ts) em duas tabelas separadas, ver
+// fetch-materiais-marketing.ts e fetch-treinamentos-webinar.ts.
+export type MaterialEntry = {
+  id: string
+  titulo: string
+  url: string
+  descricao: string | null
+  imagemUrl: string | null
+  createdByEmail: string | null
+  createdAt: string
+}
+
 export type DailyFunnelPoint = {
   date: string
   totalAlunos: number

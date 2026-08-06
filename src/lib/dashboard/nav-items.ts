@@ -1,7 +1,7 @@
 import type { UserRole } from '@/lib/auth/profile'
 import type { IconName } from '@/components/ui/icons'
 
-export type NavGroup = 'PRINCIPAL' | 'OPERAÇÃO' | 'GESTÃO' | 'SISTEMA'
+export type NavGroup = 'PRINCIPAL' | 'MARKETING' | 'OPERAÇÃO' | 'GESTÃO' | 'SISTEMA'
 
 export type NavItem = { label: string; href: string; roles?: UserRole[]; icon: IconName; hint?: string; group: NavGroup }
 
@@ -25,7 +25,8 @@ export const NAV_ITEMS: NavItem[] = [
     group: 'PRINCIPAL',
   },
   { label: 'Performance por Academia', href: '/performance', icon: 'bars', group: 'PRINCIPAL' },
-  { label: 'Central de Marketing', href: '/central-marketing', icon: 'file', group: 'PRINCIPAL' },
+  { label: 'Central de Marketing', href: '/central-marketing', icon: 'file', group: 'MARKETING' },
+  { label: 'Treinamentos e Webinar', href: '/treinamentos-webinar', icon: 'play', group: 'MARKETING' },
   { label: 'Scans QR', href: '/scans', icon: 'qr', group: 'OPERAÇÃO' },
   {
     label: 'Clientes Convertidos',

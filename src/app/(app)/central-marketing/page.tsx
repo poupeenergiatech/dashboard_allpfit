@@ -1,4 +1,4 @@
-import { MateriaisGrid } from '@/components/dashboard/materiais-marketing-grid'
+import { MateriaisGrid } from '@/components/dashboard/materiais-grid'
 import { canManageMateriaisMarketing, getCurrentUserProfile } from '@/lib/auth/profile'
 import { fetchMateriais } from '@/lib/dashboard/fetch-materiais-marketing'
 
@@ -11,7 +11,8 @@ export default async function CentralMarketingPage() {
       <div>
         <h2 className="page-title">Central de Marketing</h2>
         <p className="page-subtitle">
-          Materiais de aula, vídeos, marketing, treinamento e instruções — link externo, aberto numa nova aba.
+          Materiais de marketing — divulgação, campanhas e conteúdo de apoio pra vendas. Link externo, aberto numa
+          nova aba.
         </p>
       </div>
 

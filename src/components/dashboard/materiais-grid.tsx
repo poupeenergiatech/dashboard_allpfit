@@ -5,13 +5,26 @@ import { createMaterial, deleteMaterial } from '@/app/(app)/central-marketing/ac
 import { Icon } from '@/components/ui/icons'
 import { Modal } from '@/components/ui/modal'
 import { useToast } from '@/components/ui/toast'
-import type { MaterialEntry } from '@/lib/dashboard/fetch-materiais-marketing'
+import type { MaterialEntry } from '@/lib/dashboard/types'
+
+type CreateAction = (formData: FormData) => Promise<void>
+type DeleteAction = (id: string) => Promise<void>
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR')
 }
 
-function AddMaterialModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void }) {
+function AddMaterialModal({
+  open,
+  onClose,
+  onCreated,
+  onCreate,
+}: {
+  open: boolean
+  onClose: () => void
+  onCreated: () => void
+  onCreate: CreateAction
+}) {
   const [pending, startTransition] = useTransition()
   const { showToast } = useToast()
 
@@ -22,7 +35,7 @@ function AddMaterialModal({ open, onClose, onCreated }: { open: boolean; onClose
 
     startTransition(async () => {
       try {
-        await createMaterial(formData)
+        await onCreate(formData)
         showToast('Material cadastrado.')
         form.reset()
         onCreated()
@@ -67,7 +80,15 @@ function AddMaterialModal({ open, onClose, onCreated }: { open: boolean; onClose
   )
 }
 
-function MaterialCard({ material, canManage }: { material: MaterialEntry; canManage: boolean }) {
+function MaterialCard({
+  material,
+  canManage,
+  onDelete,
+}: {
+  material: MaterialEntry
+  canManage: boolean
+  onDelete: DeleteAction
+}) {
   const [pending, startTransition] = useTransition()
   const [imageFailed, setImageFailed] = useState(false)
   const { showToast } = useToast()
@@ -78,7 +99,7 @@ function MaterialCard({ material, canManage }: { material: MaterialEntry; canMan
 
     startTransition(async () => {
       try {
-        await deleteMaterial(material.id)
+        await onDelete(material.id)
         showToast('Material removido.')
       } catch (err) {
         showToast(err instanceof Error ? err.message : 'Erro ao remover material.', 'error')
@@ -145,7 +166,22 @@ function MaterialCard({ material, canManage }: { material: MaterialEntry; canMan
   )
 }
 
-export function MateriaisGrid({ materiais, canManage }: { materiais: MaterialEntry[]; canManage: boolean }) {
+// Reaproveitado por /central-marketing e /treinamentos-webinar — duas tabelas de
+// conteúdo separadas (ver fetch-materiais-marketing.ts e
+// fetch-treinamentos-webinar.ts), mesma UI. onCreate/onDelete tomam os defaults de
+// central-marketing/actions.ts pra manter esse call site sem mudança;
+// treinamentos-webinar/page.tsx passa as próprias actions explicitamente.
+export function MateriaisGrid({
+  materiais,
+  canManage,
+  onCreate = createMaterial,
+  onDelete = deleteMaterial,
+}: {
+  materiais: MaterialEntry[]
+  canManage: boolean
+  onCreate?: CreateAction
+  onDelete?: DeleteAction
+}) {
   const [modalOpen, setModalOpen] = useState(false)
 
   return (
@@ -165,12 +201,17 @@ export function MateriaisGrid({ materiais, canManage }: { materiais: MaterialEnt
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {materiais.map((material) => (
-            <MaterialCard key={material.id} material={material} canManage={canManage} />
+            <MaterialCard key={material.id} material={material} canManage={canManage} onDelete={onDelete} />
           ))}
         </div>
       )}
 
-      <AddMaterialModal open={modalOpen} onClose={() => setModalOpen(false)} onCreated={() => setModalOpen(false)} />
+      <AddMaterialModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onCreated={() => setModalOpen(false)}
+        onCreate={onCreate}
+      />
     </div>
   )
 }

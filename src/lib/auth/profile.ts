@@ -169,6 +169,14 @@ export function canManageMateriaisMarketing(role: UserRole): boolean {
   return role === 'super_admin'
 }
 
+// Mesma regra de canManageMateriaisMarketing, só que pra /treinamentos-webinar —
+// conteúdo separado (tabela própria, treinamentos_webinar), mas mesma mecânica e
+// mesma restrição de escrita. As duas páginas vivem juntas na categoria
+// "Marketing" do menu (ver nav-items.ts).
+export function canManageTreinamentosWebinar(role: UserRole): boolean {
+  return role === 'super_admin'
+}
+
 // Sem RLS, essa é a barreira real de escopo por academia — antes o Postgres do
 // Supabase filtrava/rejeitava sozinho qualquer linha fora da academia do usuário; agora
 // cada leitura/escrita que recebe um academiaId de fora (form, query param, argumento de
