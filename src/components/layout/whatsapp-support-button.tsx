@@ -1,4 +1,8 @@
-const WHATSAPP_SUPPORT_URL =
+// Exportado pra ser reaproveitado fora do botão também — ver
+// src/lib/email/send-user-credentials-email.ts (mesmo contato de suporte no CTA de
+// WhatsApp do email de credenciais, pra não ter dois números de suporte diferentes
+// circulando).
+export const WHATSAPP_SUPPORT_URL =
   'https://wa.me/558494685283?text=Ol%C3%A1%2C%20estou%20com%20uma%20d%C3%BAvida%2Fproblema%20sobre%20o%20Dashboard%20da%20Alle%20Energia.'
 
 // Botão flutuante fixo no canto inferior direito, presente em toda tela logada

@@ -4,6 +4,10 @@ import { revalidatePath } from 'next/cache'
 import { pool } from '@/lib/db/pool'
 import { generateRandomPassword, hashPassword } from '@/lib/auth/password'
 import { canManageUserAccount, canManageUsers, getCurrentUserProfile, type UserRole } from '@/lib/auth/profile'
+import { WHATSAPP_SUPPORT_URL } from '@/components/layout/whatsapp-support-button'
+import { getRequestOrigin } from '@/lib/dashboard/request-origin'
+import { sendUserCredentialsEmail } from '@/lib/email/send-user-credentials-email'
+import type { UserCredentialsEmailVariant } from '@/lib/email/user-credentials-email-template'
 
 const VALID_ROLES: UserRole[] = ['super_admin', 'direcao', 'gestor', 'coordenador', 'visualizador']
 const MIN_PASSWORD_LENGTH = 8
@@ -23,6 +27,20 @@ function resolvePassword(formData: FormData): PasswordResult {
     throw new Error(`Senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`)
   }
   return { password: typed, generated: false }
+}
+
+// Dispara o email de credenciais (criação de conta ou redefinição de senha) — nunca
+// lança erro pra quem chama (ver sendUserCredentialsEmail: falha de SMTP só vira log),
+// então createUser/resetUserPassword continuam retornando normalmente mesmo se o email
+// não sair.
+async function notifyUserCredentials(email: string, senha: string, variant: UserCredentialsEmailVariant) {
+  await sendUserCredentialsEmail({
+    to: email,
+    senha,
+    urlSistema: getRequestOrigin(),
+    whatsappUrl: WHATSAPP_SUPPORT_URL,
+    variant,
+  })
 }
 
 // Trava contra o sistema ficar sem ninguém capaz de gerenciar usuários: bloqueia
@@ -103,6 +121,8 @@ export async function createUser(formData: FormData): Promise<PasswordResult> {
     client.release()
   }
 
+  await notifyUserCredentials(email, result.password, 'created')
+
   revalidatePath('/usuarios')
   return result
 }
@@ -122,14 +142,16 @@ export async function resetUserPassword(userId: string, formData: FormData): Pro
   const result = resolvePassword(formData)
   const passwordHash = await hashPassword(result.password)
 
-  const { rowCount } = await pool.query('update users set password_hash = $1 where id = $2', [
-    passwordHash,
-    userId,
-  ])
+  const { rows } = await pool.query<{ email: string }>(
+    'update users set password_hash = $1 where id = $2 returning email',
+    [passwordHash, userId]
+  )
 
-  if (rowCount === 0) {
+  if (rows.length === 0) {
     throw new Error('Usuário não encontrado.')
   }
+
+  await notifyUserCredentials(rows[0].email, result.password, 'reset')
 
   revalidatePath('/usuarios')
   return result
