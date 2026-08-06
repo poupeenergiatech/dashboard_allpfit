@@ -55,12 +55,13 @@ export function canWrite(role: UserRole): boolean {
 }
 
 // Editar/reprovar/excluir e definir status (termo de adesão) em /convertidos —
-// exclusivo de Super Admin. Direção enxerga tudo (ver seesAllAcademias) mas só
-// em modo leitura: pedido explícito do usuário é que Direção nunca crie, edite
-// ou exclua nada, em nenhuma área do sistema — ver também canManageTraining,
-// canManagePendencias, canManageUserAccount, canManageAcademias,
-// canManageClientesAlle, canManageNotasFiscais e canManageMateriaisMarketing,
-// que seguem a mesma regra.
+// exclusivo de Super Admin. Direção enxerga tudo (ver seesAllAcademias) mas só em
+// modo leitura aqui: pedido explícito do usuário é que Direção não crie/edite/
+// exclua nada nessa área — ver também canManageTraining, canManagePendencias,
+// canManageAcademias, canManageClientesAlle, canManageNotasFiscais e
+// canManageMateriaisMarketing, que seguem a mesma regra. Exceção: gestão de
+// contas de usuário, onde Direção TEM escrita (menos em contas Super Admin) —
+// ver canManageUserAccount, mais abaixo.
 export function canManageManualData(role: UserRole): boolean {
   return role === 'super_admin'
 }
@@ -79,11 +80,12 @@ export function canManagePendencias(role: UserRole): boolean {
   return role === 'super_admin'
 }
 
-// Gate de VISUALIZAÇÃO das páginas /academias, /usuarios e /auditoria — Super
-// Admin e Direção enxergam essas telas por inteiro. Escrita em cada uma delas é
-// exclusiva de Super Admin: ver canManageAcademias (academias) e
-// canManageUserAccount (usuarios); /auditoria é só leitura pra quem entra,
-// não tem ação de escrita nenhuma.
+// Gate de VISUALIZAÇÃO das páginas /academias, /usuarios, /auditoria e
+// /clientes-alle — Super Admin e Direção enxergam essas telas por inteiro. Escrita
+// em cada uma é mais restrita: ver canManageAcademias (academias),
+// canManageClientesAlle (clientes-alle) e canManageUserAccount (usuarios — única
+// das quatro onde Direção também tem escrita, com a exceção de contas Super
+// Admin); /auditoria é só leitura pra quem entra, não tem ação de escrita nenhuma.
 export function canManageUsers(role: UserRole): boolean {
   return role === 'super_admin' || role === 'direcao'
 }
@@ -97,19 +99,22 @@ export function canManageAcademias(role: UserRole): boolean {
 }
 
 // Cadastrar/editar/reprovar/excluir/importar (inclusive ações em massa) em
-// /clientes-alle — exclusivo de Super Admin (ver nota em canManageManualData).
-// A página em si é aberta pra qualquer role autenticada, sem gate; esta função
-// controla só a escrita.
+// /clientes-alle — exclusivo de Super Admin (ver nota em canManageManualData). A
+// página em si é restrita a Super Admin e Direção (ver canManageUsers em
+// clientes-alle/page.tsx); esta função controla só a escrita dentro dela.
 export function canManageClientesAlle(role: UserRole): boolean {
   return role === 'super_admin'
 }
 
-// Trava dentro de /usuarios: criar, editar, redefinir senha ou excluir QUALQUER
-// conta — exclusivo de Super Admin (pedido explícito do usuário: Direção só
-// visualiza a lista de usuários, nunca gerencia nenhuma conta, nem mesmo as que
-// não são Super Admin).
-export function canManageUserAccount(actorRole: UserRole): boolean {
-  return actorRole === 'super_admin'
+// Trava fina dentro de /usuarios: Direção pode criar, editar, redefinir senha e
+// excluir qualquer conta, MENOS uma conta Super Admin — isso fica exclusivo de quem
+// já é Super Admin (pedido explícito do usuário). `targetRole` é o role atual da
+// conta sendo editada/excluída, ou o role sendo atribuído na criação/promoção; null
+// (conta nova sem user_profiles) não tem restrição extra.
+export function canManageUserAccount(actorRole: UserRole, targetRole: UserRole | null): boolean {
+  if (actorRole === 'super_admin') return true
+  if (actorRole === 'direcao') return targetRole !== 'super_admin'
+  return false
 }
 
 // Configurações do sistema (/configuracoes: sync do Alle Documentos, webhooks,

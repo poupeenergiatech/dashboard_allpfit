@@ -7,10 +7,11 @@ import { parseCsv } from '@/lib/dashboard/csv'
 import { buildAcademiaNomeResolver } from '@/lib/dashboard/resolve-academia-by-nome'
 import type { ClienteAlleStatus } from '@/lib/dashboard/fetch-clientes-alle'
 
-// Escrita em clientes_alle fica restrita a Super Admin — Direção, gestor,
-// coordenador e visualizador só enxergam a tabela (leitura), sem editar/
-// reprovar/excluir/selecionar em massa nem cadastrar/importar (ver
-// canManageClientesAlle).
+// A página /clientes-alle inteira já é restrita a Super Admin e Direção (ver
+// canManageUsers em clientes-alle/page.tsx — gestor, coordenador e visualizador nem
+// chegam a ver a tabela). Escrita fica ainda mais restrita, só Super Admin — Direção
+// só visualiza, sem editar/reprovar/excluir/selecionar em massa nem cadastrar/
+// importar (ver canManageClientesAlle).
 function resolveAcademiaId(profile: UserProfile | null, requestedAcademiaId: string) {
   if (!profile) throw new Error('Sem sessão válida.')
   const academiaId = scopeAcademiaId(profile, requestedAcademiaId)

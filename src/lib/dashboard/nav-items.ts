@@ -45,6 +45,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: 'Clientes Alle',
     href: '/clientes-alle',
+    roles: ['super_admin', 'direcao'],
     icon: 'id-card',
     hint: 'Cadastro de quem já é (ou foi) cliente Alle — ativo, pendente, reprovado etc. Alimenta o funil de conversão.',
     group: 'GESTÃO',

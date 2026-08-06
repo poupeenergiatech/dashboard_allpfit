@@ -5,7 +5,7 @@ import { ClientesAlleStatusChart } from '@/components/dashboard/clientes-alle-st
 import { ClientesAlleTable } from '@/components/dashboard/clientes-alle-table'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchClientesAlle } from '@/lib/dashboard/fetch-clientes-alle'
-import { canManageClientesAlle, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
+import { canManageClientesAlle, canManageUsers, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 
 export default async function ClientesAllePage({
   searchParams,
@@ -13,10 +13,22 @@ export default async function ClientesAllePage({
   searchParams: { academia?: string }
 }) {
   const profile = await getCurrentUserProfile().catch(() => null)
+
+  // Página inteira restrita a Super Admin e Direção (pedido explícito do usuário) —
+  // reaproveita canManageUsers, o mesmo gate de visualização já usado em /academias,
+  // /usuarios e /auditoria, em vez de criar mais uma função com regra idêntica.
+  if (!profile || !canManageUsers(profile.role)) {
+    return (
+      <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 bg-amber-50/70 dark:bg-amber-500/10 p-6 text-sm font-medium text-amber-800 dark:text-amber-300">
+        Acesso restrito a Super Admin e Direção.
+      </div>
+    )
+  }
+
   const requestedAcademiaId = searchParams.academia ?? null
 
   const [clientes, academias] = await Promise.all([
-    profile ? fetchClientesAlle(profile, requestedAcademiaId) : Promise.resolve([]),
+    fetchClientesAlle(profile, requestedAcademiaId),
     fetchActiveAcademias(profile),
   ])
 
@@ -26,7 +38,8 @@ export default async function ClientesAllePage({
         <h2 className="page-title">Clientes Alle</h2>
         <p className="page-subtitle">
           Clientes da Alle Energia por academia — ativos (já assinaram o termo de adesão) e pendentes (ainda
-          faltando assinar).
+          faltando assinar). Acesso restrito a Super Admin e Direção; cadastro, edição e exclusão são exclusivos
+          de Super Admin.
         </p>
       </div>
 
@@ -37,10 +50,10 @@ export default async function ClientesAllePage({
       <ClientesAlleTable
         clientes={clientes}
         academias={academias}
-        editable={!!profile && canManageClientesAlle(profile.role)}
+        editable={canManageClientesAlle(profile.role)}
       />
 
-      {profile && canManageClientesAlle(profile.role) && (
+      {canManageClientesAlle(profile.role) && (
         <>
           <div>
             <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Cadastrar cliente</h3>
