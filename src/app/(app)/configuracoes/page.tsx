@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { AgregadorWebhookLogTable } from '@/components/dashboard/agregador-webhook-log-table'
+import { FinanceiroVisibilityToggle } from '@/components/dashboard/financeiro-visibility-toggle'
 import { IncluirStatusSecundariosToggle } from '@/components/dashboard/incluir-status-secundarios-toggle'
 import { ResetConversoesButton } from '@/components/dashboard/reset-conversoes-button'
 import { ScansWebhookLogTable } from '@/components/dashboard/scans-webhook-log-table'
@@ -12,6 +13,7 @@ import { fetchAgregadorWebhookLog } from '@/lib/dashboard/fetch-agregador-webhoo
 import { fetchAllAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchIncluirStatusSecundariosConversao } from '@/lib/dashboard/fetch-conversao-status-settings'
 import { fetchAutoSyncEnabled } from '@/lib/dashboard/fetch-sync-settings'
+import { fetchFinanceiroVisivelOutrosCargos } from '@/lib/dashboard/fetch-financeiro-visibility'
 import { fetchScansWebhookLog } from '@/lib/dashboard/fetch-scans-webhook-log'
 import { fetchSyncHistory } from '@/lib/dashboard/fetch-sync-history'
 import { fetchSyncedConversions } from '@/lib/dashboard/fetch-synced-conversions'
@@ -41,6 +43,7 @@ export default async function ConfiguracoesPage() {
     syncedConversions,
     autoSyncEnabled,
     incluirStatusSecundarios,
+    financeiroVisivelOutrosCargos,
     agregadorWebhookLog,
     scansWebhookLog,
   ] = await Promise.all([
@@ -49,6 +52,7 @@ export default async function ConfiguracoesPage() {
     fetchSyncedConversions(),
     fetchAutoSyncEnabled(),
     fetchIncluirStatusSecundariosConversao(),
+    fetchFinanceiroVisivelOutrosCargos(),
     fetchAgregadorWebhookLog(),
     fetchScansWebhookLog(),
   ])
@@ -112,6 +116,11 @@ export default async function ConfiguracoesPage() {
       <div>
         <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Contagem de conversões</h3>
         <IncluirStatusSecundariosToggle initialEnabled={incluirStatusSecundarios} />
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Visibilidade de páginas</h3>
+        <FinanceiroVisibilityToggle initialEnabled={financeiroVisivelOutrosCargos} />
       </div>
 
       <div>

@@ -6,6 +6,7 @@ import { WhatsappSupportButton } from '@/components/layout/whatsapp-support-butt
 import { ToastProvider } from '@/components/ui/toast'
 import { getSessionUserId } from '@/lib/auth/session'
 import { getCurrentUserProfile } from '@/lib/auth/profile'
+import { fetchFinanceiroVisivelOutrosCargos } from '@/lib/dashboard/fetch-financeiro-visibility'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   // O middleware (Edge runtime) só checa se existe um cookie de sessão — quem confirma
@@ -20,11 +21,20 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // essa segunda chamada não custa outra query); aqui só evita quebrar o Sidebar.
   const profile = await getCurrentUserProfile().catch(() => null)
 
+  // Super Admin nunca tem o link escondido, então nem consulta o toggle — só
+  // Direção/Gestor/Coordenador/Visualizador dependem dele (ver
+  // FinanceiroVisibilityToggle em /configuracoes e a mesma checagem em
+  // financeiro/page.tsx, que é quem de fato bloqueia o acesso direto pela URL;
+  // isso aqui só evita mostrar um link morto no menu).
+  const financeiroOculto =
+    !!profile && profile.role !== 'super_admin' && !(await fetchFinanceiroVisivelOutrosCargos())
+  const hiddenHrefs = financeiroOculto ? ['/financeiro'] : []
+
   return (
     <ToastProvider>
       <MobileNavProvider>
         <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
-          <Sidebar role={profile?.role ?? null} />
+          <Sidebar role={profile?.role ?? null} hiddenHrefs={hiddenHrefs} />
           <div className="flex min-w-0 flex-1 flex-col">
             <Topbar />
             <main className="flex-1 p-4 md:p-8">

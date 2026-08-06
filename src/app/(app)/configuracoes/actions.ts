@@ -66,6 +66,26 @@ export async function setIncluirStatusSecundariosConversao(enabled: boolean) {
   revalidatePath('/')
 }
 
+// Liga/desliga se Direção e Gestor enxergam /financeiro — Super Admin sempre vê,
+// independente disso (ver fetch-financeiro-visibility.ts). A leitura em si nunca
+// é cacheada (pool.query, não fetch — Next não guarda isso em cache nenhum), então
+// qualquer usuário já vê o valor atualizado na próxima navegação/reload sem
+// precisar disso; revalidamos só pra atualizar a tela de quem clicou no toggle.
+export async function setFinanceiroVisivelOutrosCargos(enabled: boolean) {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canManageConfiguracoes(profile.role)) {
+    throw new Error('Apenas Super Admin pode alterar essa configuração.')
+  }
+
+  await pool.query(
+    'update financeiro_visibility_settings set visivel_outros_cargos = $1, updated_at = now() where id = 1',
+    [enabled]
+  )
+
+  revalidatePath('/configuracoes')
+  revalidatePath('/financeiro')
+}
+
 export type ResetConversoesResult = {
   conversoesAneRemovidas: number
   diasManuaisZerados: number

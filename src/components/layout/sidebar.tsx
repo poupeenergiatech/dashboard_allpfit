@@ -32,11 +32,24 @@ function groupItems(items: NavItem[]): { group: NavGroup; items: NavItem[] }[] {
 }
 
 // basePath permite reusar o mesmo Sidebar/navegação na área autenticada real
-// ("") e na rota de prévia com dados fictícios ("/preview").
-export function Sidebar({ role, basePath = '' }: { role: UserRole | null; basePath?: string }) {
+// ("") e na rota de prévia com dados fictícios ("/preview"). hiddenHrefs esconde
+// itens além do filtro por role — hoje só /financeiro quando o Super Admin desliga
+// o toggle "Mostrar Financeiro pra Direção e Gestor" em /configuracoes (ver
+// AppLayout, que resolve isso a partir de fetchFinanceiroVisivelOutrosCargos).
+export function Sidebar({
+  role,
+  basePath = '',
+  hiddenHrefs = [],
+}: {
+  role: UserRole | null
+  basePath?: string
+  hiddenHrefs?: string[]
+}) {
   const pathname = usePathname()
   const { open, setOpen, desktopCollapsed, setDesktopCollapsed } = useMobileNav()
-  const items = NAV_ITEMS.filter((item) => !item.roles || (role && item.roles.includes(role)))
+  const items = NAV_ITEMS.filter(
+    (item) => (!item.roles || (role && item.roles.includes(role))) && !hiddenHrefs.includes(item.href)
+  )
   const groups = groupItems(items)
 
   function nav(collapsed: boolean, onNavigate?: () => void) {
