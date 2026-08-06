@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { pool } from '@/lib/db/pool'
 import { canManageMateriaisMarketing, getCurrentUserProfile } from '@/lib/auth/profile'
+import { fetchLinkPreviewImage } from '@/lib/dashboard/link-preview'
 
 function normalizeUrl(value: string): string {
   const trimmed = value.trim()
@@ -32,9 +33,14 @@ export async function createMaterial(formData: FormData) {
     throw new Error('Link inválido.')
   }
 
+  // Melhor esforço: extrai a imagem de prévia (og:image, ou thumbnail do YouTube) da
+  // própria URL cadastrada — nunca bloqueia o cadastro se isso falhar/der timeout
+  // (ver fetchLinkPreviewImage, que já engole qualquer erro e devolve null).
+  const imagemUrl = await fetchLinkPreviewImage(url)
+
   await pool.query(
-    `insert into materiais_marketing (titulo, url, descricao, created_by) values ($1, $2, $3, $4)`,
-    [titulo, url, descricao || null, profile.userId]
+    `insert into materiais_marketing (titulo, url, descricao, imagem_url, created_by) values ($1, $2, $3, $4, $5)`,
+    [titulo, url, descricao || null, imagemUrl, profile.userId]
   )
 
   revalidatePath('/central-marketing')

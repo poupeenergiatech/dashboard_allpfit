@@ -69,6 +69,7 @@ function AddMaterialModal({ open, onClose, onCreated }: { open: boolean; onClose
 
 function MaterialCard({ material, canManage }: { material: MaterialEntry; canManage: boolean }) {
   const [pending, startTransition] = useTransition()
+  const [imageFailed, setImageFailed] = useState(false)
   const { showToast } = useToast()
 
   function handleDelete() {
@@ -85,38 +86,60 @@ function MaterialCard({ material, canManage }: { material: MaterialEntry; canMan
     })
   }
 
+  const showImage = !!material.imagemUrl && !imageFailed
+
   return (
-    <div className="card-interactive group flex flex-col p-5">
-      <div className="flex items-start justify-between gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-300">
-          <Icon name="file" className="h-5 w-5" />
-        </span>
+    <div className="card-interactive group flex flex-col overflow-hidden">
+      {/* aspect-video pra todo card ficar com a mesma altura de banner, tenha
+          imagem de prévia extraída (ver link-preview.ts) ou não — sem isso, cards
+          com e sem imagem ficariam com alturas bem diferentes lado a lado na grid. */}
+      <div className="relative aspect-video w-full shrink-0 bg-brand-50 dark:bg-brand-500/10">
+        {showImage ? (
+          // Imagem vem de host externo arbitrário (og:image de qualquer site,
+          // thumbnail do YouTube) — não dá pra passar por next/image sem abrir a
+          // otimização pra qualquer domínio.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={material.imagemUrl!}
+            alt=""
+            loading="lazy"
+            onError={() => setImageFailed(true)}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <Icon name="file" className="h-9 w-9 text-brand-300 dark:text-brand-500/40" />
+          </div>
+        )}
+
         {canManage && (
           <button
             type="button"
             onClick={handleDelete}
             disabled={pending}
             title="Excluir material"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-slate-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:text-slate-600 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+            className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-slate-500 shadow hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:bg-slate-900/90 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400"
           >
             <Icon name="x-circle" className="h-4 w-4" />
           </button>
         )}
       </div>
 
-      <h3 className="mt-3 text-base font-bold text-slate-900 dark:text-white">{material.titulo}</h3>
-      {material.descricao && (
-        <p className="mt-1 line-clamp-3 text-sm text-slate-500 dark:text-slate-400">{material.descricao}</p>
-      )}
+      <div className="flex flex-1 flex-col p-5">
+        <h3 className="text-base font-bold text-slate-900 dark:text-white">{material.titulo}</h3>
+        {material.descricao && (
+          <p className="mt-1 line-clamp-3 text-sm text-slate-500 dark:text-slate-400">{material.descricao}</p>
+        )}
 
-      <div className="mt-4 flex flex-1 items-end justify-between gap-2">
-        <p className="text-xs text-slate-400 dark:text-slate-500">
-          {formatDate(material.createdAt)}
-          {material.createdByEmail ? ` · ${material.createdByEmail}` : ''}
-        </p>
-        <a href={material.url} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-sm shrink-0">
-          Abrir
-        </a>
+        <div className="mt-4 flex flex-1 items-end justify-between gap-2">
+          <p className="text-xs text-slate-400 dark:text-slate-500">
+            {formatDate(material.createdAt)}
+            {material.createdByEmail ? ` · ${material.createdByEmail}` : ''}
+          </p>
+          <a href={material.url} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-sm shrink-0">
+            Abrir
+          </a>
+        </div>
       </div>
     </div>
   )

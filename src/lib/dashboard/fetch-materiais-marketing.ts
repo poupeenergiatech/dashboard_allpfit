@@ -7,6 +7,7 @@ export type MaterialEntry = {
   titulo: string
   url: string
   descricao: string | null
+  imagemUrl: string | null
   createdByEmail: string | null
   createdAt: string
 }
@@ -20,10 +21,11 @@ export async function fetchMateriais(): Promise<MaterialEntry[]> {
     titulo: string
     url: string
     descricao: string | null
+    imagem_url: string | null
     created_by_email: string | null
     created_at: string
   }>(
-    `select m.id, m.titulo, m.url, m.descricao, u.email as created_by_email, m.created_at
+    `select m.id, m.titulo, m.url, m.descricao, m.imagem_url, u.email as created_by_email, m.created_at
      from materiais_marketing m
      left join users u on u.id = m.created_by
      order by m.created_at desc`
@@ -34,6 +36,7 @@ export async function fetchMateriais(): Promise<MaterialEntry[]> {
     titulo: row.titulo,
     url: row.url,
     descricao: row.descricao,
+    imagemUrl: row.imagem_url,
     createdByEmail: row.created_by_email,
     createdAt: row.created_at,
   }))
