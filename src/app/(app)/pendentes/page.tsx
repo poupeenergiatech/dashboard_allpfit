@@ -1,5 +1,5 @@
 import { AcademiaFilterLinks } from '@/components/dashboard/academia-filter-links'
-import { AlunosPendentesTable } from '@/components/dashboard/alunos-pendentes-table'
+import { AlunosPendentesPorUnidade } from '@/components/dashboard/alunos-pendentes-por-unidade'
 import { PendenciaSection } from '@/components/dashboard/pendencia-section'
 import { PendenciasPorAcademiaChart } from '@/components/dashboard/pendencias-por-academia-chart'
 import { PendenciasTotalCard } from '@/components/dashboard/pendencias-total-card'
@@ -35,8 +35,8 @@ export default async function PendentesPage({
     // Leitura do histórico é liberada pra qualquer role (mesmo padrão de dados
     // manuais, ver canManagePendencias) — só lançar/editar fica restrito.
     profile ? fetchPendenciasHistory(profile, requestedAcademiaId) : Promise.resolve([]),
-    // Lista nominal — só Gestor (ver canViewAlunosPendentesList); pra quem não
-    // tem acesso, nem busca no banco.
+    // Lista nominal, agrupada por unidade — Super Admin, Direção e Gestor (ver
+    // canViewAlunosPendentesList); pra quem não tem acesso, nem busca no banco.
     profile && canViewAlunosPendentesList(profile.role)
       ? fetchClientesAllePendentes(profile, requestedAcademiaId)
       : Promise.resolve([]),
@@ -61,8 +61,8 @@ export default async function PendentesPage({
 
       {profile && canViewAlunosPendentesList(profile.role) && (
         <div>
-          <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Alunos pendentes de assinatura</h3>
-          <AlunosPendentesTable clientes={alunosPendentes} />
+          <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Alunos pendentes por unidade</h3>
+          <AlunosPendentesPorUnidade clientes={alunosPendentes} />
         </div>
       )}
 

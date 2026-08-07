@@ -187,15 +187,16 @@ export function canManageTreinamentosWebinar(role: UserRole): boolean {
   return role === 'super_admin'
 }
 
-// /pendentes: lista nominal (nome/telefone/academia) dos clientes_alle com
-// status 'pendente' — além dos números agregados que qualquer role já vê
-// nessa página. Exclusivo de Gestor (pedido explícito do usuário): Super
-// Admin e Direção já têm a mesma lista, com edição, em /clientes-alle;
-// Coordenador e Visualizador continuam só com os agregados. Sempre em modo
-// leitura em /pendentes, mesmo pra quem teria canManageClientesAlle noutra
-// tela — ver AlunosPendentesTable.
+// /pendentes: lista nominal (nome/telefone/academia), agrupada por unidade,
+// dos clientes_alle com status 'pendente' — além dos números agregados que
+// qualquer role já vê nessa página. Super Admin, Direção e Gestor (pedido
+// explícito do usuário — Super Admin/Direção já tinham a mesma informação,
+// com edição, em /clientes-alle, mas pediram essa visão agrupada aqui também
+// por conveniência); Coordenador e Visualizador continuam só com os
+// agregados. Sempre em modo leitura em /pendentes, mesmo pra quem teria
+// canManageClientesAlle noutra tela — ver AlunosPendentesPorUnidade.
 export function canViewAlunosPendentesList(role: UserRole): boolean {
-  return role === 'gestor'
+  return role === 'super_admin' || role === 'direcao' || role === 'gestor'
 }
 
 // Sem RLS, essa é a barreira real de escopo por academia — antes o Postgres do
