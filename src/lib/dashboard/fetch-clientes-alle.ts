@@ -62,3 +62,44 @@ export async function fetchClientesAlle(
     createdAt: row.created_at,
   }))
 }
+
+// Só os pendentes (status = 'pendente') — usada em /pendentes pra Gestor ver a
+// lista nominal de quem falta assinar (ver canViewAlunosPendentesList em
+// profile.ts), sem dar acesso à tela inteira de /clientes-alle. Mesmo escopo de
+// academia de fetchClientesAlle, mas filtra no SQL em vez de buscar tudo e
+// descartar em JS.
+export async function fetchClientesAllePendentes(
+  profile: UserProfile,
+  requestedAcademiaId?: string | null
+): Promise<ClienteAlle[]> {
+  const scopedAcademiaId = scopeAcademiaId(profile, requestedAcademiaId ?? null)
+
+  const { rows } = await pool.query<{
+    id: string
+    academia_id: string
+    academia_nome: string
+    nome: string
+    telefone: string | null
+    email: string | null
+    status: ClienteAlleStatus
+    created_at: string
+  }>(
+    `select ca.id, ca.academia_id, a.nome as academia_nome, ca.nome, ca.telefone, ca.email, ca.status, ca.created_at
+     from clientes_alle ca
+     join academias a on a.id = ca.academia_id
+     where ca.status = 'pendente' and ($1::uuid is null or ca.academia_id = $1)
+     order by ca.nome`,
+    [scopedAcademiaId]
+  )
+
+  return rows.map((row) => ({
+    id: row.id,
+    academiaId: row.academia_id,
+    academiaNome: row.academia_nome,
+    nome: row.nome,
+    telefone: row.telefone,
+    email: row.email,
+    status: row.status,
+    createdAt: row.created_at,
+  }))
+}
