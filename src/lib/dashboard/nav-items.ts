@@ -65,7 +65,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: 'Auditoria de Login',
     href: '/auditoria',
-    roles: ['super_admin', 'direcao'],
+    roles: ['super_admin'],
     icon: 'shield',
     hint: 'Histórico de tentativas de login — quem entrou, quando, de onde, e falhas de autenticação.',
     group: 'SISTEMA',

@@ -80,14 +80,24 @@ export function canManagePendencias(role: UserRole): boolean {
   return role === 'super_admin'
 }
 
-// Gate de VISUALIZAÇÃO das páginas /academias, /usuarios, /auditoria e
-// /clientes-alle — Super Admin e Direção enxergam essas telas por inteiro. Escrita
-// em cada uma é mais restrita: ver canManageAcademias (academias),
-// canManageClientesAlle (clientes-alle) e canManageUserAccount (usuarios — única
-// das quatro onde Direção também tem escrita, com a exceção de contas Super
-// Admin); /auditoria é só leitura pra quem entra, não tem ação de escrita nenhuma.
+// Gate de VISUALIZAÇÃO das páginas /academias, /usuarios e /clientes-alle —
+// Super Admin e Direção enxergam essas telas por inteiro. Escrita em cada uma
+// é mais restrita: ver canManageAcademias (academias), canManageClientesAlle
+// (clientes-alle) e canManageUserAccount (usuarios — única das três onde
+// Direção também tem escrita, com a exceção de contas Super Admin). /auditoria
+// usa canAccessAuditoria abaixo, não esta função (pedido explícito do
+// usuário: log de login é exclusivo de Super Admin).
 export function canManageUsers(role: UserRole): boolean {
   return role === 'super_admin' || role === 'direcao'
+}
+
+// /auditoria (histórico de tentativas de login, sucesso e falha) — exclusivo
+// de Super Admin. Direção tinha acesso de leitura antes (reaproveitava
+// canManageUsers, como as outras telas de gestão); removido a pedido
+// explícito do usuário, junto com /configuracoes que já era super_admin-only
+// (ver canManageConfiguracoes).
+export function canAccessAuditoria(role: UserRole): boolean {
+  return role === 'super_admin'
 }
 
 // Cadastrar/editar/ativar-desativar/excluir academias, vincular/remover nomes
