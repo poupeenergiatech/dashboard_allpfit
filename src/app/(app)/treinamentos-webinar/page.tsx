@@ -1,4 +1,4 @@
-import { createTreinamentoWebinar, deleteTreinamentoWebinar } from './actions'
+import { createTreinamentoWebinar, deleteTreinamentoWebinar, updateTreinamentoWebinar } from './actions'
 import { MateriaisGrid } from '@/components/dashboard/materiais-grid'
 import { canManageTreinamentosWebinar, getCurrentUserProfile } from '@/lib/auth/profile'
 import { fetchTreinamentosWebinar } from '@/lib/dashboard/fetch-treinamentos-webinar'
@@ -18,6 +18,7 @@ export default async function TreinamentosWebinarPage() {
         materiais={materiais}
         canManage={!!profile && canManageTreinamentosWebinar(profile.role)}
         onCreate={createTreinamentoWebinar}
+        onUpdate={updateTreinamentoWebinar}
         onDelete={deleteTreinamentoWebinar}
       />
     </div>
