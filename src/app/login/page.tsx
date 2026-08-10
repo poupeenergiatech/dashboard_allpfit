@@ -1,9 +1,10 @@
+import Link from 'next/link'
 import { login } from './actions'
 
 export default function LoginPage({
   searchParams,
 }: {
-  searchParams: { error?: string }
+  searchParams: { error?: string; sucesso?: string }
 }) {
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-4 dark:bg-slate-950">
@@ -38,9 +39,17 @@ export default function LoginPage({
             </div>
 
             <div>
-              <label htmlFor="password" className="field-label">
-                Senha
-              </label>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label htmlFor="password" className="field-label mb-0">
+                  Senha
+                </label>
+                <Link
+                  href="/esqueci-senha"
+                  className="text-xs font-medium text-brand-600 hover:underline dark:text-brand-400"
+                >
+                  Esqueci minha senha
+                </Link>
+              </div>
               <input
                 id="password"
                 name="password"
@@ -55,6 +64,12 @@ export default function LoginPage({
             {searchParams.error && (
               <p className="rounded-xl border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-600 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
                 {searchParams.error}
+              </p>
+            )}
+
+            {searchParams.sucesso && (
+              <p className="rounded-xl border border-emerald-100 bg-emerald-50 px-3.5 py-2.5 text-sm font-medium text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
+                {searchParams.sucesso}
               </p>
             )}
 

@@ -4,7 +4,9 @@ import { SESSION_COOKIE_NAME } from './cookie'
 // /preview é uma rota de demonstração com dados fictícios (sem banco real) — só existe
 // fora de produção, pra nunca virar um jeito de pular a autenticação de verdade.
 const PUBLIC_PATHS =
-  process.env.NODE_ENV === 'production' ? ['/login', '/auth'] : ['/login', '/auth', '/preview']
+  process.env.NODE_ENV === 'production'
+    ? ['/login', '/auth', '/esqueci-senha', '/redefinir-senha']
+    : ['/login', '/auth', '/preview', '/esqueci-senha', '/redefinir-senha']
 
 // O middleware roda em Edge runtime, que não suporta conexão TCP crua — `pg` não
 // funciona aqui. Por isso essa checagem é só "existe um cookie de sessão?" (redireciona
