@@ -31,10 +31,20 @@ function defaultCustomRange(): DateRange {
   return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) }
 }
 
-export function GestoresPanelDashboard({ academias }: { academias: Academia[] }) {
+export function GestoresPanelDashboard({
+  academias,
+  initialAcademiaId = null,
+}: {
+  academias: Academia[]
+  // Unidade vinculada de quem está vendo (coordenador) — filtro parte já
+  // selecionado nela a cada carregamento da página, em vez de "Todas as
+  // academias" (ver comentário em gestores/page.tsx). null pra quem enxerga
+  // todas as academias, que continua vendo o painel sem filtro por padrão.
+  initialAcademiaId?: string | null
+}) {
   const [period, setPeriod] = useState<GestoresPanelPeriod>('7dias')
   const [customRange, setCustomRange] = useState<DateRange | null>(null)
-  const [academiaId, setAcademiaId] = useState<string | null>(null)
+  const [academiaId, setAcademiaId] = useState<string | null>(initialAcademiaId)
 
   function changePeriod(next: GestoresPanelPeriod) {
     setPeriod(next)

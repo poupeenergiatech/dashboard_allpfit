@@ -1,6 +1,6 @@
 import { GestoresPanelDashboard } from '@/components/dashboard/gestores-panel-dashboard'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
-import { canAccessPainelGestores, getCurrentUserProfile } from '@/lib/auth/profile'
+import { canAccessPainelGestores, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
 
 export default async function GestoresPage() {
   const profile = await getCurrentUserProfile().catch(() => null)
@@ -19,5 +19,12 @@ export default async function GestoresPage() {
   // também, não só a do usuário.
   const academias = await fetchActiveAcademias()
 
-  return <GestoresPanelDashboard academias={academias} />
+  // Coordenador continua vendo o painel inteiro (comparativo entre todas as
+  // unidades, ver canAccessPainelGestores) — só o filtro parte pré-selecionado na
+  // própria unidade a cada carregamento da página, em vez de "Todas as
+  // academias", pedido explícito do usuário. Nada trava: o select continua
+  // habilitado, dá pra trocar pra outra unidade ou "Todas" a qualquer momento.
+  const initialAcademiaId = seesAllAcademias(profile.role) ? null : profile.academiaId
+
+  return <GestoresPanelDashboard academias={academias} initialAcademiaId={initialAcademiaId} />
 }
