@@ -87,9 +87,17 @@ export async function fetchGestoresPanel(
     { rows: treinadas },
     { rows: pendentes },
   ] = await Promise.all([
-    pool.query<{ id: string; nome: string; total_alunos: number; conversoes_manual_ajuste_total: number }>(
-      `select id, nome, total_alunos, conversoes_manual_ajuste_total from academias
-       where ativo = true and ($1::uuid is null or id = $1)
+    // Sem filtro de ativo aqui (diferente da versão antiga desta query): os totais do
+    // topo (totals, abaixo) precisam somar atividade de academias já desativadas
+    // também, mesmo padrão do dashboard principal (fetch-funnel-counts.ts, que nunca
+    // filtra por ativo) — sem isso, scans/conversões reais de uma unidade que fechou
+    // depois de gerar movimento continuavam contando na home mas somem daqui,
+    // divergindo os dois totais pro mesmo filtro. `ativo` vem junto pra filtrar
+    // ranking/pódio/treinamento (rows, abaixo) só entre as academias que ainda
+    // competem — não faz sentido rankear ou treinar uma unidade fechada.
+    pool.query<{ id: string; nome: string; total_alunos: number; conversoes_manual_ajuste_total: number; ativo: boolean }>(
+      `select id, nome, total_alunos, conversoes_manual_ajuste_total, ativo from academias
+       where ($1::uuid is null or id = $1)
        order by nome`,
       [academiaId]
     ),
@@ -241,7 +249,7 @@ export async function fetchGestoresPanel(
     pendentes.map((r) => [r.academia_id, (r.quantidade_manual ?? 0) + r.clientes_pendentes])
   )
 
-  const rows: GestoresPanelRow[] = academias.map((a) => {
+  function buildRow(a: (typeof academias)[number]): GestoresPanelRow {
     // conversoes_manual_ajuste_total não tem data própria (não é um lançamento
     // diário) — só entra na soma na visão "Todo período", mesma regra de
     // fetch-academia-performance.ts.
@@ -271,32 +279,41 @@ export async function fetchGestoresPanel(
       treinada: treinadaByAcademia.get(a.id) ?? false,
       pendentesAssinatura: pendentesByAcademia.get(a.id) ?? 0,
     }
-  })
+  }
 
+  // rows (ranking/pódio/gráficos) só com academias ativas — uma unidade fechada não
+  // compete nem precisa de treinamento.
+  const rows: GestoresPanelRow[] = academias.filter((a) => a.ativo).map(buildRow)
   rows.sort((a, b) => b.totalConversoes - a.totalConversoes)
 
-  const totals = rows.reduce(
+  // pendentesAssinatura/academiasTreinadas/academiasTotal descrevem o conjunto que
+  // ainda compete — somam só as ativas (rows), igual sempre foi.
+  const totalsAtivos = rows.reduce(
+    (acc, r) => ({
+      pendentesAssinatura: acc.pendentesAssinatura + r.pendentesAssinatura,
+      academiasTreinadas: acc.academiasTreinadas + (r.treinada ? 1 : 0),
+      academiasTotal: acc.academiasTotal + 1,
+    }),
+    { pendentesAssinatura: 0, academiasTreinadas: 0, academiasTotal: 0 }
+  )
+
+  // Scans/conversões/Clientes Alle ativos somam TODAS as academias com atividade no
+  // período, inclusive as desativadas (ver comentário na query de `academias` acima)
+  // — é isso que faz esses totais baterem com os cards equivalentes do dashboard
+  // principal (Scans QR, Total de clientes convertidos, Clientes Alle ativos) pro
+  // mesmo filtro de período.
+  const totalsAtividade = academias.map(buildRow).reduce(
     (acc, r) => ({
       totalScansPeriodo: acc.totalScansPeriodo + r.totalScansPeriodo,
       totalScansHoje: acc.totalScansHoje + r.totalScansHoje,
       totalConversoes: acc.totalConversoes + r.totalConversoes,
       totalConversoesHoje: acc.totalConversoesHoje + r.totalConversoesHoje,
       clientesAlleAtivos: acc.clientesAlleAtivos + r.clientesAlleAtivos,
-      pendentesAssinatura: acc.pendentesAssinatura + r.pendentesAssinatura,
-      academiasTreinadas: acc.academiasTreinadas + (r.treinada ? 1 : 0),
-      academiasTotal: acc.academiasTotal + 1,
     }),
-    {
-      totalScansPeriodo: 0,
-      totalScansHoje: 0,
-      totalConversoes: 0,
-      totalConversoesHoje: 0,
-      clientesAlleAtivos: 0,
-      pendentesAssinatura: 0,
-      academiasTreinadas: 0,
-      academiasTotal: 0,
-    }
+    { totalScansPeriodo: 0, totalScansHoje: 0, totalConversoes: 0, totalConversoesHoje: 0, clientesAlleAtivos: 0 }
   )
+
+  const totals = { ...totalsAtividade, ...totalsAtivos }
 
   return { days: range?.days ?? null, rows, totals }
 }
