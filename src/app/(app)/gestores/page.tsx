@@ -26,5 +26,11 @@ export default async function GestoresPage() {
   // habilitado, dá pra trocar pra outra unidade ou "Todas" a qualquer momento.
   const initialAcademiaId = seesAllAcademias(profile.role) ? null : profile.academiaId
 
-  return <GestoresPanelDashboard academias={academias} initialAcademiaId={initialAcademiaId} />
+  return (
+    <GestoresPanelDashboard
+      academias={academias}
+      initialAcademiaId={initialAcademiaId}
+      isSuperAdmin={profile.role === 'super_admin'}
+    />
+  )
 }

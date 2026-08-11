@@ -24,10 +24,14 @@ export default async function AcademiasPage() {
     <div className="space-y-6">
       <div>
         <h2 className="page-title">Academias</h2>
-        <p className="page-subtitle">
-          Unidades cadastradas — visualização liberada a Super Admin e Direção; cadastro, edição e exclusão são
-          exclusivos de Super Admin.
-        </p>
+        {/* Descrição visível só pro Super Admin, pedido explícito do usuário — editable
+            já equivale a super_admin aqui (ver canManageAcademias). */}
+        {editable && (
+          <p className="page-subtitle">
+            Unidades cadastradas — visualização liberada a Super Admin e Direção; cadastro, edição e exclusão são
+            exclusivos de Super Admin.
+          </p>
+        )}
       </div>
 
       <AcademiasTable academias={academias} editable={editable} />

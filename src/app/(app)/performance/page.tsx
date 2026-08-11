@@ -59,7 +59,10 @@ export default async function PerformancePage({
     <div className="space-y-6">
       <div>
         <h2 className="page-title">Performance por academia</h2>
-        <p className="page-subtitle">Totais de contatos e conversões por unidade, no período selecionado.</p>
+        {/* Descrição visível só pro Super Admin, pedido explícito do usuário. */}
+        {isSuperAdmin && (
+          <p className="page-subtitle">Totais de contatos e conversões por unidade, no período selecionado.</p>
+        )}
       </div>
 
       <PeriodFilterLinks

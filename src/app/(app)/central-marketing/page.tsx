@@ -10,10 +10,13 @@ export default async function CentralMarketingPage() {
     <div className="space-y-4">
       <div>
         <h2 className="page-title">Central de Marketing</h2>
-        <p className="page-subtitle">
-          Materiais de marketing — divulgação, campanhas e conteúdo de apoio pra vendas. Link externo, aberto numa
-          nova aba.
-        </p>
+        {/* Descrição visível só pro Super Admin, pedido explícito do usuário. */}
+        {!!profile && profile.role === 'super_admin' && (
+          <p className="page-subtitle">
+            Materiais de marketing — divulgação, campanhas e conteúdo de apoio pra vendas. Link externo, aberto numa
+            nova aba.
+          </p>
+        )}
       </div>
 
       <MateriaisGrid materiais={materiais} canManage={!!profile && canManageMateriaisMarketing(profile.role)} />

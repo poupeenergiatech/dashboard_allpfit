@@ -21,11 +21,14 @@ export default async function ConvertidosPage({
     <div className="space-y-6">
       <div>
         <h2 className="page-title">Clientes convertidos</h2>
-        <p className="page-subtitle">
-          Convertidos pela Ane (sync do Alle Documentos) e manualmente (cadastro/CSV de Clientes Alle), com nome e
-          telefone — inclui quem da Ane ainda está sem unidade vinculada, quando o filtro é &quot;Todas as
-          academias&quot;.
-        </p>
+        {/* Descrição visível só pro Super Admin, pedido explícito do usuário. */}
+        {profile?.role === 'super_admin' && (
+          <p className="page-subtitle">
+            Convertidos pela Ane (sync do Alle Documentos) e manualmente (cadastro/CSV de Clientes Alle), com nome e
+            telefone — inclui quem da Ane ainda está sem unidade vinculada, quando o filtro é &quot;Todas as
+            academias&quot;.
+          </p>
+        )}
       </div>
 
       <AcademiaFilterLinks basePath="/convertidos" academias={academias} academiaId={requestedAcademiaId} />

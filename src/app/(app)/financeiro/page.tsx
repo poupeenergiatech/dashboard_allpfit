@@ -31,7 +31,8 @@ export default async function FinanceiroPage() {
     <div className="space-y-6">
       <div>
         <h2 className="page-title">Financeiro</h2>
-        <p className="page-subtitle">Valor mensal por unidade, histórico e notas fiscais.</p>
+        {/* Descrição visível só pro Super Admin, pedido explícito do usuário. */}
+        {profile.role === 'super_admin' && <p className="page-subtitle">Valor mensal por unidade, histórico e notas fiscais.</p>}
       </div>
 
       <FinanceiroContent

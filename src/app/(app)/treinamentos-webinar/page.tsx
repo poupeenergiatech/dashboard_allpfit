@@ -11,7 +11,10 @@ export default async function TreinamentosWebinarPage() {
     <div className="space-y-4">
       <div>
         <h2 className="page-title">Treinamentos e Webinar</h2>
-        <p className="page-subtitle">Treinamentos, aulas e gravações de webinar — link externo, aberto numa nova aba.</p>
+        {/* Descrição visível só pro Super Admin, pedido explícito do usuário. */}
+        {!!profile && profile.role === 'super_admin' && (
+          <p className="page-subtitle">Treinamentos, aulas e gravações de webinar — link externo, aberto numa nova aba.</p>
+        )}
       </div>
 
       <MateriaisGrid

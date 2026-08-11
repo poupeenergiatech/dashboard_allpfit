@@ -46,10 +46,13 @@ export default async function PendentesPage({
     <div className="space-y-6">
       <div>
         <h2 className="page-title">Pendentes de assinatura</h2>
-        <p className="page-subtitle">
-          Quantos alunos estão com assinatura de termo pendente, por academia — soma o lançamento manual com os
-          clientes de status &quot;Pendente&quot; em /clientes-alle.
-        </p>
+        {/* Descrição visível só pro Super Admin, pedido explícito do usuário. */}
+        {profile?.role === 'super_admin' && (
+          <p className="page-subtitle">
+            Quantos alunos estão com assinatura de termo pendente, por academia — soma o lançamento manual com os
+            clientes de status &quot;Pendente&quot; em /clientes-alle.
+          </p>
+        )}
       </div>
 
       <AcademiaFilterLinks basePath="/pendentes" academias={academias} academiaId={requestedAcademiaId} />

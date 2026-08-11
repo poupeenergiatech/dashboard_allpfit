@@ -34,6 +34,7 @@ function defaultCustomRange(): DateRange {
 export function GestoresPanelDashboard({
   academias,
   initialAcademiaId = null,
+  isSuperAdmin = false,
 }: {
   academias: Academia[]
   // Unidade vinculada de quem está vendo (coordenador) — filtro parte já
@@ -41,6 +42,7 @@ export function GestoresPanelDashboard({
   // academias" (ver comentário em gestores/page.tsx). null pra quem enxerga
   // todas as academias, que continua vendo o painel sem filtro por padrão.
   initialAcademiaId?: string | null
+  isSuperAdmin?: boolean
 }) {
   const [period, setPeriod] = useState<GestoresPanelPeriod>('7dias')
   const [customRange, setCustomRange] = useState<DateRange | null>(null)
@@ -60,10 +62,13 @@ export function GestoresPanelDashboard({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="page-title">Dashboard</h2>
-          <p className="page-subtitle">
-            Resumo comparativo entre as unidades — performance, scans, conversões e treinamento, tudo num só lugar
-            pra facilitar a competição.
-          </p>
+          {/* Descrição visível só pro Super Admin, pedido explícito do usuário. */}
+          {isSuperAdmin && (
+            <p className="page-subtitle">
+              Resumo comparativo entre as unidades — performance, scans, conversões e treinamento, tudo num só lugar
+              pra facilitar a competição.
+            </p>
+          )}
         </div>
         <LiveIndicator lastUpdatedAt={lastUpdatedAt} />
       </div>

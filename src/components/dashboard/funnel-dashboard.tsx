@@ -37,7 +37,8 @@ export function FunnelDashboard({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="page-title">Funil de conversão</h2>
-          <p className="page-subtitle">Do QR code na academia até a assinatura do contrato.</p>
+          {/* Descrição visível só pro Super Admin, pedido explícito do usuário. */}
+          {isSuperAdmin && <p className="page-subtitle">Do QR code na academia até a assinatura do contrato.</p>}
         </div>
         <LiveIndicator lastUpdatedAt={lastUpdatedAt} />
       </div>

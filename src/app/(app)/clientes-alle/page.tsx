@@ -36,11 +36,14 @@ export default async function ClientesAllePage({
     <div className="space-y-6">
       <div>
         <h2 className="page-title">Clientes Alle</h2>
-        <p className="page-subtitle">
-          Clientes da Alle Energia por academia — ativos (já assinaram o termo de adesão) e pendentes (ainda
-          faltando assinar). Acesso restrito a Super Admin e Direção; cadastro, edição e exclusão são exclusivos
-          de Super Admin.
-        </p>
+        {/* Descrição visível só pro Super Admin, pedido explícito do usuário. */}
+        {profile.role === 'super_admin' && (
+          <p className="page-subtitle">
+            Clientes da Alle Energia por academia — ativos (já assinaram o termo de adesão) e pendentes (ainda
+            faltando assinar). Acesso restrito a Super Admin e Direção; cadastro, edição e exclusão são exclusivos
+            de Super Admin.
+          </p>
+        )}
       </div>
 
       <AcademiaFilterLinks basePath="/clientes-alle" academias={academias} academiaId={requestedAcademiaId} />

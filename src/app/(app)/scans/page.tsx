@@ -60,7 +60,10 @@ export default async function ScansPage({
     <div className="space-y-6">
       <div>
         <h2 className="page-title">Scans QR</h2>
-        <p className="page-subtitle">Detalhe completo dos scans lançados via RPA, por dia e por academia.</p>
+        {/* Descrição visível só pro Super Admin, pedido explícito do usuário. */}
+        {profile?.role === 'super_admin' && (
+          <p className="page-subtitle">Detalhe completo dos scans lançados via RPA, por dia e por academia.</p>
+        )}
       </div>
 
       <PeriodFilterLinks

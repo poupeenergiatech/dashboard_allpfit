@@ -11,11 +11,9 @@ export default async function TreinadasPage() {
     <div className="space-y-4">
       <div>
         <h2 className="page-title">Academias treinadas</h2>
-        <p className="page-subtitle">
-          {canEdit
-            ? 'Marque as unidades que já passaram pelo treinamento.'
-            : 'Somente Super Admin pode alterar esse status.'}
-        </p>
+        {/* Descrição visível só pro Super Admin, pedido explícito do usuário — canEdit
+            já equivale a super_admin aqui (ver canManageTraining). */}
+        {canEdit && <p className="page-subtitle">Marque as unidades que já passaram pelo treinamento.</p>}
       </div>
 
       <TreinadasGrid rows={rows} canEdit={canEdit} />

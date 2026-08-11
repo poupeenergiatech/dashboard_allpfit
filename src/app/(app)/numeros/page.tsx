@@ -13,9 +13,12 @@ export default async function NumerosPage() {
           WhatsApp <span className="mx-1 text-zinc-300 dark:text-zinc-700">/</span> Unidades
         </p>
         <h2 className="page-title">Contatos por unidade</h2>
-        <p className="page-subtitle">
-          Quais números de WhatsApp estão vinculados a cada unidade, status de conexão e volume de contatos do dia.
-        </p>
+        {/* Descrição visível só pro Super Admin, pedido explícito do usuário. */}
+        {profile?.role === 'super_admin' && (
+          <p className="page-subtitle">
+            Quais números de WhatsApp estão vinculados a cada unidade, status de conexão e volume de contatos do dia.
+          </p>
+        )}
       </div>
 
       <NumerosList rows={rows} />
