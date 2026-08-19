@@ -81,7 +81,11 @@ const PLACE_COLORS: Record<PodiumMetricKey, PlaceColor[]> = {
 // conversões — "resultado final" do funil, ver funnel-card.tsx) pra dar um
 // diferencial rápido entre os 3 cards, que de resto têm o mesmo layout e eram
 // fáceis de confundir à primeira vista.
-const METRICS: Record<
+// Ordem de exibição dos 3 pódios na página — exportado pra quem precisa
+// iterar as métricas na mesma ordem sem duplicar o array (ver export-podios.ts).
+export const PODIUM_METRIC_KEYS: PodiumMetricKey[] = ['totalContatos', 'totalConversoes', 'totalScansPeriodo']
+
+export const PODIUM_METRICS: Record<
   PodiumMetricKey,
   { title: string; unitLabel: string; icon: 'chat' | 'trophy' | 'qr'; badge: string; topBorder: string }
 > = {
@@ -116,10 +120,17 @@ const METRICS: Record<
 // original, não dá mais pra confiar na ordenação que já vem de fetchGestoresPanel,
 // já que agora duas das três métricas (contatos, scans) não são o critério de
 // ordenação padrão do servidor.
+// Mesmo critério de ordenação usado nos 3 cards do pódio (mais saturado no
+// 1º lugar) — exportado pra export-podios.ts gerar CSV/PDF com a MESMA
+// classificação que aparece na tela, em vez de reimplementar o sort lá.
+export function rankRowsByMetric(rows: GestoresPanelRow[], metricKey: PodiumMetricKey): GestoresPanelRow[] {
+  return [...rows].sort((a, b) => b[metricKey] - a[metricKey])
+}
+
 export function GestoresPodium({ rows, metricKey }: { rows: GestoresPanelRow[]; metricKey: PodiumMetricKey }) {
-  const metric = METRICS[metricKey]
+  const metric = PODIUM_METRICS[metricKey]
   const colors = PLACE_COLORS[metricKey]
-  const sorted = [...rows].sort((a, b) => b[metricKey] - a[metricKey])
+  const sorted = rankRowsByMetric(rows, metricKey)
   const top3 = sorted.slice(0, 3)
   const rest = sorted.slice(3)
 

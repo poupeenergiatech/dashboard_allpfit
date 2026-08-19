@@ -7,6 +7,7 @@ import { GestoresPodium } from './gestores-podium'
 import { GestoresRankingTable } from './gestores-ranking-table'
 import { GestoresScansChart } from './gestores-scans-chart'
 import { LiveIndicator } from './live-indicator'
+import { exportPodiosCsv, exportPodiosPdf } from '@/lib/dashboard/export-podios'
 import { useGestoresPanelData } from '@/lib/dashboard/use-gestores-panel-data'
 import type { GestoresPanelPeriod } from '@/lib/dashboard/fetch-gestores-panel'
 import type { Academia, DateRange } from '@/lib/dashboard/types'
@@ -56,6 +57,20 @@ export function GestoresPanelDashboard({
   }
 
   const { data, loading, error, lastUpdatedAt } = useGestoresPanelData(period, customRange, academiaId)
+
+  // Rótulo do período pro cabeçalho do export (CSV/PDF) — mesmo texto que já
+  // aparece nos botões de filtro, com as datas reais quando "Escolher datas".
+  // Pódio não é escopado por academia (ver GestoresPodium/fetchGestoresPanel:
+  // o filtro de academia aqui só troca quem entra no ranking, não muda a
+  // pergunta "quem é o 1º/2º/3º"), mas o nome da unidade filtrada entra no
+  // rótulo pra deixar claro no arquivo que o ranking foi calculado só sobre
+  // ela quando for o caso.
+  const periodLabel =
+    period === 'personalizado' && customRange
+      ? `${customRange.from} a ${customRange.to}`
+      : (PERIODS.find((p) => p.value === period)?.label ?? period)
+  const academiaLabel = academiaId ? (academias.find((a) => a.id === academiaId)?.nome ?? 'Unidade filtrada') : 'Todas as academias'
+  const exportLabel = `${periodLabel} · ${academiaLabel}`
 
   return (
     <div className="space-y-5">
@@ -166,6 +181,27 @@ export function GestoresPanelDashboard({
                 ranking das demais academias rolável dentro do próprio card,
                 então a tabela completa abaixo (com colunas sem pódio, como
                 Alunos/Treinada) continua existindo sem sobreposição de conteúdo. */}
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Pódios por unidade</p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => exportPodiosCsv(data.rows, exportLabel)}
+                  disabled={data.rows.length === 0}
+                  className="btn-secondary btn-sm disabled:opacity-50"
+                >
+                  Exportar CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void exportPodiosPdf(data.rows, exportLabel)}
+                  disabled={data.rows.length === 0}
+                  className="btn-secondary btn-sm disabled:opacity-50"
+                >
+                  Exportar PDF
+                </button>
+              </div>
+            </div>
             <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
               <GestoresPodium rows={data.rows} metricKey="totalContatos" />
               <GestoresPodium rows={data.rows} metricKey="totalConversoes" />
