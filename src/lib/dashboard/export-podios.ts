@@ -1,10 +1,14 @@
 'use client'
 
-// Export dos 3 pódios de /gestores (contatos, conversões, scans) em CSV e PDF —
-// mesma classificação por academia que aparece na tela (ver rankRowsByMetric em
-// gestores-podium.tsx), então o arquivo exportado sempre bate com o que o
-// usuário está vendo no momento do clique (inclusive o filtro de academia e
-// período já aplicados, já que `rows` chega filtrado do painel).
+// Export do pódio de conversões de /gestores em CSV e PDF — mesma classificação
+// por academia que aparece na tela (ver rankRowsByMetric em gestores-podium.tsx),
+// então o arquivo exportado sempre bate com o que o usuário está vendo no
+// momento do clique (inclusive o filtro de academia e período já aplicados, já
+// que `rows` chega filtrado do painel).
+//
+// Antes exportava os 3 pódios (contatos/conversões/scans); a pedido do
+// usuário, o relatório ficou só com o de conversões — os outros dois
+// continuam visíveis na tela, só não entram mais no CSV/PDF.
 //
 // jsPDF + jspdf-autotable NÃO entram no import estático deste arquivo (só o
 // PDF precisa deles, CSV não) — import() dinâmico dentro de exportPodiosPdf
@@ -13,10 +17,12 @@
 // `import type` continua estático (apagado na compilação, não vira import de
 // verdade) só pra anotar o parâmetro dos helpers de desenho abaixo.
 import { downloadCsv, toCsv } from './csv'
-import { PODIUM_METRIC_KEYS, PODIUM_METRICS, rankRowsByMetric } from '@/components/dashboard/gestores-podium'
+import { rankRowsByMetric } from '@/components/dashboard/gestores-podium'
 import type { GestoresPanelRow } from './fetch-gestores-panel'
 import type { PodiumMetricKey } from '@/components/dashboard/gestores-podium'
 import type { jsPDF } from 'jspdf'
+
+const METRIC_KEY: PodiumMetricKey = 'totalConversoes'
 
 function timestamp(): string {
   return new Date().toISOString().slice(0, 10)
@@ -29,71 +35,44 @@ function ordinal(n: number): string {
 // ---------------------------------------------------------------------------
 // CSV — sem como desenhar um pódio de verdade em texto plano, mas a forma
 // (não só a lista corrida) reaproveita a mesma ideia: uma seção "PÓDIO (TOP 3)"
-// em formato largo, 1º/2º/3º lugar lado a lado por métrica — o mais perto que
-// uma planilha chega de mostrar os 3 degraus que aparecem na tela — e uma
-// seção separada só pro 4º lugar em diante, do mesmo jeito que o card na tela
-// separa o pódio da lista rolável abaixo dele.
+// e uma seção separada só pro 4º lugar em diante, do mesmo jeito que o card na
+// tela separa o pódio da lista rolável abaixo dele.
 // ---------------------------------------------------------------------------
 export function exportPodiosCsv(rows: GestoresPanelRow[], periodLabel: string): void {
-  const podioHeader = [
-    'Métrica',
-    '1º Lugar — Academia',
-    '1º Lugar — Valor',
-    '2º Lugar — Academia',
-    '2º Lugar — Valor',
-    '3º Lugar — Academia',
-    '3º Lugar — Valor',
-  ]
-  const podioRows = PODIUM_METRIC_KEYS.map((metricKey) => {
-    const metric = PODIUM_METRICS[metricKey]
-    const top3 = rankRowsByMetric(rows, metricKey).slice(0, 3)
-    const label = metric.title.replace('Pódio de ', '')
-    const cells: (string | number | null)[] = [label]
-    for (let i = 0; i < 3; i++) {
-      cells.push(top3[i]?.nome ?? '', top3[i] ? top3[i][metricKey] : '')
-    }
-    return cells
-  })
-
-  const restHeader = ['Métrica', 'Colocação', 'Academia', 'Valor']
-  const restRows = PODIUM_METRIC_KEYS.flatMap((metricKey) => {
-    const metric = PODIUM_METRICS[metricKey]
-    const label = metric.title.replace('Pódio de ', '')
-    return rankRowsByMetric(rows, metricKey)
-      .slice(3)
-      .map((row, i) => [label, ordinal(i + 4), row.nome, row[metricKey]])
-  })
+  const ranked = rankRowsByMetric(rows, METRIC_KEY)
+  const top3 = ranked.slice(0, 3)
+  const rest = ranked.slice(3)
 
   const csvRows: (string | number | null)[][] = [
-    ['Pódios — Dashboard de Gestores'],
+    ['Pódio de Conversões — Dashboard de Gestores'],
     ['Período', periodLabel],
     [],
     ['PÓDIO (TOP 3)'],
-    podioHeader,
-    ...podioRows,
+    ['Colocação', 'Academia', 'Conversões'],
+    ...top3.map((row, i) => [ordinal(i + 1), row.nome, row[METRIC_KEY]]),
   ]
-  if (restRows.length > 0) {
-    csvRows.push([], ['DEMAIS COLOCAÇÕES (4º em diante)'], restHeader, ...restRows)
+  if (rest.length > 0) {
+    csvRows.push(
+      [],
+      ['DEMAIS COLOCAÇÕES (4º em diante)'],
+      ['Colocação', 'Academia', 'Conversões'],
+      ...rest.map((row, i) => [ordinal(i + 4), row.nome, row[METRIC_KEY]])
+    )
   }
 
-  downloadCsv(`podios-gestores-${timestamp()}.csv`, toCsv(csvRows))
+  downloadCsv(`podio-conversoes-gestores-${timestamp()}.csv`, toCsv(csvRows))
 }
 
 // ---------------------------------------------------------------------------
 // PDF — desenha o pódio de verdade (barras em degrau, 2º/1º/3º da esquerda pra
 // direita, igual gestores-podium.tsx) em vez de só uma tabela de ranking.
-// Cores por métrica são o hex real das mesmas 3 escalas usadas na tela
-// (brand/accent em tailwind.config.ts; violet é a escala padrão do Tailwind,
-// não customizada), do mais saturado (1º) ao mais claro (3º) — mesma leitura
-// visual de "mais saturado = melhor colocação" que os cards da tela.
+// Cores são o hex real da escala accent usada na tela (accent-600/400/300 em
+// tailwind.config.ts), do mais saturado (1º) ao mais claro (3º) — mesma
+// leitura visual de "mais saturado = melhor colocação" do card da tela.
 // ---------------------------------------------------------------------------
-const PDF_PLACE_COLORS: Record<PodiumMetricKey, [string, string, string]> = {
-  totalContatos: ['#7b00ae', '#ab5ccb', '#c894dd'], // brand-600 / 400 / 300
-  totalConversoes: ['#ef6700', '#fea25c', '#ffc294'], // accent-600 / 400 / 300
-  totalScansPeriodo: ['#7c3aed', '#a78bfa', '#c4b5fd'], // violet-600 / 400 / 300
-}
+const PLACE_COLORS: [string, string, string] = ['#ef6700', '#fea25c', '#ffc294'] // accent-600 / 400 / 300
 
-const BADGE_FILL: [number, number, number] = [51, 65, 85] // slate-700 — mesmo badge escuro nos 3 pódios, contraste garantido com número branco independente da cor da barra
+const BADGE_FILL: [number, number, number] = [51, 65, 85] // slate-700 — badge escuro, contraste garantido com número branco independente da cor da barra
 
 function hexToRgb(hex: string): [number, number, number] {
   const v = hex.replace('#', '')
@@ -124,10 +103,9 @@ function drawPlaceCard(
     color: string
     rank: number
     row: GestoresPanelRow
-    metricKey: PodiumMetricKey
   }
 ): void {
-  const { x, width, topY, barHeight, baseline, color, rank, row, metricKey } = opts
+  const { x, width, topY, barHeight, baseline, color, rank, row } = opts
   const centerX = x + width / 2
   const [r, g, b] = hexToRgb(color)
 
@@ -148,7 +126,7 @@ function drawPlaceCard(
   // Valor (fonte maior, negrito) logo abaixo do nome.
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(11)
-  doc.text(row[metricKey].toLocaleString('pt-BR'), centerX, topY + 9.5 + nameHeight + 4, { align: 'center' })
+  doc.text(row[METRIC_KEY].toLocaleString('pt-BR'), centerX, topY + 9.5 + nameHeight + 4, { align: 'center' })
 
   // Barra (riser) — cantos levemente arredondados, mesma cor do avatar.
   doc.setFillColor(r, g, b)
@@ -168,13 +146,12 @@ export async function exportPodiosPdf(rows: GestoresPanelRow[], periodLabel: str
   const [{ jsPDF: JsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')])
   const doc = new JsPDF()
   const pageWidth = doc.internal.pageSize.getWidth()
-  const pageHeight = doc.internal.pageSize.getHeight()
   const margin = 14
   let cursorY = 16
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(16)
-  doc.text('Pódios — Dashboard de Gestores', pageWidth / 2, cursorY, { align: 'center' })
+  doc.text('Pódio de Conversões — Dashboard de Gestores', pageWidth / 2, cursorY, { align: 'center' })
   cursorY += 7
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
@@ -183,6 +160,10 @@ export async function exportPodiosPdf(rows: GestoresPanelRow[], periodLabel: str
   doc.setTextColor(0)
   cursorY += 10
 
+  const ranked = rankRowsByMetric(rows, METRIC_KEY)
+  const top3 = ranked.slice(0, 3)
+  const rest = ranked.slice(3)
+
   const barWidth = 46
   const gap = 8
   const podiumWidth = barWidth * 3 + gap * 2
@@ -190,65 +171,40 @@ export async function exportPodiosPdf(rows: GestoresPanelRow[], periodLabel: str
   const nameBlockHeight = 24
   const barHeights = [32, 22, 16] // altura do 1º/2º/3º, igual à hierarquia visual da tela
 
-  for (const metricKey of PODIUM_METRIC_KEYS) {
-    const metric = PODIUM_METRICS[metricKey]
-    const colors = PDF_PLACE_COLORS[metricKey]
-    const ranked = rankRowsByMetric(rows, metricKey)
-    const top3 = ranked.slice(0, 3)
-    const rest = ranked.slice(3)
+  const topY = cursorY
+  const baseline = topY + nameBlockHeight + barHeights[0]
 
-    // Bloco inteiro (título + 3 cards) não cabendo mais na página → pula pra
-    // próxima antes de começar, senão o pódio fica cortado ao meio.
-    const blockHeight = 10 + nameBlockHeight + barHeights[0] + 8
-    if (cursorY + blockHeight > pageHeight - margin) {
-      doc.addPage()
-      cursorY = 16
-    }
-
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(12)
-    doc.text(metric.title, margin, cursorY)
-    cursorY += 6
-
-    const topY = cursorY
-    const baseline = topY + nameBlockHeight + barHeights[0]
-
-    // Ordem visual igual à tela: 2º à esquerda, 1º no centro (mais alto), 3º
-    // à direita — não a ordem de colocação (1,2,3).
-    const visualOrder = [1, 0, 2]
-    visualOrder.forEach((rankIndex, slot) => {
-      const row = top3[rankIndex]
-      if (!row) return
-      const x = startX + slot * (barWidth + gap)
-      drawPlaceCard(doc, {
-        x,
-        width: barWidth,
-        topY,
-        barHeight: barHeights[rankIndex],
-        baseline,
-        color: colors[rankIndex],
-        rank: rankIndex + 1,
-        row,
-        metricKey,
-      })
+  // Ordem visual igual à tela: 2º à esquerda, 1º no centro (mais alto), 3º à
+  // direita — não a ordem de colocação (1,2,3).
+  const visualOrder = [1, 0, 2]
+  visualOrder.forEach((rankIndex, slot) => {
+    const row = top3[rankIndex]
+    if (!row) return
+    const x = startX + slot * (barWidth + gap)
+    drawPlaceCard(doc, {
+      x,
+      width: barWidth,
+      topY,
+      barHeight: barHeights[rankIndex],
+      baseline,
+      color: PLACE_COLORS[rankIndex],
+      rank: rankIndex + 1,
+      row,
     })
+  })
 
-    cursorY = baseline + 8
+  cursorY = baseline + 8
 
-    if (rest.length > 0) {
-      autoTable(doc, {
-        startY: cursorY,
-        head: [['Colocação', 'Academia', metric.unitLabel[0].toUpperCase() + metric.unitLabel.slice(1)]],
-        body: rest.map((row, i) => [ordinal(i + 4), row.nome, row[metricKey].toLocaleString('pt-BR')]),
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: hexToRgb(colors[0]) },
-        margin: { left: margin, right: margin },
-      })
-      cursorY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10
-    } else {
-      cursorY += 6
-    }
+  if (rest.length > 0) {
+    autoTable(doc, {
+      startY: cursorY,
+      head: [['Colocação', 'Academia', 'Conversões']],
+      body: rest.map((row, i) => [ordinal(i + 4), row.nome, row[METRIC_KEY].toLocaleString('pt-BR')]),
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: hexToRgb(PLACE_COLORS[0]) },
+      margin: { left: margin, right: margin },
+    })
   }
 
-  doc.save(`podios-gestores-${timestamp()}.pdf`)
+  doc.save(`podio-conversoes-gestores-${timestamp()}.pdf`)
 }
