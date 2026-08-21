@@ -8,9 +8,11 @@ import { canManageManualData, getCurrentUserProfile } from '@/lib/auth/profile'
 // academia certa quando o sync veio "sem unidade", seja pra corrigir nome/telefone
 // depois do fato (o sync já insere com `on conflict (alle_documento_id) do
 // nothing`, então corrigir a origem no Alle Documentos e sincronizar de novo NÃO
-// atualiza esse registro). A query exige `cliente_alle_id is null` — depois que o
-// convertido é vinculado a um clientes_alle (ver definirStatusClienteConvertido),
-// corrigir esses campos é em /clientes-alle, esse registro já tem vida própria lá.
+// atualiza esse registro). Se já estiver vinculado a um clientes_alle (ver
+// definirStatusClienteConvertido), edita o registro vinculado em vez da linha de
+// conversions — é ele que fetchClientesConvertidos usa como fonte de nome/telefone/
+// academia depois do vínculo, e é ele que /clientes-alle também edita, então os dois
+// lugares continuam mostrando o mesmo dado.
 export async function updateClienteConvertidoAcademia(conversionId: string, formData: FormData) {
   const profile = await getCurrentUserProfile()
   if (!profile || !canManageManualData(profile.role)) {
@@ -25,19 +27,37 @@ export async function updateClienteConvertidoAcademia(conversionId: string, form
     throw new Error('Academia é obrigatória.')
   }
 
-  const { rowCount } = await pool.query(
-    `update conversions
-     set academia_id = $1, nome = $2, telefone = $3
-     where id = $4 and cliente_alle_id is null`,
-    [academiaId, nome || null, telefone || null, conversionId]
+  const { rows } = await pool.query<{ cliente_alle_id: string | null }>(
+    'select cliente_alle_id from conversions where id = $1',
+    [conversionId]
   )
-  if (rowCount === 0) {
-    throw new Error('Convertido não encontrado ou já vinculado a um cliente Alle — edite em Clientes Alle.')
+  const conversion = rows[0]
+  if (!conversion) {
+    throw new Error('Convertido não encontrado.')
+  }
+
+  if (conversion.cliente_alle_id) {
+    // clientes_alle.nome é not null — diferente da linha de conversions (onde nome
+    // pode ficar vazio até alguém preencher), aqui precisa de um valor.
+    if (!nome) {
+      throw new Error('Nome é obrigatório.')
+    }
+    await pool.query(
+      `update clientes_alle set academia_id = $1, nome = $2, telefone = $3, updated_at = now() where id = $4`,
+      [academiaId, nome, telefone || null, conversion.cliente_alle_id]
+    )
+  } else {
+    await pool.query(
+      `update conversions set academia_id = $1, nome = $2, telefone = $3 where id = $4`,
+      [academiaId, nome || null, telefone || null, conversionId]
+    )
   }
 
   revalidatePath('/convertidos')
+  revalidatePath('/clientes-alle')
   revalidatePath('/')
   revalidatePath('/performance')
+  revalidatePath('/pendentes')
 }
 
 export type ClienteConvertidoStatusEditavel =
@@ -49,16 +69,15 @@ export type ClienteConvertidoStatusEditavel =
 
 // Marca o termo de adesão do convertido (Ativo/Pendente de assinatura/Sem
 // informação/Com impedimentos/Falta documentos — igual o status de clientes_alle,
-// ver ClienteAlleStatus) — cria (ou
-// reaproveita, se já existir por academia+nome, mesmo upsert do CSV de
-// clientes_alle) o registro em clientes_alle com esse status, e grava o vínculo em
-// conversions.cliente_alle_id pra não deixar fazer isso duas vezes pra mesma
-// conversão. Exige academia definida (não dá pra criar um cliente Alle sem
-// academia) e nome preenchido — resolve isso primeiro via
-// updateClienteConvertidoAcademia acima. Reprovado fica de fora de propósito: usa
-// reprovarClienteConvertido abaixo, que não depende de academia/nome preenchidos.
-// Depois de vinculado, mudar o status de novo é em /clientes-alle — esse registro
-// já existe lá com vida própria.
+// ver ClienteAlleStatus). Na primeira vez, cria (ou reaproveita, se já existir por
+// academia+nome, mesmo upsert do CSV de clientes_alle) o registro em clientes_alle
+// com esse status, e grava o vínculo em conversions.cliente_alle_id. Exige academia
+// definida (não dá pra criar um cliente Alle sem academia) e nome preenchido —
+// resolve isso primeiro via updateClienteConvertidoAcademia acima. Reprovado fica de
+// fora de propósito: usa reprovarClienteConvertido abaixo, que não depende de
+// academia/nome preenchidos. Chamadas seguintes (já vinculado) só trocam o status do
+// clientes_alle vinculado — é o mesmo efeito de trocar o status em /clientes-alle,
+// só que sem sair de /convertidos.
 export async function definirStatusClienteConvertido(
   conversionId: string,
   status: ClienteConvertidoStatusEditavel
@@ -80,7 +99,15 @@ export async function definirStatusClienteConvertido(
     throw new Error('Convertido não encontrado.')
   }
   if (conversion.cliente_alle_id) {
-    throw new Error('Esse convertido já foi marcado como cliente Alle — edite o status em Clientes Alle.')
+    await pool.query(`update clientes_alle set status = $1, updated_at = now() where id = $2`, [
+      status,
+      conversion.cliente_alle_id,
+    ])
+    revalidatePath('/convertidos')
+    revalidatePath('/clientes-alle')
+    revalidatePath('/')
+    revalidatePath('/pendentes')
+    return
   }
   if (!conversion.academia_id) {
     throw new Error('Defina a academia antes de marcar o termo de adesão.')

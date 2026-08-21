@@ -34,15 +34,23 @@ export type ClienteConvertido = {
 // Depois de vinculada (cliente_alle_id preenchido, ver definirStatusClienteConvertido
 // em convertidos/actions.ts), o status vem do clientes_alle vinculado — qualquer um
 // dos status de ClienteAlleStatus, o que estiver lá agora, não um valor fixo — editar
-// esse cliente em /clientes-alle depois de vinculado reflete aqui também. 'reprovado' do
+// esse cliente em /clientes-alle depois de vinculado reflete aqui também (e vice-versa:
+// updateClienteConvertidoAcademia/definirStatusClienteConvertido editam o mesmo
+// registro vinculado quando chamados a partir de /convertidos). 'reprovado' do
 // lado 'ane' (antes de vincular) vem de conversions.status (coluna própria — ver
 // migration 0020) em vez de um clientes_alle: reprovar não devia depender de
 // academia/nome estarem preenchidos, que é o caso de sem-unidade.
 //
-// academiaId/academiaNome vêm null só do lado 'ane' — clientes_alle.academia_id é
-// not null no schema, então 'manual' nunca cai nesse caso. Só aparece pra quem
-// enxerga todas as academias: scopeAcademiaId sempre resolve pra uma academia real
-// quando o role é escopado, então esses registros null nunca entram no filtro dele.
+// nome/telefone/academia também vêm do clientes_alle vinculado quando ele existe
+// (coalesce abaixo) — depois do vínculo é ele a fonte de verdade (é o que as duas
+// actions acima editam), a linha de conversions fica só como o registro original do
+// sync/import que gerou o vínculo.
+//
+// academiaId/academiaNome vêm null só do lado 'ane' sem academia nem vínculo —
+// clientes_alle.academia_id é not null no schema, então 'manual' nunca cai nesse
+// caso. Só aparece pra quem enxerga todas as academias: scopeAcademiaId sempre
+// resolve pra uma academia real quando o role é escopado, então esses registros
+// null nunca entram no filtro dele.
 export async function fetchClientesConvertidos(
   profile: UserProfile,
   requestedAcademiaId?: string | null
@@ -59,7 +67,11 @@ export async function fetchClientesConvertidos(
     status: 'ativo' | 'pendente' | 'reprovado' | 'sem_informacao' | 'com_impedimentos' | 'falta_documentos' | null
     created_at: string
   }>(
-    `select c.id, 'ane' as origem, c.academia_id, a.nome as academia_nome, c.nome, c.telefone,
+    `select c.id, 'ane' as origem,
+            coalesce(linked.academia_id, c.academia_id) as academia_id,
+            coalesce(linked_academia.nome, a.nome) as academia_nome,
+            coalesce(linked.nome, c.nome) as nome,
+            coalesce(linked.telefone, c.telefone) as telefone,
             case
               when c.cliente_alle_id is not null then linked.status
               when c.status = 'reprovado' then 'reprovado'
@@ -69,7 +81,8 @@ export async function fetchClientesConvertidos(
      from conversions c
      left join academias a on a.id = c.academia_id
      left join clientes_alle linked on linked.id = c.cliente_alle_id
-     where ($1::uuid is null or c.academia_id = $1)
+     left join academias linked_academia on linked_academia.id = linked.academia_id
+     where ($1::uuid is null or coalesce(linked.academia_id, c.academia_id) = $1)
      union all
      select ca.id, 'manual' as origem, ca.academia_id, a.nome as academia_nome, ca.nome, ca.telefone,
             ca.status, ca.created_at

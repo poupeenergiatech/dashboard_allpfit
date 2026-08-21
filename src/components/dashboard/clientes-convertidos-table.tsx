@@ -296,12 +296,15 @@ export function ClientesConvertidosTable({
                             value={c.status as ClienteConvertidoStatusEditavel}
                             onChangeStatus={(status) => onSetStatusManual(c.id, status)}
                           />
-                        ) : c.status !== null ? (
-                          // 'ane' já vinculada a um clientes_alle (ver definirStatusClienteConvertido) — o
-                          // status real é desse registro; editar de novo é em /clientes-alle.
-                          <StatusBadge status={c.status} />
                         ) : c.academiaId ? (
-                          <StatusSelect value={null} onChangeStatus={(status) => onSetStatusAne(c.id, status)} />
+                          // 'ane' com academia definida: mesmo select tanto antes quanto depois de
+                          // vinculada a um clientes_alle (ver definirStatusClienteConvertido) — trocar o
+                          // status aqui atualiza o registro vinculado direto, sem precisar ir em
+                          // /clientes-alle.
+                          <StatusSelect
+                            value={c.status as ClienteConvertidoStatusEditavel | null}
+                            onChangeStatus={(status) => onSetStatusAne(c.id, status)}
+                          />
                         ) : (
                           <span className="text-xs text-slate-400 dark:text-slate-500" title="Defina a academia antes de marcar o termo de adesão.">
                             —
@@ -312,7 +315,7 @@ export function ClientesConvertidosTable({
                     {editable && (
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3 text-xs font-medium">
-                          {c.origem === 'ane' && c.status === null && (
+                          {c.origem === 'ane' && c.status !== 'reprovado' && (
                             <button
                               type="button"
                               onClick={() => setEditingId(c.id)}
@@ -386,36 +389,6 @@ export function ClientesConvertidosTable({
         </div>
       )}
     </div>
-  )
-}
-
-function StatusBadge({ status }: { status: ClienteConvertidoStatusEditavel }) {
-  if (status === 'ativo') {
-    return (
-      <span className="badge bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
-        Cliente Alle ativo
-      </span>
-    )
-  }
-  if (status === 'pendente') {
-    return <span className="badge bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">Pendente</span>
-  }
-  if (status === 'com_impedimentos') {
-    return (
-      <span className="badge bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400">
-        Com impedimentos
-      </span>
-    )
-  }
-  if (status === 'falta_documentos') {
-    return (
-      <span className="badge bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-400">
-        Falta documentos
-      </span>
-    )
-  }
-  return (
-    <span className="badge bg-slate-100 dark:bg-slate-700/40 text-slate-600 dark:text-slate-300">Sem informação</span>
   )
 }
 
@@ -518,10 +491,10 @@ function ConfirmActionButton({
   )
 }
 
-// Disponível pra qualquer linha 'ane' ainda não vinculada a um clientes_alle
-// (status null — nem reprovada, nem com termo de adesão definido, ver
-// definirStatusClienteConvertido). Depois de vinculada, corrigir nome/telefone é em
-// /clientes-alle — esse registro já tem vida própria lá.
+// Disponível pra qualquer linha 'ane' não reprovada — tanto antes quanto depois de
+// vinculada a um clientes_alle (ver definirStatusClienteConvertido): onUpdate
+// (updateClienteConvertidoAcademia) decide sozinho se edita a linha de conversions
+// ou o clientes_alle vinculado.
 function ClienteConvertidoEditRow({
   cliente,
   academias,
