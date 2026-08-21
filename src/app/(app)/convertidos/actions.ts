@@ -46,6 +46,17 @@ export async function updateClienteConvertidoAcademia(conversionId: string, form
       `update clientes_alle set academia_id = $1, nome = $2, telefone = $3, updated_at = now() where id = $4`,
       [academiaId, nome, telefone || null, conversion.cliente_alle_id]
     )
+    // Propaga pra conversions também (pode haver mais de uma linha 'ane' vinculada
+    // ao mesmo clientes_alle — ver o "reaproveita" em definirStatusClienteConvertido
+    // abaixo). Sem isso, conversions.telefone fica com o valor antigo, pré-edição —
+    // invisível em qualquer listagem (que agora mostra o telefone novo, vindo do
+    // clientes_alle) mas ainda "ocupando" o número antigo pro cheque de duplicado em
+    // createClienteAlle/importClientesAlleCsv (clientes-alle/actions.ts): um telefone
+    // fantasma que bloqueia cadastro sem aparecer em busca nenhuma.
+    await pool.query(
+      `update conversions set academia_id = $1, nome = $2, telefone = $3 where cliente_alle_id = $4`,
+      [academiaId, nome, telefone || null, conversion.cliente_alle_id]
+    )
   } else {
     await pool.query(
       `update conversions set academia_id = $1, nome = $2, telefone = $3 where id = $4`,

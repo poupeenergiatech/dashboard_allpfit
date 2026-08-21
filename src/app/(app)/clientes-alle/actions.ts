@@ -103,7 +103,21 @@ export async function updateClienteAlle(clienteId: string, formData: FormData) {
     throw new Error('Cliente não encontrado.')
   }
 
+  // Se esse cliente Alle veio de (ou foi depois vinculado a) uma conversão da Ane
+  // (conversions.cliente_alle_id, ver definirStatusClienteConvertido em
+  // convertidos/actions.ts), propaga academia/nome/telefone pra lá também — sem
+  // isso, conversions.telefone fica com o valor antigo (pré-edição), que some de
+  // toda a UI (fetchClientesConvertidos passa a mostrar o telefone novo, vindo
+  // daqui) mas continua "ocupando" o número antigo pro cheque de duplicado em
+  // createClienteAlle/importClientesAlleCsv — um telefone fantasma que bloqueia
+  // cadastro sem aparecer em busca nenhuma.
+  await pool.query(
+    `update conversions set academia_id = $1, nome = $2, telefone = $3 where cliente_alle_id = $4`,
+    [academiaId, nome, telefone || null, clienteId]
+  )
+
   revalidatePath('/clientes-alle')
+  revalidatePath('/convertidos')
   revalidatePath('/')
   revalidatePath('/pendentes')
 }
