@@ -31,7 +31,7 @@ function StatBlock({
           {formatCentavos(valorCentavos)}
         </p>
         <p className="mt-1.5 text-xs font-medium text-slate-400 dark:text-slate-500">
-          {quantidadeConversoes} {quantidadeConversoes === 1 ? 'conversão' : 'conversões'} no mês
+          {quantidadeConversoes} {quantidadeConversoes === 1 ? 'cliente ativado' : 'clientes ativados'} no mês
         </p>
       </div>
       <span
@@ -81,7 +81,7 @@ export function FinanceiroValorMensalCards({
         <div>
           <p className="panel-title">Valor mensal por unidade</p>
           <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {formatCompetencia(atuais[0].ano, atuais[0].mes)} · conversões do mês x{' '}
+            {formatCompetencia(atuais[0].ano, atuais[0].mes)} · clientes ativados no mês x{' '}
             {formatCentavos(atuais[0].valorPorConversaoCentavos)} cada
           </p>
         </div>

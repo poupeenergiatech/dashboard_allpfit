@@ -6,7 +6,7 @@ import { pool } from '@/lib/db/pool'
 import { canManageNotasFiscais, getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
 import { deleteNotaFiscalPdf, keyFromNotaFiscalUrl, uploadNotaFiscalPdf } from '@/lib/storage/s3'
 import type { NotaFiscalTipo } from '@/lib/dashboard/fetch-notas-fiscais'
-import { fetchClientesConvertidosDoMes, type ClientesConvertidosDoMes } from '@/lib/dashboard/fetch-clientes-convertidos-mes'
+import { fetchClientesConvertidosDoMes, type ClienteConvertidoDoMes } from '@/lib/dashboard/fetch-clientes-convertidos-mes'
 
 const MAX_SIZE_BYTES = 10 * 1024 * 1024 // 10MB — nota fiscal em PDF não costuma passar disso.
 
@@ -107,7 +107,7 @@ export async function listarClientesConvertidosDoMes(
   academiaId: string,
   ano: number,
   mes: number
-): Promise<ClientesConvertidosDoMes> {
+): Promise<ClienteConvertidoDoMes[]> {
   const profile = await getCurrentUserProfile()
   if (!profile || profile.role !== 'super_admin') {
     throw new Error('Sem permissão para ver os clientes convertidos.')

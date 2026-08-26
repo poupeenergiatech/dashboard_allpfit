@@ -15,6 +15,11 @@ export type ValorMensalUnidade = {
   academiaNome: string
   ano: number
   mes: number
+  // Quantidade de clientes que viraram 'ativo' PELA PRIMEIRA VEZ nesse mês
+  // específico (ver clientes_alle_status_history e fetch-financeiro-valor-mensal.ts)
+  // — diferente do "conversão" usado no resto do app (dashboard, /gestores,
+  // /performance), que não exige status ativo. Só aqui em /financeiro esse nome
+  // tem esse sentido mais restrito.
   quantidadeConversoes: number
   valorPorConversaoCentavos: number
   valorTotalCentavos: number

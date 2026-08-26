@@ -68,7 +68,8 @@ export function FinanceiroValorMensalHistoricoTable({
           {comparar && <span className="font-normal text-slate-400 dark:text-slate-500"> · coluna extra: {comparar.nome}</span>}
         </p>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Conversões daquele mês específico x valor por conversão vigente na época.
+          Clientes que viraram ativos naquele mês específico (1ª vez de cada um, nunca de novo se saírem e
+          voltarem) x valor por conversão vigente na época.
         </p>
       </div>
       <div className="overflow-x-auto">

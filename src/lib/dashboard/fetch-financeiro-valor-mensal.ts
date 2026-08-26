@@ -1,6 +1,6 @@
 import { pool } from '@/lib/db/pool'
 import { scopeAcademiaId, type UserProfile } from '@/lib/auth/profile'
-import { fetchAcademiaPerformance } from './fetch-academia-performance'
+import { periodRange } from './period'
 import { VALOR_POR_CONVERSAO_CENTAVOS, type ValorMensalUnidade } from './financeiro-valor-mensal'
 
 function pad2(n: number): string {
@@ -15,16 +15,52 @@ function monthBounds(ano: number, mes: number): { from: string; to: string } {
 }
 
 // Recalcula (upsert) o valor mensal de cada academia no escopo do profile, pra um
-// ano/mês específico — reusa fetchAcademiaPerformance (mesma contagem de conversões
-// Ane + manual do resto do app), escopado só pro intervalo daquele mês, nunca o
-// histórico inteiro (é isso que torna o cálculo "único a cada mês").
+// ano/mês específico. Diferente do resto do app (dashboard, /gestores,
+// /performance — que continuam contando "conversão" como Ane + manual, sem exigir
+// status ativo), o financeiro é a ÚNICA tela onde "conversão" quer dizer
+// especificamente "virou cliente Alle ATIVO", contado só uma vez na vida, no mês
+// da 1ª ativação (pedido explícito do usuário — ver clientes_alle_status_history,
+// migration 0035). Por isso não reusa fetchAcademiaPerformance (que soma origem
+// Ane + manual, sem olhar status): a fonte aqui é só a tabela de histórico.
 async function recalcularMes(profile: UserProfile, ano: number, mes: number): Promise<void> {
   const { from, to } = monthBounds(ano, mes)
-  const performance = await fetchAcademiaPerformance(profile, 'personalizado', { from, to })
+  const { from: fromTs, toExclusive } = periodRange('personalizado', { from, to })
+  const scopedAcademiaId = scopeAcademiaId(profile, null)
+
+  const [{ rows: academias }, { rows: ativacoes }] = await Promise.all([
+    pool.query<{ id: string }>(
+      scopedAcademiaId
+        ? 'select id from academias where ativo = true and id = $1'
+        : 'select id from academias where ativo = true',
+      scopedAcademiaId ? [scopedAcademiaId] : []
+    ),
+    // "1ª ativação": min(changed_at) por cliente entre as linhas com status='ativo'
+    // do histórico, filtrado pro mês — se o cliente saiu e voltou a ficar ativo
+    // depois, essa 2ª (ou 3ª...) transição não entra aqui, só a primeira de todas
+    // (min por cliente_alle_id, calculado ANTES do filtro de mês).
+    pool.query<{ academia_id: string; quantidade: string }>(
+      `select ca.academia_id, count(*) as quantidade
+       from (
+         select cliente_alle_id, min(changed_at) as ativado_em
+         from clientes_alle_status_history
+         where status = 'ativo'
+         group by cliente_alle_id
+       ) primeira_ativacao
+       join clientes_alle ca on ca.id = primeira_ativacao.cliente_alle_id
+       where primeira_ativacao.ativado_em >= $1
+         and primeira_ativacao.ativado_em < $2
+         and ($3::uuid is null or ca.academia_id = $3)
+       group by ca.academia_id`,
+      [fromTs, toExclusive, scopedAcademiaId]
+    ),
+  ])
+
+  const quantidadeByAcademia = new Map(ativacoes.map((r) => [r.academia_id, Number(r.quantidade)]))
 
   await Promise.all(
-    performance.map((academia) => {
-      const valorTotalCentavos = academia.totalConversoes * VALOR_POR_CONVERSAO_CENTAVOS
+    academias.map(({ id: academiaId }) => {
+      const quantidadeConversoes = quantidadeByAcademia.get(academiaId) ?? 0
+      const valorTotalCentavos = quantidadeConversoes * VALOR_POR_CONVERSAO_CENTAVOS
       return pool.query(
         `insert into financeiro_valor_mensal_unidade
            (academia_id, competencia_ano, competencia_mes, quantidade_conversoes, valor_por_conversao_centavos, valor_total_centavos, calculado_em)
@@ -35,7 +71,7 @@ async function recalcularMes(profile: UserProfile, ano: number, mes: number): Pr
            valor_por_conversao_centavos = excluded.valor_por_conversao_centavos,
            valor_total_centavos = excluded.valor_total_centavos,
            calculado_em = excluded.calculado_em`,
-        [academia.academiaId, ano, mes, academia.totalConversoes, VALOR_POR_CONVERSAO_CENTAVOS, valorTotalCentavos]
+        [academiaId, ano, mes, quantidadeConversoes, VALOR_POR_CONVERSAO_CENTAVOS, valorTotalCentavos]
       )
     })
   )

@@ -54,7 +54,7 @@ export function FinanceiroDetalhamentoUnidadeTable({ rows }: { rows: ValorMensal
         <div>
           <p className="panel-title mb-1">Detalhamento por unidade</p>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Conversões e valor de cada unidade num mês — &quot;Ver clientes&quot; mostra quem entrou na conta.
+            Clientes ativados e valor de cada unidade num mês — &quot;Ver clientes&quot; mostra quem entrou na conta.
           </p>
         </div>
         {competencias.length > 1 && (
@@ -78,7 +78,7 @@ export function FinanceiroDetalhamentoUnidadeTable({ rows }: { rows: ValorMensal
 
       {linhas.length === 0 ? (
         <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">
-          Nenhuma unidade com conversão em {formatCompetencia(competenciaAtual.ano, competenciaAtual.mes)}.
+          Nenhuma unidade com cliente ativado em {formatCompetencia(competenciaAtual.ano, competenciaAtual.mes)}.
         </p>
       ) : (
         <div className="overflow-x-auto">
@@ -86,7 +86,7 @@ export function FinanceiroDetalhamentoUnidadeTable({ rows }: { rows: ValorMensal
             <thead>
               <tr className="border-b border-slate-100 text-left text-xs font-medium uppercase tracking-wide text-slate-400 dark:border-slate-800 dark:text-slate-500">
                 <th className="py-2 pr-4 font-medium">Unidade</th>
-                <th className="py-2 pr-4 text-right font-medium">Conversões</th>
+                <th className="py-2 pr-4 text-right font-medium">Ativações</th>
                 <th className="py-2 pr-4 text-right font-medium">Valor</th>
                 <th className="py-2 pr-0 text-right font-medium">
                   <span className="sr-only">Ações</span>
