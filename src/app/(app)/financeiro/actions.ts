@@ -6,6 +6,7 @@ import { pool } from '@/lib/db/pool'
 import { canManageNotasFiscais, getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
 import { deleteNotaFiscalPdf, keyFromNotaFiscalUrl, uploadNotaFiscalPdf } from '@/lib/storage/s3'
 import type { NotaFiscalTipo } from '@/lib/dashboard/fetch-notas-fiscais'
+import { fetchClientesConvertidosDoMes, type ClientesConvertidosDoMes } from '@/lib/dashboard/fetch-clientes-convertidos-mes'
 
 const MAX_SIZE_BYTES = 10 * 1024 * 1024 // 10MB — nota fiscal em PDF não costuma passar disso.
 
@@ -95,4 +96,22 @@ export async function deleteNotaFiscal(id: string) {
   await deleteNotaFiscalPdf(keyFromNotaFiscalUrl(row.arquivo_url)).catch(() => {})
 
   revalidatePath('/financeiro')
+}
+
+// "Verificar os clientes convertidos daquele mês" — drill-down da linha de
+// financeiro_valor_mensal_unidade (unidade + competência) pra lista de pessoas,
+// exclusivo de Super Admin (mesma régua de /clientes-alle e /configuracoes,
+// canManageManualData). Direção e Gestor continuam vendo os valores agregados em
+// /financeiro, só não este detalhamento pessoa a pessoa.
+export async function listarClientesConvertidosDoMes(
+  academiaId: string,
+  ano: number,
+  mes: number
+): Promise<ClientesConvertidosDoMes> {
+  const profile = await getCurrentUserProfile()
+  if (!profile || profile.role !== 'super_admin') {
+    throw new Error('Sem permissão para ver os clientes convertidos.')
+  }
+
+  return fetchClientesConvertidosDoMes(profile, academiaId, ano, mes)
 }

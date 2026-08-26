@@ -13,12 +13,17 @@ export function Modal({
   title,
   subtitle,
   children,
+  maxWidthClassName = 'max-w-md',
 }: {
   open: boolean
   onClose: () => void
   title: string
   subtitle?: string
   children: React.ReactNode
+  // Todo modal até agora era um formulário estreito (max-w-md serve bem); a lista de
+  // clientes convertidos do /financeiro precisa de mais espaço pras colunas de uma
+  // tabela — em vez de cravar isso no componente genérico, o chamador escolhe.
+  maxWidthClassName?: string
 }) {
   useEffect(() => {
     if (!open) return
@@ -39,7 +44,12 @@ export function Modal({
         onClick={onClose}
         className="absolute inset-0 bg-slate-900/50 backdrop-blur-[1px]"
       />
-      <div role="dialog" aria-modal="true" aria-label={title} className="card relative w-full max-w-md animate-fade-up p-6">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className={`card relative w-full ${maxWidthClassName} animate-fade-up p-6`}
+      >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white">{title}</h3>

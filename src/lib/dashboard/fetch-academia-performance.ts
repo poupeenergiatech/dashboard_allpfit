@@ -87,11 +87,10 @@ export async function fetchAcademiaPerformance(
            and ($3::date is null or data <= $3)`,
         [scopedAcademiaId, range?.fromDate ?? null, range?.toDate ?? null]
       ),
-      // Sem filtro de data — cliente Alle é conversão manual sem data por linha
-      // (created_at é cadastro, não conversão), então conta pra qualquer período
-      // igual ao card "Clientes Alle" (ver fetch-funnel-counts.ts). `total` é o
-      // headcount real de ATIVOS (exibido na coluna "Clientes Alle ativos" — quem
-      // não assinou o termo ainda, ex. status 'pendente', não entra aqui).
+      // `total` é o headcount real de ATIVOS (exibido na coluna "Clientes Alle
+      // ativos" — quem não assinou o termo ainda, ex. status 'pendente', não entra
+      // aqui) — sem filtro de data de propósito, é uma foto do estado atual, igual
+      // ao card "Clientes Alle" (ver fetch-funnel-counts.ts).
       // `exclusivo` é outra coisa: quem converteu por fora do Ane com um dos
       // status habilitados em /configuracoes (ver fetchConversaoStatusesIncluidos
       // — ativo/pendente/reprovado sempre contam, sem_informacao/com_impedimentos/
@@ -100,18 +99,27 @@ export async function fetchAcademiaPerformance(
       // adesão" em /convertidos (definirStatusClienteConvertido, ver actions.ts)
       // cria/vincula um clientes_alle a partir de uma conversão Ane já existente,
       // e essa pessoa já está contada em totalConversoesAne. Só `exclusivo` entra
-      // em totalConversoesManual.
+      // em totalConversoesManual — por isso, diferente de `total`, `exclusivo` É
+      // escopado por `created_at` (data de cadastro em clientes_alle, mais perto
+      // que temos de "data da conversão" pra quem entrou fora do Ane) quando o
+      // período não for "todos". Mesmo padrão já usado em fetch-gestores-panel.ts.
+      // Sem isso, cada cliente exclusivo contava em TODO mês recalculado por
+      // /financeiro (fetchHistoricoValorMensal chama esta função uma vez por mês
+      // da série) em vez de só no mês em que entrou — inflava o valor de todos os
+      // meses igualmente.
       pool.query<{ academia_id: string; total: number; exclusivo: number }>(
         `select ca.academia_id,
                 count(*) filter (where ca.status = 'ativo') as total,
                 count(*) filter (
                   where ca.status = any($2::text[])
                     and not exists (select 1 from conversions c2 where c2.cliente_alle_id = ca.id)
+                    and ($3::timestamptz is null or ca.created_at >= $3)
+                    and ($4::timestamptz is null or ca.created_at < $4)
                 ) as exclusivo
          from clientes_alle ca
          where ($1::uuid is null or ca.academia_id = $1)
          group by ca.academia_id`,
-        [scopedAcademiaId, statusesConversao]
+        [scopedAcademiaId, statusesConversao, range?.from ?? null, range?.toExclusive ?? null]
       ),
       // Mesma composição de fetch-pendencias-assinatura.ts (backlog atual, não soma
       // por período): último lançamento manual + clientes com termo de adesão

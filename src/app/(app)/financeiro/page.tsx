@@ -40,6 +40,7 @@ export default async function FinanceiroPage() {
         academias={academias}
         fixedAcademiaId={fixedAcademiaId}
         canManageNotasFiscais={canManageNotasFiscais(profile.role)}
+        isSuperAdmin={profile.role === 'super_admin'}
       />
     </div>
   )

@@ -132,8 +132,21 @@ body {
     text-wrap: balance;
   }
 
+  /* `both` mantinha o efeito da animação "ativo" pra sempre depois de terminar
+     (fill-mode) — e um `transform` animado com efeito ainda ativo vira containing
+     block pra descendentes `position: fixed`, mesmo a keyframe final valendo
+     `none` (confirmado: getComputedStyle(...).transform continuava reportando
+     uma matrix identidade, não `none`, enquanto o fill-mode segurava o efeito).
+     Como .animate-fade-up envolve o conteúdo inteiro de toda página (ver
+     layout.tsx), isso "prendia" qualquer <Modal> (position: fixed, ver
+     components/ui/modal.tsx) na altura da PÁGINA em vez da viewport — em página
+     mais alta que a tela, o modal renderizava fora do centro (achado testando de
+     verdade o modal novo de /financeiro numa página comprida). Sem `both`, a
+     animação termina e o elemento volta pro estado normal (não-animado) — que já
+     é opacity:1/transform:none, então não há flash nem mudança visual, só o
+     efeito colateral no fixed some. */
   .animate-fade-up {
-    animation: fade-up 0.35s ease-out both;
+    animation: fade-up 0.35s ease-out;
   }
 
   .skeleton {
@@ -159,7 +172,10 @@ body {
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    /* `none`, não `translateY(0)` — mesmo resultado visual, valor computado mais
+       limpo. Ver o comentário em .animate-fade-up acima: a causa raiz do bug de
+       containing block era o fill-mode `both`, não este valor. */
+    transform: none;
   }
 }
 

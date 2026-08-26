@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { FinanceiroDetalhamentoUnidadeTable } from './financeiro-detalhamento-unidade-table'
 import { FinanceiroValorMensalCards } from './financeiro-valor-mensal-cards'
 import { FinanceiroValorMensalChart } from './financeiro-valor-mensal-chart'
 import { FinanceiroValorMensalHistoricoTable } from './financeiro-valor-mensal-historico-table'
@@ -21,11 +22,17 @@ export function FinanceiroContent({
   academias,
   fixedAcademiaId,
   canManageNotasFiscais,
+  isSuperAdmin,
 }: {
   valorMensalRows: ValorMensalUnidade[]
   academias: Academia[]
   fixedAcademiaId: string | null
   canManageNotasFiscais: boolean
+  // Detalhamento por unidade (com o "Ver clientes" pessoa a pessoa) é exclusivo de
+  // Super Admin — ver listarClientesConvertidosDoMes em financeiro/actions.ts,
+  // checado de novo lá no server, isso aqui é só pra não desenhar o painel à toa
+  // pra quem nunca vai poder abrir o modal.
+  isSuperAdmin: boolean
 }) {
   const [unidadeId, setUnidadeId] = useState('')
   const academiaCalendario = fixedAcademiaId ?? (unidadeId || academias[0]?.id || null)
@@ -35,6 +42,7 @@ export function FinanceiroContent({
       <FinanceiroValorMensalCards rows={valorMensalRows} compararId={unidadeId} onCompararChange={setUnidadeId} />
       <FinanceiroValorMensalChart rows={valorMensalRows} compararId={unidadeId} />
       <FinanceiroValorMensalHistoricoTable rows={valorMensalRows} compararId={unidadeId} />
+      {isSuperAdmin && <FinanceiroDetalhamentoUnidadeTable rows={valorMensalRows} />}
       <NotasFiscaisCalendar
         academias={academias}
         academiaId={academiaCalendario}
