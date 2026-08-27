@@ -1,5 +1,12 @@
 import { FinanceiroContent } from '@/components/dashboard/financeiro-content'
-import { canAccessFinanceiro, canManageNotasFiscais, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
+import {
+  canAccessFinanceiro,
+  canManageNotasFiscais,
+  canValidateNotasFiscais,
+  canViewNotasFiscaisHistorico,
+  getCurrentUserProfile,
+  seesAllAcademias,
+} from '@/lib/auth/profile'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchFinanceiroVisivelOutrosCargos } from '@/lib/dashboard/fetch-financeiro-visibility'
 import { fetchHistoricoValorMensal } from '@/lib/dashboard/fetch-financeiro-valor-mensal'
@@ -40,6 +47,8 @@ export default async function FinanceiroPage() {
         academias={academias}
         fixedAcademiaId={fixedAcademiaId}
         canManageNotasFiscais={canManageNotasFiscais(profile.role)}
+        canViewNotasFiscaisHistorico={canViewNotasFiscaisHistorico(profile.role)}
+        canValidateNotasFiscais={canValidateNotasFiscais(profile.role)}
         isSuperAdmin={profile.role === 'super_admin'}
       />
     </div>

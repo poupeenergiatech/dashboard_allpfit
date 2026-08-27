@@ -171,6 +171,24 @@ export function canManageNotasFiscais(role: UserRole): boolean {
   return role === 'super_admin' || role === 'gestor'
 }
 
+// Ver o histórico de eventos (upload/substituição/exclusão) de notas fiscais — só
+// Direção e Super Admin, pedido explícito do usuário: Gestor já sabe o que fez (é
+// quem manuseia os arquivos via canManageNotasFiscais), o histórico existe pra dar
+// visibilidade de cima pra quem NÃO anexa/remove nada, não pra quem já mexe direto.
+export function canViewNotasFiscaisHistorico(role: UserRole): boolean {
+  return role === 'super_admin' || role === 'direcao'
+}
+
+// Definir o status de revisão (Validado/Pendente/Reprovado) de uma nota fiscal já
+// anexada — Super Admin e Direção, pedido explícito do usuário. Diferente de
+// canManageNotasFiscais (que é sobre o ARQUIVO: anexar/reenviar/excluir, exclusivo
+// de Super Admin/Gestor): aqui é sobre a REVISÃO do arquivo que já está lá, e é
+// justamente Direção quem ganha esse poder de escrita em /financeiro (em todo o
+// resto da página ela só lê).
+export function canValidateNotasFiscais(role: UserRole): boolean {
+  return role === 'super_admin' || role === 'direcao'
+}
+
 // Cadastrar/remover material (aula, vídeo, marketing, treinamento, instrução) em
 // /central-marketing — exclusivo de Super Admin (ver nota em
 // canManageManualData; Gestor já ficava de fora antes). Leitura da lista

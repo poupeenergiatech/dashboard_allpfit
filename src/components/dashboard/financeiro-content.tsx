@@ -22,12 +22,20 @@ export function FinanceiroContent({
   academias,
   fixedAcademiaId,
   canManageNotasFiscais,
+  canViewNotasFiscaisHistorico,
+  canValidateNotasFiscais,
   isSuperAdmin,
 }: {
   valorMensalRows: ValorMensalUnidade[]
   academias: Academia[]
   fixedAcademiaId: string | null
   canManageNotasFiscais: boolean
+  // Ver o histórico de upload/substituição/exclusão de notas fiscais — Direção e
+  // Super Admin, checado de novo no server em fetchNotaFiscalHistorico.
+  canViewNotasFiscaisHistorico: boolean
+  // Definir o status (Validado/Pendente/Reprovado) de uma nota já anexada —
+  // Direção e Super Admin, checado de novo no server em setNotaFiscalStatus.
+  canValidateNotasFiscais: boolean
   // Detalhamento por unidade (com o "Ver clientes" pessoa a pessoa) é exclusivo de
   // Super Admin — ver listarClientesConvertidosDoMes em financeiro/actions.ts,
   // checado de novo lá no server, isso aqui é só pra não desenhar o painel à toa
@@ -48,6 +56,8 @@ export function FinanceiroContent({
         academiaId={academiaCalendario}
         onAcademiaChange={setUnidadeId}
         canManage={canManageNotasFiscais}
+        canViewHistorico={canViewNotasFiscaisHistorico}
+        canValidate={canValidateNotasFiscais}
       />
     </>
   )

@@ -5,6 +5,8 @@ import { getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
 
 export type NotaFiscalTipo = 'unidade' | 'individual'
 
+export type NotaFiscalStatus = 'pendente' | 'validado' | 'reprovado'
+
 export type NotaFiscalEntry = {
   id: string
   tipo: NotaFiscalTipo
@@ -15,6 +17,9 @@ export type NotaFiscalEntry = {
   tamanhoBytes: number
   uploadedByEmail: string | null
   createdAt: string
+  status: NotaFiscalStatus
+  validatedByEmail: string | null
+  validatedAt: string | null
 }
 
 // requestedAcademiaId sempre resolvido de novo via scopeAcademiaId (mesmo motivo de
@@ -40,9 +45,13 @@ export async function fetchNotasFiscais(requestedAcademiaId: string | null, ano:
     tamanho_bytes: number
     uploaded_by_email: string | null
     created_at: string
+    status: NotaFiscalStatus
+    validated_by_email: string | null
+    validated_at: string | null
   }>(
     `select nf.id, nf.tipo, nf.competencia_ano, nf.competencia_mes, nf.arquivo_url, nf.nome_arquivo,
-            nf.tamanho_bytes, nf.created_at, u.email as uploaded_by_email
+            nf.tamanho_bytes, nf.created_at, u.email as uploaded_by_email,
+            nf.status, nf.validated_by_email, nf.validated_at
      from notas_fiscais nf
      left join users u on u.id = nf.uploaded_by
      where nf.academia_id = $1 and nf.competencia_ano = $2
@@ -60,5 +69,8 @@ export async function fetchNotasFiscais(requestedAcademiaId: string | null, ano:
     tamanhoBytes: row.tamanho_bytes,
     uploadedByEmail: row.uploaded_by_email,
     createdAt: row.created_at,
+    status: row.status,
+    validatedByEmail: row.validated_by_email,
+    validatedAt: row.validated_at,
   }))
 }

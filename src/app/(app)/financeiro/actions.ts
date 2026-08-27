@@ -3,9 +3,9 @@
 import { randomUUID } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 import { pool } from '@/lib/db/pool'
-import { canManageNotasFiscais, getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
+import { canManageNotasFiscais, canValidateNotasFiscais, getCurrentUserProfile, scopeAcademiaId } from '@/lib/auth/profile'
 import { deleteNotaFiscalPdf, keyFromNotaFiscalUrl, uploadNotaFiscalPdf } from '@/lib/storage/s3'
-import type { NotaFiscalTipo } from '@/lib/dashboard/fetch-notas-fiscais'
+import type { NotaFiscalStatus, NotaFiscalTipo } from '@/lib/dashboard/fetch-notas-fiscais'
 import { fetchClientesConvertidosDoMes, type ClienteConvertidoDoMes } from '@/lib/dashboard/fetch-clientes-convertidos-mes'
 
 const MAX_SIZE_BYTES = 10 * 1024 * 1024 // 10MB — nota fiscal em PDF não costuma passar disso.
@@ -43,11 +43,19 @@ export async function uploadNotaFiscal(formData: FormData) {
     throw new Error('Sem permissão para anexar nota fiscal dessa academia.')
   }
 
-  const { rows: existentes } = await pool.query<{ arquivo_url: string }>(
-    `select arquivo_url from notas_fiscais
+  const { rows: existentes } = await pool.query<{ arquivo_url: string; status: NotaFiscalStatus }>(
+    `select arquivo_url, status from notas_fiscais
      where academia_id = $1 and tipo = $2 and competencia_ano = $3 and competencia_mes = $4`,
     [academiaId, tipo, ano, mes]
   )
+
+  // Nota já validada só é trocada excluindo antes (ação deliberada, botão já
+  // existente) — protege um documento aprovado de ser sobrescrito num reenvio de
+  // 1 clique. Checado nesse server action, não só escondendo o botão no client
+  // (mesmo espírito de scopeAcademiaId logo acima).
+  if (existentes[0]?.status === 'validado') {
+    throw new Error('Essa nota já foi validada — exclua antes de anexar uma nova.')
+  }
 
   const buffer = Buffer.from(await file.arrayBuffer())
   const key = `notas-fiscais/${academiaId}/${ano}/${String(mes).padStart(2, '0')}/${tipo}-${randomUUID()}.pdf`
@@ -62,8 +70,32 @@ export async function uploadNotaFiscal(formData: FormData) {
            nome_arquivo = excluded.nome_arquivo,
            tamanho_bytes = excluded.tamanho_bytes,
            uploaded_by = excluded.uploaded_by,
-           created_at = now()`,
+           created_at = now(),
+           status = 'pendente',
+           validated_by = null,
+           validated_by_email = null,
+           validated_at = null`,
     [academiaId, tipo, ano, mes, arquivoUrl, file.name, file.size, profile.userId]
+  )
+
+  // Histórico pra Direção/Super Admin (ver fetch-nota-fiscal-historico.ts) — grava o
+  // evento ANTES de apagar o PDF antigo do S3, mesma ordem "só apaga depois de
+  // garantir que o resto já está salvo" do bloco abaixo.
+  await pool.query(
+    `insert into notas_fiscais_historico
+       (academia_id, tipo, competencia_ano, competencia_mes, acao, nome_arquivo, tamanho_bytes, performed_by, performed_by_email)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+    [
+      academiaId,
+      tipo,
+      ano,
+      mes,
+      existentes[0] ? 'substituicao' : 'upload',
+      file.name,
+      file.size,
+      profile.userId,
+      profile.email ?? '(email desconhecido)',
+    ]
   )
 
   // Apaga o PDF antigo só depois que o novo já está salvo no banco — se a troca
@@ -81,8 +113,17 @@ export async function deleteNotaFiscal(id: string) {
     throw new Error('Sem permissão para excluir notas fiscais.')
   }
 
-  const { rows } = await pool.query<{ arquivo_url: string; academia_id: string }>(
-    `select arquivo_url, academia_id from notas_fiscais where id = $1`,
+  const { rows } = await pool.query<{
+    arquivo_url: string
+    academia_id: string
+    tipo: NotaFiscalTipo
+    competencia_ano: number
+    competencia_mes: number
+    nome_arquivo: string
+    tamanho_bytes: number
+  }>(
+    `select arquivo_url, academia_id, tipo, competencia_ano, competencia_mes, nome_arquivo, tamanho_bytes
+     from notas_fiscais where id = $1`,
     [id]
   )
   const row = rows[0]
@@ -93,7 +134,83 @@ export async function deleteNotaFiscal(id: string) {
   }
 
   await pool.query('delete from notas_fiscais where id = $1', [id])
+
+  // Histórico pra Direção/Super Admin — mesma tabela usada em uploadNotaFiscal.
+  await pool.query(
+    `insert into notas_fiscais_historico
+       (academia_id, tipo, competencia_ano, competencia_mes, acao, nome_arquivo, tamanho_bytes, performed_by, performed_by_email)
+     values ($1, $2, $3, $4, 'exclusao', $5, $6, $7, $8)`,
+    [
+      row.academia_id,
+      row.tipo,
+      row.competencia_ano,
+      row.competencia_mes,
+      row.nome_arquivo,
+      row.tamanho_bytes,
+      profile.userId,
+      profile.email ?? '(email desconhecido)',
+    ]
+  )
+
   await deleteNotaFiscalPdf(keyFromNotaFiscalUrl(row.arquivo_url)).catch(() => {})
+
+  revalidatePath('/financeiro')
+}
+
+// Revisão de Direção/Super Admin sobre um arquivo já anexado — pedido explícito do
+// usuário. Diferente de uploadNotaFiscal/deleteNotaFiscal (que mexem no ARQUIVO,
+// exclusivo de canManageNotasFiscais), aqui só o status muda; o arquivo em si nem é
+// tocado. Gestor não valida a própria nota (canValidateNotasFiscais não inclui
+// gestor), e todo evento fica no mesmo histórico de notas_fiscais_historico, com
+// acao prefixado "status_" pra distinguir de upload/substituicao/exclusao.
+export async function setNotaFiscalStatus(id: string, status: NotaFiscalStatus) {
+  const profile = await getCurrentUserProfile()
+  if (!profile || !canValidateNotasFiscais(profile.role)) {
+    throw new Error('Sem permissão para validar notas fiscais.')
+  }
+
+  const { rows } = await pool.query<{
+    academia_id: string
+    tipo: NotaFiscalTipo
+    competencia_ano: number
+    competencia_mes: number
+    nome_arquivo: string
+    tamanho_bytes: number
+  }>(
+    `select academia_id, tipo, competencia_ano, competencia_mes, nome_arquivo, tamanho_bytes
+     from notas_fiscais where id = $1`,
+    [id]
+  )
+  const row = rows[0]
+  if (!row) throw new Error('Nota fiscal não encontrada.')
+
+  if (scopeAcademiaId(profile, row.academia_id) !== row.academia_id) {
+    throw new Error('Sem permissão para validar nota fiscal dessa academia.')
+  }
+
+  await pool.query(
+    `update notas_fiscais
+       set status = $2, validated_by = $3, validated_by_email = $4, validated_at = now()
+     where id = $1`,
+    [id, status, profile.userId, profile.email ?? '(email desconhecido)']
+  )
+
+  await pool.query(
+    `insert into notas_fiscais_historico
+       (academia_id, tipo, competencia_ano, competencia_mes, acao, nome_arquivo, tamanho_bytes, performed_by, performed_by_email)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+    [
+      row.academia_id,
+      row.tipo,
+      row.competencia_ano,
+      row.competencia_mes,
+      `status_${status}`,
+      row.nome_arquivo,
+      row.tamanho_bytes,
+      profile.userId,
+      profile.email ?? '(email desconhecido)',
+    ]
+  )
 
   revalidatePath('/financeiro')
 }
