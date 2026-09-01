@@ -383,6 +383,7 @@ export const MOCK_GESTORES_PANEL: GestoresPanelData = {
   rows: gestoresPanelRows,
   totals: gestoresPanelRows.reduce(
     (acc, r) => ({
+      totalContatos: acc.totalContatos + r.totalContatos,
       totalScansPeriodo: acc.totalScansPeriodo + r.totalScansPeriodo,
       totalScansHoje: acc.totalScansHoje + r.totalScansHoje,
       totalConversoes: acc.totalConversoes + r.totalConversoes,
@@ -393,6 +394,7 @@ export const MOCK_GESTORES_PANEL: GestoresPanelData = {
       academiasTotal: acc.academiasTotal + 1,
     }),
     {
+      totalContatos: 0,
       totalScansPeriodo: 0,
       totalScansHoje: 0,
       totalConversoes: 0,

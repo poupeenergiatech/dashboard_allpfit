@@ -32,6 +32,7 @@ export type GestoresPanelData = {
   days: number | null
   rows: GestoresPanelRow[]
   totals: {
+    totalContatos: number
     totalScansPeriodo: number
     totalScansHoje: number
     totalConversoes: number
@@ -304,13 +305,21 @@ export async function fetchGestoresPanel(
   // mesmo filtro de período.
   const totalsAtividade = academias.map(buildRow).reduce(
     (acc, r) => ({
+      totalContatos: acc.totalContatos + r.totalContatos,
       totalScansPeriodo: acc.totalScansPeriodo + r.totalScansPeriodo,
       totalScansHoje: acc.totalScansHoje + r.totalScansHoje,
       totalConversoes: acc.totalConversoes + r.totalConversoes,
       totalConversoesHoje: acc.totalConversoesHoje + r.totalConversoesHoje,
       clientesAlleAtivos: acc.clientesAlleAtivos + r.clientesAlleAtivos,
     }),
-    { totalScansPeriodo: 0, totalScansHoje: 0, totalConversoes: 0, totalConversoesHoje: 0, clientesAlleAtivos: 0 }
+    {
+      totalContatos: 0,
+      totalScansPeriodo: 0,
+      totalScansHoje: 0,
+      totalConversoes: 0,
+      totalConversoesHoje: 0,
+      clientesAlleAtivos: 0,
+    }
   )
 
   const totals = { ...totalsAtividade, ...totalsAtivos }
