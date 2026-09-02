@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { AcademiaPerformanceChart } from './academia-performance-chart'
 import { GestoresPanelSummaryCards } from './gestores-panel-summary-cards'
-import { GestoresPodium } from './gestores-podium'
+import { GestoresPodium, PodiumFunnelConnector } from './gestores-podium'
 import { GestoresRankingTable } from './gestores-ranking-table'
 import { GestoresScansChart } from './gestores-scans-chart'
 import { LiveIndicator } from './live-indicator'
@@ -180,7 +180,11 @@ export function GestoresPanelDashboard({
             {/* 3 pódios lado a lado (empilham no mobile) — cada um já traz o
                 ranking das demais academias rolável dentro do próprio card,
                 então a tabela completa abaixo (com colunas sem pódio, como
-                Alunos/Treinada) continua existindo sem sobreposição de conteúdo. */}
+                Alunos/Treinada) continua existindo sem sobreposição de conteúdo.
+                clientesAlleAtivos é foto do estado atual (não filtra por
+                created_at, ver fetch-gestores-panel.ts) — diferente dos outros
+                dois pódios, não muda com o filtro de período acima; pedido
+                explícito do usuário mesmo assim (substituiu o pódio de scans). */}
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Pódios por unidade</p>
               <div className="flex items-center gap-2">
@@ -202,10 +206,12 @@ export function GestoresPanelDashboard({
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3">
+            <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:gap-4">
               <GestoresPodium rows={data.rows} metricKey="totalContatos" />
+              <PodiumFunnelConnector />
               <GestoresPodium rows={data.rows} metricKey="totalConversoes" />
-              <GestoresPodium rows={data.rows} metricKey="totalScansPeriodo" />
+              <PodiumFunnelConnector />
+              <GestoresPodium rows={data.rows} metricKey="clientesAlleAtivos" />
             </div>
             <GestoresRankingTable rows={data.rows} />
             {/* Os dois gráficos por academia lado a lado (empilham no mobile) —

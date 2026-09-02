@@ -69,6 +69,7 @@ export const MOCK_FUNNEL_COUNTS: FunnelCounts = {
   totalConversoesManual: MOCK_FUNNEL_SERIES.reduce((s, p) => s + p.conversoesManual, 0),
   totalConversoes: MOCK_FUNNEL_SERIES.reduce((s, p) => s + p.conversoes, 0),
   totalReprovados: MOCK_FUNNEL_SERIES.reduce((s, p) => s + p.reprovados, 0),
+  totalReprovadosAlle: 3,
   totalClientesAlle: 32,
   series: MOCK_FUNNEL_SERIES,
 }
@@ -191,6 +192,29 @@ export const MOCK_CLIENTES_ALLE: ClienteAlle[] = [
     email: null,
     status: 'sem_informacao',
     createdAt: '2026-06-25T16:00:00.000Z',
+  },
+  // ca6/ca7: cobrem com_impedimentos/falta_documentos no mock — sem esses dois,
+  // /preview/clientes-alle sempre mostraria "Reprovados Alle" zerado, mascarando
+  // qualquer regressão no cálculo (ver totalReprovadosAlle em page.tsx real).
+  {
+    id: 'ca6',
+    academiaId: MOCK_ACADEMIAS[0].id,
+    academiaNome: MOCK_ACADEMIAS[0].nome,
+    nome: 'Bruno Farias',
+    telefone: '5511954321098',
+    email: null,
+    status: 'com_impedimentos',
+    createdAt: '2026-06-27T09:30:00.000Z',
+  },
+  {
+    id: 'ca7',
+    academiaId: MOCK_ACADEMIAS[1].id,
+    academiaNome: MOCK_ACADEMIAS[1].nome,
+    nome: 'Juliana Prado',
+    telefone: null,
+    email: 'juliana.prado@exemplo.com',
+    status: 'falta_documentos',
+    createdAt: '2026-06-28T13:15:00.000Z',
   },
 ]
 

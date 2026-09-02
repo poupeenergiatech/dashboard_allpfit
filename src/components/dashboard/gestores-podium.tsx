@@ -13,7 +13,7 @@ const PLACE_LAYOUT = [
   { order: 'sm:order-3', height: 'h-[78px] sm:h-[100px]', nameSize: 'text-sm', valueSize: 'text-2xl' },
 ]
 
-export type PodiumMetricKey = 'totalContatos' | 'totalConversoes' | 'totalScansPeriodo'
+export type PodiumMetricKey = 'totalContatos' | 'totalConversoes' | 'clientesAlleAtivos'
 
 type PlaceColor = { riser: string; ring: string; badge: string }
 
@@ -57,40 +57,58 @@ const PLACE_COLORS: Record<PodiumMetricKey, PlaceColor[]> = {
       badge: 'bg-accent-200 text-accent-900 dark:bg-accent-300 dark:text-accent-950',
     },
   ],
-  totalScansPeriodo: [
+  clientesAlleAtivos: [
     {
-      riser: 'bg-gradient-to-b from-violet-400 to-violet-600 dark:from-violet-500 dark:to-violet-700',
-      ring: 'ring-violet-200 dark:ring-violet-500/50',
+      riser: 'bg-gradient-to-b from-emerald-400 to-emerald-600 dark:from-emerald-500 dark:to-emerald-700',
+      ring: 'ring-emerald-200 dark:ring-emerald-500/50',
       badge: '',
     },
     {
-      riser: 'bg-gradient-to-b from-violet-300 to-violet-400 dark:from-violet-400 dark:to-violet-500',
-      ring: 'ring-violet-100 dark:ring-violet-400/40',
-      badge: 'bg-violet-400 text-white dark:bg-violet-400',
+      riser: 'bg-gradient-to-b from-emerald-300 to-emerald-400 dark:from-emerald-400 dark:to-emerald-500',
+      ring: 'ring-emerald-100 dark:ring-emerald-400/40',
+      badge: 'bg-emerald-400 text-white dark:bg-emerald-400',
     },
     {
-      riser: 'bg-gradient-to-b from-violet-200 to-violet-300 dark:from-violet-300 dark:to-violet-400',
-      ring: 'ring-violet-100 dark:ring-violet-300/40',
-      badge: 'bg-violet-200 text-violet-900 dark:bg-violet-300 dark:text-violet-950',
+      riser: 'bg-gradient-to-b from-emerald-200 to-emerald-300 dark:from-emerald-300 dark:to-emerald-400',
+      ring: 'ring-emerald-100 dark:ring-emerald-300/40',
+      badge: 'bg-emerald-200 text-emerald-900 dark:bg-emerald-300 dark:text-emerald-950',
     },
   ],
 }
 
 // Cada métrica reaproveita uma cor já associada a ela em outro lugar do
-// dashboard (violeta pro card "Scans no período", laranja de marca pra
-// conversões — "resultado final" do funil, ver funnel-card.tsx) pra dar um
-// diferencial rápido entre os 3 cards, que de resto têm o mesmo layout e eram
-// fáceis de confundir à primeira vista.
+// dashboard (laranja de marca pra conversões — "resultado final" do funil,
+// verde-esmeralda pra clientes Alle ativos, mesma cor do card equivalente em
+// funnel-grid.tsx) pra dar um diferencial rápido entre os 3 cards, que de
+// resto têm o mesmo layout e eram fáceis de confundir à primeira vista.
 // Ordem de exibição dos 3 pódios na página — exportado pra quem precisa
 // iterar as métricas na mesma ordem sem duplicar o array (ver export-podios.ts).
-export const PODIUM_METRIC_KEYS: PodiumMetricKey[] = ['totalContatos', 'totalConversoes', 'totalScansPeriodo']
+export const PODIUM_METRIC_KEYS: PodiumMetricKey[] = ['totalContatos', 'totalConversoes', 'clientesAlleAtivos']
 
+// step/subtitle: pedido explícito do usuário pra deixar a sequência do funil
+// óbvia pra quem não conhece o fluxo de perto — os 3 pódios já vêm nessa
+// ordem (contato → conversão/adesão aprovada → cliente ativo recebendo
+// energia), mas o nome sozinho ("conversão", "ativo") não deixava claro
+// ONDE cada métrica cai nesse funil nem o que ela representa de verdade.
+// step numera 1/2/3 (badge no canto do ícone); subtitle é a explicação
+// curta abaixo do título; PodiumFunnelConnector (abaixo) desenha a seta
+// entre os cards na página.
 export const PODIUM_METRICS: Record<
   PodiumMetricKey,
-  { title: string; unitLabel: string; icon: 'chat' | 'trophy' | 'qr'; badge: string; topBorder: string }
+  {
+    title: string
+    subtitle: string
+    step: number
+    unitLabel: string
+    icon: 'chat' | 'trophy' | 'id-card'
+    badge: string
+    topBorder: string
+  }
 > = {
   totalContatos: {
     title: 'Pódio de contatos',
+    subtitle: 'Quem entrou em contato com a Alle',
+    step: 1,
     unitLabel: 'contatos',
     icon: 'chat',
     badge: 'bg-brand-50 text-brand-600 dark:bg-brand-500/10 dark:text-brand-300',
@@ -98,18 +116,42 @@ export const PODIUM_METRICS: Record<
   },
   totalConversoes: {
     title: 'Pódio de conversões',
+    subtitle: 'Aptos ao benefício após a verificação',
+    step: 2,
     unitLabel: 'conversões',
     icon: 'trophy',
     badge: 'bg-accent-50 text-accent-600 dark:bg-accent-500/10 dark:text-accent-400',
     topBorder: 'border-t-accent-400 dark:border-t-accent-500/70',
   },
-  totalScansPeriodo: {
-    title: 'Pódio de scans de QR code',
-    unitLabel: 'scans',
-    icon: 'qr',
-    badge: 'bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400',
-    topBorder: 'border-t-violet-400 dark:border-t-violet-500/70',
+  clientesAlleAtivos: {
+    title: 'Pódio de clientes Alle ativos',
+    subtitle: 'Assinaram o termo e já recebem energia',
+    step: 3,
+    unitLabel: 'ativos',
+    icon: 'id-card',
+    badge: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400',
+    topBorder: 'border-t-emerald-400 dark:border-t-emerald-500/70',
   },
+}
+
+// Seta decorativa entre os 3 pódios (contato → conversão → ativo) — mesmo
+// ícone rotacionado pra apontar pra baixo empilhado no mobile (grid de 1
+// coluna) e pra direita lado a lado no desktop (ver grid-cols com faixas
+// "auto" em gestores-panel-dashboard.tsx/preview/gestores/page.tsx, onde
+// esse componente entra intercalado com os 3 <GestoresPodium>).
+// `lg:pt-7` alinha aproximadamente com a linha do ícone+título do card
+// vizinho (ícone 28px + margem abaixo do header) em vez de centralizar na
+// altura toda da coluna, que varia muito com o tamanho da lista de "demais
+// academias" de cada pódio.
+export function PodiumFunnelConnector() {
+  return (
+    <div
+      aria-hidden="true"
+      className="flex items-center justify-center py-1 text-slate-300 dark:text-slate-700 lg:self-start lg:py-0 lg:pt-7"
+    >
+      <Icon name="chevron-down" className="h-5 w-5 lg:h-4 lg:w-4 lg:-rotate-90" />
+    </div>
+  )
 }
 
 // Pódio das 3 academias líderes numa métrica, com o ranking das demais logo
@@ -140,11 +182,17 @@ export function GestoresPodium({ rows, metricKey }: { rows: GestoresPanelRow[]; 
 
   return (
     <div className={`card flex flex-col border-t-4 p-5 sm:p-6 ${metric.topBorder}`}>
-      <div className="mb-6 flex items-center gap-2.5">
-        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${metric.badge}`}>
+      <div className="mb-6 flex items-start gap-2.5">
+        <span className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${metric.badge}`}>
           <Icon name={metric.icon} className="h-4 w-4" />
+          <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-slate-500 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:ring-slate-700">
+            {metric.step}
+          </span>
         </span>
-        <p className="panel-title">{metric.title}</p>
+        <div>
+          <p className="panel-title">{metric.title}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{metric.subtitle}</p>
+        </div>
       </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-center sm:gap-4">
         {top3.map((row, i) => {

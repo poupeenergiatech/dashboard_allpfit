@@ -27,6 +27,7 @@ export function FunnelGrid({ counts, isSuperAdmin }: { counts: FunnelCounts; isS
     totalConversoesManual,
     totalConversoes,
     totalReprovados,
+    totalReprovadosAlle,
     totalClientesAlle,
   } = counts
 
@@ -61,7 +62,7 @@ export function FunnelGrid({ counts, isSuperAdmin }: { counts: FunnelCounts; isS
         <p className="mb-2 text-xs font-bold uppercase tracking-[0.07em] text-slate-400 dark:text-slate-500">
           Detalhes da conversão
         </p>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {isSuperAdmin && (
             <FunnelCard
               label="Convertidos Ane"
@@ -83,6 +84,17 @@ export function FunnelGrid({ counts, isSuperAdmin }: { counts: FunnelCounts; isS
             value={totalReprovados}
             icon={<Icon name="x-circle" className="h-[18px] w-[18px]" />}
             accent="rose"
+          />
+          {/* Contagem à parte de "Reprovados / cancelados" (status='reprovado')
+              — soma quem está com_impedimentos ou falta_documentos, pendências
+              que ainda podem ser resolvidas, não uma reprovação definitiva.
+              Pedido explícito do usuário; não muda nada em como esses status
+              contam (ou não) como conversão em outro lugar. */}
+          <FunnelCard
+            label="Reprovados Alle"
+            value={totalReprovadosAlle}
+            icon={<Icon name="warning" className="h-[18px] w-[18px]" />}
+            accent="violet"
           />
           <FunnelCard
             label="Clientes Alle ativos"

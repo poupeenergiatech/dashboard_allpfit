@@ -128,7 +128,7 @@ export function FunnelShapeChart({ counts }: { counts: FunnelCounts }) {
   return (
     <div className="card p-5">
       <div className="mb-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <p className="panel-title">Funil de conversão</p>
+        <p className="panel-title">Formato do funil</p>
         {overallRate != null && (
           <span className="inline-flex items-center rounded-full bg-accent-50 dark:bg-accent-500/10 px-2.5 py-0.5 text-xs font-semibold text-accent-600 dark:text-accent-400">
             Conversão geral: {formatRate(overallRate)}%

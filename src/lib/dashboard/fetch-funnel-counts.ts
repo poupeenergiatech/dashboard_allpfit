@@ -201,9 +201,17 @@ export async function fetchFunnelCounts(
   // inteiro). "sem_link_ane" é o critério de exclusividade: quem já tem
   // conversão Ane vinculada (definirStatusClienteConvertido) já está contado em
   // totalConversoesAne — somar de novo aqui contaria essa pessoa duas vezes.
+  // totalReprovadosAlle: soma à parte, pedida pelo usuário, pra 'com_impedimentos'
+  // e 'falta_documentos' terem um número próprio em vez de só aparecerem
+  // misturados no gráfico de status de /clientes-alle. Não mexe em mais nada:
+  // continuam contando (ou não) como conversão do jeito que já funcionava,
+  // via statusesConversao/toggle em /configurações (decisão explícita do
+  // usuário — só adicionar a contagem nova, não tirar o efeito da antiga).
   let totalClientesAlle = 0
+  let totalReprovadosAlle = 0
   for (const row of clientesAlleRows) {
     if (row.status === 'ativo') totalClientesAlle++
+    if (row.status === 'com_impedimentos' || row.status === 'falta_documentos') totalReprovadosAlle++
 
     if (row.sem_link_ane && statusesConversao.includes(row.status)) {
       totalConversoesManual++
@@ -250,6 +258,7 @@ export async function fetchFunnelCounts(
     totalConversoesManual,
     totalConversoes,
     totalReprovados,
+    totalReprovadosAlle,
     totalClientesAlle,
     series,
   }

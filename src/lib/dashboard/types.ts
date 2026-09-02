@@ -45,6 +45,12 @@ export type FunnelCounts = {
   totalConversoesManual: number
   totalConversoes: number
   totalReprovados: number
+  // Clientes Alle com status 'com_impedimentos' ou 'falta_documentos' — não é
+  // reprovação definitiva (ver totalReprovados), são clientes travados numa
+  // pendência que pode ser resolvida depois. Contagem própria pedida pelo
+  // usuário, separada de totalReprovados de propósito (ver comentário em
+  // fetch-funnel-counts.ts).
+  totalReprovadosAlle: number
   totalClientesAlle: number
   series: DailyFunnelPoint[]
 }

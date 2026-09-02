@@ -3,6 +3,8 @@ import { ClientesAlleForm } from '@/components/dashboard/clientes-alle-form'
 import { ClientesAlleImportForm } from '@/components/dashboard/clientes-alle-import-form'
 import { ClientesAlleStatusChart } from '@/components/dashboard/clientes-alle-status-chart'
 import { ClientesAlleTable } from '@/components/dashboard/clientes-alle-table'
+import { FunnelCard } from '@/components/dashboard/funnel-card'
+import { Icon } from '@/components/ui/icons'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchClientesAlle } from '@/lib/dashboard/fetch-clientes-alle'
 import { canManageClientesAlle, canManageUsers, getCurrentUserProfile, seesAllAcademias } from '@/lib/auth/profile'
@@ -32,6 +34,15 @@ export default async function ClientesAllePage({
     fetchActiveAcademias(profile),
   ])
 
+  // com_impedimentos/falta_documentos já aparecem separados no gráfico por status
+  // abaixo — esse card só dá o total das duas somadas, pedido explícito do
+  // usuário pra ter um número único de "Reprovados Alle" sem precisar somar as
+  // duas barras do gráfico de cabeça. Calculado aqui em cima do array já
+  // buscado, sem query extra.
+  const totalReprovadosAlle = clientes.filter(
+    (c) => c.status === 'com_impedimentos' || c.status === 'falta_documentos'
+  ).length
+
   return (
     <div className="space-y-6">
       <div>
@@ -47,6 +58,15 @@ export default async function ClientesAllePage({
       </div>
 
       <AcademiaFilterLinks basePath="/clientes-alle" academias={academias} academiaId={requestedAcademiaId} />
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <FunnelCard
+          label="Reprovados Alle"
+          value={totalReprovadosAlle}
+          icon={<Icon name="warning" className="h-[18px] w-[18px]" />}
+          accent="violet"
+        />
+      </div>
 
       <ClientesAlleStatusChart clientes={clientes} />
 
