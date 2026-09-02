@@ -125,9 +125,9 @@ export const PODIUM_METRICS: Record<
   },
   clientesAlleAtivos: {
     title: 'Pódio de clientes Alle ativos',
-    subtitle: 'Assinaram o termo e já recebem energia',
+    subtitle: 'Passaram a receber energia no período',
     step: 3,
-    unitLabel: 'ativos',
+    unitLabel: 'ativados',
     icon: 'id-card',
     badge: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400',
     topBorder: 'border-t-emerald-400 dark:border-t-emerald-500/70',
@@ -157,11 +157,11 @@ export function PodiumFunnelConnector() {
 // Pódio das 3 academias líderes numa métrica, com o ranking das demais logo
 // abaixo (rolável, pra não estourar a altura do card) — junta o que antes eram
 // dois blocos separados (pódio + tabela de ranking) num único card por métrica,
-// pra caber 3 lado a lado (contatos/conversões/scans) na mesma seção. Cada card
-// ordena `rows` pela sua própria métrica — diferente do pódio de conversões
+// pra caber 3 lado a lado (contatos/conversões/ativados) na mesma seção. Cada
+// card ordena `rows` pela sua própria métrica — diferente do pódio de conversões
 // original, não dá mais pra confiar na ordenação que já vem de fetchGestoresPanel,
-// já que agora duas das três métricas (contatos, scans) não são o critério de
-// ordenação padrão do servidor.
+// já que agora duas das três métricas (contatos, clientesAlleAtivos) não são o
+// critério de ordenação padrão do servidor.
 // Mesmo critério de ordenação usado nos 3 cards do pódio (mais saturado no
 // 1º lugar) — exportado pra export-podios.ts gerar CSV/PDF com a MESMA
 // classificação que aparece na tela, em vez de reimplementar o sort lá.

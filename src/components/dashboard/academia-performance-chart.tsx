@@ -75,7 +75,17 @@ function stripCommonPrefix(names: string[]): string[] {
 // isso aponta pro campo bruto (ex.: totalAlunos), não pro peso: mostra a contagem
 // real, não o número normalizado 0-1. O eixo continua escondido, porque uma régua em
 // log não se lê tão direto quanto o número escrito em cima da barra.
-export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[] }) {
+// clientesAlleLabel: em /performance a série clientesAlleAtivos é headcount atual
+// de ativos ("Clientes Alle ativos"); em /gestores a MESMA chave carrega
+// "ativados no período" (ver fetch-gestores-panel.ts), então o painel passa um
+// rótulo próprio pra legenda/tooltip não mentirem sobre o que a barra conta.
+export function AcademiaPerformanceChart({
+  rows,
+  clientesAlleLabel = SERIES.clientesAlle.label,
+}: {
+  rows: AcademiaPerformance[]
+  clientesAlleLabel?: string
+}) {
   const isDark = useIsDark()
   const chrome = getChartChrome(isDark)
   if (rows.length === 0) return null
@@ -171,7 +181,7 @@ export function AcademiaPerformanceChart({ rows }: { rows: AcademiaPerformance[]
               </Bar>
               <Bar
                 dataKey={SERIES.clientesAlle.weightKey}
-                name={SERIES.clientesAlle.label}
+                name={clientesAlleLabel}
                 fill={isDark ? SERIES.clientesAlle.dark : SERIES.clientesAlle.light}
                 radius={[4, 4, 0, 0]}
                 barSize={26}

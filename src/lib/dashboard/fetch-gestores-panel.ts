@@ -23,6 +23,11 @@ export type GestoresPanelRow = {
   // campo só pra poder reaproveitar AcademiaPerformanceChart aqui direto, sem
   // adaptar as linhas. Não aparece em nenhum card/coluna própria do painel.
   conversoesManualAjusteTotal: number
+  // Clientes cuja 1ª ativação (status→ativo) caiu no período do filtro — NÃO é o
+  // headcount de ativos hoje (esse conceito, foto do estado atual, segue em
+  // fetch-academia-performance.ts pra /performance). Ver a query de clientesAtivos
+  // abaixo. Mesmo nome do campo em AcademiaPerformance só pra reaproveitar
+  // AcademiaPerformanceChart aqui direto; o significado difere entre as duas telas.
   clientesAlleAtivos: number
   treinada: boolean
   pendentesAssinatura: number
@@ -159,25 +164,33 @@ export async function fetchGestoresPanel(
        group by ca.academia_id`,
       [statusesConversao, hoje.from, hoje.toExclusive, academiaId]
     ),
-    // `total` é o headcount real de ATIVOS (exibido como "Clientes Alle ativos"
-    // no painel — quem não assinou o termo ainda não entra aqui, e não é escopado
-    // por período: é uma foto do estado atual, igual clientesAlleAtivos em
-    // fetch-academia-performance.ts). `exclusivo` é outra coisa: quem converteu
-    // por fora do Ane com um dos status habilitados em /configuracoes (ver
-    // fetchConversaoStatusesIncluidos — ativo/pendente/reprovado sempre contam,
-    // sem_informacao/com_impedimentos/falta_documentos só se ligado) e ainda não
-    // tem uma linha em conversions apontando pra cá (cliente_alle_id, criada ao
-    // marcar o termo de adesão em /convertidos via definirStatusClienteConvertido).
-    // Só `exclusivo` entra em totalConversoesManual (ver abaixo) — somar `total`
-    // ali contava essa pessoa duas vezes (uma em totalConversoesAne, outra aqui).
-    // Diferente de `total`, `exclusivo` é escopado por created_at quando o período
-    // não for "todos" — sem isso, o pódio/ranking não refletiam o filtro de
-    // hoje/ontem/data específica: esse número (cadastro manual, não passa pelo
-    // Ane) costuma ser bem maior que o volume diário real de conversões, "afogando"
-    // a diferença entre períodos e fazendo o ranking parecer travado.
+    // `total` alimenta o pódio ③ / coluna "Ativados período" / gráfico de
+    // performance do painel: clientes cuja 1ª transição pra status='ativo'
+    // (min(changed_at) em clientes_alle_status_history, migration 0035) caiu
+    // dentro do período do filtro — mesma definição de "virou ativo no mês" que
+    // /financeiro usa (fetch-financeiro-valor-mensal.ts). Antes era
+    // `count(*) filter (where ca.status = 'ativo')`, uma foto do estado atual que
+    // ignorava o filtro de período (o pódio ③ ficava "travado" enquanto os
+    // pódios ① Contatos e ② Conversões respondiam). O min() é calculado ANTES do
+    // filtro de período: se o cliente saiu de ativo e voltou depois, a
+    // reativação não conta de novo — só a 1ª vez na vida. Em "Todo período"
+    // (range null) conta toda 1ª ativação já registrada no histórico.
+    // `exclusivo` é outra coisa: quem converteu por fora do Ane com um dos status
+    // habilitados em /configuracoes (ver fetchConversaoStatusesIncluidos —
+    // ativo/pendente/reprovado sempre contam, sem_informacao/com_impedimentos/
+    // falta_documentos só se ligado) e ainda não tem uma linha em conversions
+    // apontando pra cá (cliente_alle_id, criada ao marcar o termo de adesão em
+    // /convertidos via definirStatusClienteConvertido). Só `exclusivo` entra em
+    // totalConversoesManual (ver abaixo); é escopado por created_at quando o
+    // período não for "todos" — sem isso, o pódio/ranking de conversões não
+    // refletiam o filtro de hoje/ontem/data específica.
     pool.query<{ academia_id: string; total: number; exclusivo: number }>(
       `select ca.academia_id,
-              count(*) filter (where ca.status = 'ativo') as total,
+              count(*) filter (
+                where pa.ativado_em is not null
+                  and ($3::timestamptz is null or pa.ativado_em >= $3)
+                  and ($4::timestamptz is null or pa.ativado_em < $4)
+              ) as total,
               count(*) filter (
                 where ca.status = any($1::text[])
                   and not exists (select 1 from conversions c2 where c2.cliente_alle_id = ca.id)
@@ -185,6 +198,12 @@ export async function fetchGestoresPanel(
                   and ($4::timestamptz is null or ca.created_at < $4)
               ) as exclusivo
        from clientes_alle ca
+       left join (
+         select cliente_alle_id, min(changed_at) as ativado_em
+         from clientes_alle_status_history
+         where status = 'ativo'
+         group by cliente_alle_id
+       ) pa on pa.cliente_alle_id = ca.id
        where ($2::uuid is null or ca.academia_id = $2)
        group by ca.academia_id`,
       [statusesConversao, academiaId, range?.from ?? null, range?.toExclusive ?? null]
@@ -243,7 +262,7 @@ export async function fetchGestoresPanel(
   const totalConversoesExclusivoHojeByAcademia = new Map(
     clientesExclusivosHoje.map((r) => [r.academia_id, r.exclusivo])
   )
-  const clientesAtivosByAcademia = new Map(clientesAtivos.map((r) => [r.academia_id, r.total]))
+  const clientesAtivadosNoPeriodoByAcademia = new Map(clientesAtivos.map((r) => [r.academia_id, r.total]))
   const clientesAtivosExclusivosByAcademia = new Map(clientesAtivos.map((r) => [r.academia_id, r.exclusivo]))
   const treinadaByAcademia = new Map(treinadas.map((r) => [r.academia_id, r.treinada ?? false]))
   const pendentesByAcademia = new Map(
@@ -276,7 +295,7 @@ export async function fetchGestoresPanel(
         (totalConversoesManualHojeByAcademia.get(a.id) ?? 0) +
         (totalConversoesExclusivoHojeByAcademia.get(a.id) ?? 0),
       conversoesManualAjusteTotal: ajusteTotal,
-      clientesAlleAtivos: clientesAtivosByAcademia.get(a.id) ?? 0,
+      clientesAlleAtivos: clientesAtivadosNoPeriodoByAcademia.get(a.id) ?? 0,
       treinada: treinadaByAcademia.get(a.id) ?? false,
       pendentesAssinatura: pendentesByAcademia.get(a.id) ?? 0,
     }
@@ -298,11 +317,14 @@ export async function fetchGestoresPanel(
     { pendentesAssinatura: 0, academiasTreinadas: 0, academiasTotal: 0 }
   )
 
-  // Scans/conversões/Clientes Alle ativos somam TODAS as academias com atividade no
-  // período, inclusive as desativadas (ver comentário na query de `academias` acima)
-  // — é isso que faz esses totais baterem com os cards equivalentes do dashboard
-  // principal (Scans QR, Total de clientes convertidos, Clientes Alle ativos) pro
-  // mesmo filtro de período.
+  // Contatos/scans/conversões somam TODAS as academias com atividade no período,
+  // inclusive as desativadas (ver comentário na query de `academias` acima) — é
+  // isso que faz esses totais baterem com os cards equivalentes do dashboard
+  // principal (Scans QR, Total de clientes convertidos) pro mesmo filtro de
+  // período. clientesAlleAtivos entra na soma pelo mesmo motivo (não perder as
+  // ativações de uma unidade que fechou depois), mas aqui é "ativados no período"
+  // (ver GestoresPanelRow) — NÃO bate com o card "Clientes Alle ativos" da home,
+  // que é headcount atual; esse total não é exibido em nenhum card do painel.
   const totalsAtividade = academias.map(buildRow).reduce(
     (acc, r) => ({
       totalContatos: acc.totalContatos + r.totalContatos,

@@ -181,10 +181,10 @@ export function GestoresPanelDashboard({
                 ranking das demais academias rolável dentro do próprio card,
                 então a tabela completa abaixo (com colunas sem pódio, como
                 Alunos/Treinada) continua existindo sem sobreposição de conteúdo.
-                clientesAlleAtivos é foto do estado atual (não filtra por
-                created_at, ver fetch-gestores-panel.ts) — diferente dos outros
-                dois pódios, não muda com o filtro de período acima; pedido
-                explícito do usuário mesmo assim (substituiu o pódio de scans). */}
+                Os 3 respondem ao filtro de período: ① Contatos e ② Conversões
+                contam eventos com created_at na janela; ③ conta clientes cuja
+                1ª ativação (status→ativo) caiu na janela — ver clientesAlleAtivos
+                em fetch-gestores-panel.ts. */}
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Pódios por unidade</p>
               <div className="flex items-center gap-2">
@@ -221,7 +221,7 @@ export function GestoresPanelDashboard({
                 academias, o de performance é fixo). */}
             <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
               <GestoresScansChart rows={data.rows} />
-              <AcademiaPerformanceChart rows={data.rows} />
+              <AcademiaPerformanceChart rows={data.rows} clientesAlleLabel="Ativados no período" />
             </div>
           </>
         )

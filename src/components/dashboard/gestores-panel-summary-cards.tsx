@@ -2,18 +2,15 @@ import { FunnelCard } from './funnel-card'
 import { Icon } from '@/components/ui/icons'
 import type { GestoresPanelData } from '@/lib/dashboard/fetch-gestores-panel'
 
-// Só as métricas que de fato respondem ao filtro de período do painel
-// (Contatos/Conversões no período). "Scans no período" saiu daqui a pedido
-// do usuário (ver pódio de scans substituído por "Clientes Alle ativos" em
-// gestores-podium.tsx); "Clientes Alle ativos" e "Pendentes de assinatura"
-// já não estavam aqui — são fotos do estado atual (sem filtro por
-// created_at nas queries de fetch-gestores-panel.ts), então ficavam
-// exibidos ao lado de cards que mudam com o filtro sem nunca mudar eles
-// mesmos, dando a falsa impressão de que também respondiam ao período.
-// Scans no período continua disponível por academia na tabela de ranking
-// abaixo (GestoresRankingTable) e no gráfico GestoresScansChart; os outros
-// dois números seguem disponíveis nas telas que já são a fonte deles
-// (/clientes-alle, /pendentes).
+// Resumo enxuto do topo: só Contatos e Conversões no período. "Scans no
+// período" saiu daqui a pedido do usuário (ver pódio de scans substituído por
+// "Clientes Alle ativos" em gestores-podium.tsx) e segue disponível por
+// academia na tabela de ranking abaixo (GestoresRankingTable) e no gráfico
+// GestoresScansChart. "Pendentes de assinatura" é foto do estado atual (sem
+// filtro por período), então ficaria enganoso ao lado de cards que mudam com o
+// filtro — segue disponível em /pendentes. "Clientes Alle ativos" hoje
+// responde ao período (conta ativações na janela, ver fetch-gestores-panel.ts),
+// mas o usuário só pediu esse número no pódio ③ / ranking, não como card aqui.
 export function GestoresPanelSummaryCards({ data }: { data: GestoresPanelData }) {
   const { totals } = data
 

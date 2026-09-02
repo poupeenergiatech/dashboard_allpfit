@@ -396,7 +396,10 @@ const gestoresPanelRows: GestoresPanelRow[] = MOCK_ACADEMIAS.map((a) => {
     totalConversoes: performance.totalConversoes,
     totalConversoesHoje: Math.round(performance.totalConversoes * 0.08),
     conversoesManualAjusteTotal: performance.conversoesManualAjusteTotal,
-    clientesAlleAtivos: performance.clientesAlleAtivos,
+    // No painel de gestores esse campo é "ativados no período" (1ª ativação na
+    // janela do filtro), não o headcount atual que a mesma chave carrega em
+    // MOCK_PERFORMANCE — por isso um número menor, coerente com uma janela curta.
+    clientesAlleAtivos: Math.max(0, Math.round(performance.totalConversoes * 0.4)),
     treinada,
     pendentesAssinatura: pendentes,
   }

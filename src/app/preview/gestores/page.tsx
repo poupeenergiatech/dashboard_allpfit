@@ -27,7 +27,7 @@ export default function PreviewGestoresPage() {
       <GestoresRankingTable rows={MOCK_GESTORES_PANEL.rows} />
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
         <GestoresScansChart rows={MOCK_GESTORES_PANEL.rows} />
-        <AcademiaPerformanceChart rows={MOCK_GESTORES_PANEL.rows} />
+        <AcademiaPerformanceChart rows={MOCK_GESTORES_PANEL.rows} clientesAlleLabel="Ativados no período" />
       </div>
     </div>
   )

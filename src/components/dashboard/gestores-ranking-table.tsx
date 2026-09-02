@@ -25,7 +25,7 @@ const COLUMNS: Column[] = [
   { key: 'totalScansHoje', label: 'Scans hoje', align: 'right' },
   { key: 'totalContatos', label: 'Contatos', align: 'right' },
   { key: 'totalAlunos', label: 'Alunos', align: 'right' },
-  { key: 'clientesAlleAtivos', label: 'Clientes ativos', align: 'right' },
+  { key: 'clientesAlleAtivos', label: 'Ativados período', align: 'right' },
   { key: 'pendentesAssinatura', label: 'Pendentes assinatura', align: 'right' },
 ]
 
