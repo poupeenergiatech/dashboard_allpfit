@@ -80,16 +80,17 @@ export function FunnelGrid({ counts, isSuperAdmin }: { counts: FunnelCounts; isS
             />
           )}
           <FunnelCard
-            label="Reprovados / cancelados"
+            label="Reprovados"
             value={totalReprovados}
             icon={<Icon name="x-circle" className="h-[18px] w-[18px]" />}
             accent="rose"
           />
-          {/* Contagem à parte de "Reprovados / cancelados" (status='reprovado')
-              — soma quem está com_impedimentos ou falta_documentos, pendências
-              que ainda podem ser resolvidas, não uma reprovação definitiva.
-              Pedido explícito do usuário; não muda nada em como esses status
-              contam (ou não) como conversão em outro lugar. */}
+          {/* Contagem à parte do card "Reprovados" acima (reprovados/cancelados
+              lançados em manual_data + clientes_alle status='reprovado') — soma
+              quem está com_impedimentos ou falta_documentos, pendências que ainda
+              podem ser resolvidas, não uma reprovação definitiva. Pedido
+              explícito do usuário; não muda nada em como esses status contam (ou
+              não) como conversão em outro lugar. */}
           <FunnelCard
             label="Reprovados Alle"
             value={totalReprovadosAlle}
