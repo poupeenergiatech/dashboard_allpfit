@@ -1,14 +1,16 @@
 'use client'
 
-// Export do pódio de conversões de /gestores em CSV e PDF — mesma classificação
-// por academia que aparece na tela (ver rankRowsByMetric em gestores-podium.tsx),
-// então o arquivo exportado sempre bate com o que o usuário está vendo no
-// momento do clique (inclusive o filtro de academia e período já aplicados, já
-// que `rows` chega filtrado do painel).
+// Export do pódio ③ de /gestores (clientes Alle ativados no período) em CSV e
+// PDF — mesma classificação por academia que aparece na tela (ver
+// rankRowsByMetric em gestores-podium.tsx), então o arquivo exportado sempre
+// bate com o que o usuário está vendo no momento do clique (inclusive o filtro
+// de academia e período já aplicados, já que `rows` chega filtrado do painel).
 //
-// Antes exportava os 3 pódios (contatos/conversões/scans); a pedido do
-// usuário, o relatório ficou só com o de conversões — os outros dois
-// continuam visíveis na tela, só não entram mais no CSV/PDF.
+// Antes exportava os 3 pódios (contatos/conversões/scans), depois só o de
+// conversões; a pedido do usuário, o relatório passou a ser o pódio de clientes
+// Alle ativos (mesmo número do card "Clientes Alle ativados no período" e da
+// coluna "Ativados período") — os outros dois pódios continuam visíveis na
+// tela, só não entram no CSV/PDF.
 //
 // jsPDF + jspdf-autotable NÃO entram no import estático deste arquivo (só o
 // PDF precisa deles, CSV não) — import() dinâmico dentro de exportPodiosPdf
@@ -22,7 +24,12 @@ import type { GestoresPanelRow } from './fetch-gestores-panel'
 import type { PodiumMetricKey } from '@/components/dashboard/gestores-podium'
 import type { jsPDF } from 'jspdf'
 
-const METRIC_KEY: PodiumMetricKey = 'totalConversoes'
+const METRIC_KEY: PodiumMetricKey = 'clientesAlleAtivos'
+const METRIC_TITLE = 'Pódio de Clientes Alle Ativos — Dashboard de Gestores'
+// Cabeçalho de coluna do valor — mesmo rótulo da unidade no card da tela
+// (PODIUM_METRICS.clientesAlleAtivos.unitLabel) e da coluna no ranking.
+const VALUE_COLUMN = 'Ativados'
+const FILE_SLUG = 'podio-clientes-alle-ativos-gestores'
 
 function timestamp(): string {
   return new Date().toISOString().slice(0, 10)
@@ -44,33 +51,34 @@ export function exportPodiosCsv(rows: GestoresPanelRow[], periodLabel: string): 
   const rest = ranked.slice(3)
 
   const csvRows: (string | number | null)[][] = [
-    ['Pódio de Conversões — Dashboard de Gestores'],
+    [METRIC_TITLE],
     ['Período', periodLabel],
     [],
     ['PÓDIO (TOP 3)'],
-    ['Colocação', 'Academia', 'Conversões'],
+    ['Colocação', 'Academia', VALUE_COLUMN],
     ...top3.map((row, i) => [ordinal(i + 1), row.nome, row[METRIC_KEY]]),
   ]
   if (rest.length > 0) {
     csvRows.push(
       [],
       ['DEMAIS COLOCAÇÕES (4º em diante)'],
-      ['Colocação', 'Academia', 'Conversões'],
+      ['Colocação', 'Academia', VALUE_COLUMN],
       ...rest.map((row, i) => [ordinal(i + 4), row.nome, row[METRIC_KEY]])
     )
   }
 
-  downloadCsv(`podio-conversoes-gestores-${timestamp()}.csv`, toCsv(csvRows))
+  downloadCsv(`${FILE_SLUG}-${timestamp()}.csv`, toCsv(csvRows))
 }
 
 // ---------------------------------------------------------------------------
 // PDF — desenha o pódio de verdade (barras em degrau, 2º/1º/3º da esquerda pra
 // direita, igual gestores-podium.tsx) em vez de só uma tabela de ranking.
-// Cores são o hex real da escala accent usada na tela (accent-600/400/300 em
-// tailwind.config.ts), do mais saturado (1º) ao mais claro (3º) — mesma
+// Cores são o hex real da escala emerald do Tailwind (emerald-600/400/300),
+// mesma cor do pódio ③ "clientes Alle ativos" na tela (PLACE_COLORS em
+// gestores-podium.tsx), do mais saturado (1º) ao mais claro (3º) — mesma
 // leitura visual de "mais saturado = melhor colocação" do card da tela.
 // ---------------------------------------------------------------------------
-const PLACE_COLORS: [string, string, string] = ['#ef6700', '#fea25c', '#ffc294'] // accent-600 / 400 / 300
+const PLACE_COLORS: [string, string, string] = ['#059669', '#34d399', '#6ee7b7'] // emerald-600 / 400 / 300
 
 const BADGE_FILL: [number, number, number] = [51, 65, 85] // slate-700 — badge escuro, contraste garantido com número branco independente da cor da barra
 
@@ -151,7 +159,7 @@ export async function exportPodiosPdf(rows: GestoresPanelRow[], periodLabel: str
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(16)
-  doc.text('Pódio de Conversões — Dashboard de Gestores', pageWidth / 2, cursorY, { align: 'center' })
+  doc.text(METRIC_TITLE, pageWidth / 2, cursorY, { align: 'center' })
   cursorY += 7
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
@@ -198,7 +206,7 @@ export async function exportPodiosPdf(rows: GestoresPanelRow[], periodLabel: str
   if (rest.length > 0) {
     autoTable(doc, {
       startY: cursorY,
-      head: [['Colocação', 'Academia', 'Conversões']],
+      head: [['Colocação', 'Academia', VALUE_COLUMN]],
       body: rest.map((row, i) => [ordinal(i + 4), row.nome, row[METRIC_KEY].toLocaleString('pt-BR')]),
       styles: { fontSize: 8 },
       headStyles: { fillColor: hexToRgb(PLACE_COLORS[0]) },
@@ -206,5 +214,5 @@ export async function exportPodiosPdf(rows: GestoresPanelRow[], periodLabel: str
     })
   }
 
-  doc.save(`podio-conversoes-gestores-${timestamp()}.pdf`)
+  doc.save(`${FILE_SLUG}-${timestamp()}.pdf`)
 }

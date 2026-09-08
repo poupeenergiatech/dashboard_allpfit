@@ -29,10 +29,10 @@ export function ClientesAlleStatusChart({ clientes }: { clientes: ClienteAlle[] 
   const isDark = useIsDark()
   const chrome = getChartChrome(isDark)
 
-  const data = useMemo(() => {
+  const { data, reprovadosAlle } = useMemo(() => {
     const counts = new Map<ClienteAlleStatus, number>()
     for (const c of clientes) counts.set(c.status, (counts.get(c.status) ?? 0) + 1)
-    return STATUS_META.map((meta) => {
+    const data = STATUS_META.map((meta) => {
       const value = counts.get(meta.status) ?? 0
       // Valor embutido no rótulo do eixo (não um LabelList por cima da barra) — com
       // 0 clientes a barra tem largura zero e o LabelList simplesmente não desenha
@@ -40,13 +40,26 @@ export function ClientesAlleStatusChart({ clientes }: { clientes: ClienteAlle[] 
       // gente nesse status". Embutir garante que o 0 apareça sempre.
       return { label: `${meta.label} — ${value}`, value, color: isDark ? meta.dark : meta.light }
     })
+    // "Reprovados Alle" = com_impedimentos + falta_documentos somados. Vivia num
+    // card separado acima do gráfico; movido pra cá (pedido do usuário) pra ficar
+    // do lado das duas barras que ele soma, sem precisar somá-las de cabeça e sem
+    // um card só pra isso.
+    const reprovadosAlle = (counts.get('com_impedimentos') ?? 0) + (counts.get('falta_documentos') ?? 0)
+    return { data, reprovadosAlle }
   }, [clientes, isDark])
 
   if (clientes.length === 0) return null
 
   return (
     <div className="card p-5">
-      <p className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-400">Clientes Alle por status</p>
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Clientes Alle por status</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500">
+          Reprovados Alle:{' '}
+          <span className="font-semibold text-slate-600 dark:text-slate-300">{reprovadosAlle}</span>
+          <span className="ml-1">(com impedimentos + falta documentos)</span>
+        </p>
+      </div>
       <div style={{ height: 260 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ top: 4, right: 32, left: 8, bottom: 0 }}>
