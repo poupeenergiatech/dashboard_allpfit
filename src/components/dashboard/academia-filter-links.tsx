@@ -14,12 +14,17 @@ export function AcademiaFilterLinks({
   academiaId,
   paramName = 'academia',
   extraParams = {},
+  bare = false,
 }: {
   basePath: string
   academias: Academia[]
   academiaId: string | null
   paramName?: string
   extraParams?: Record<string, string>
+  // Só o <select>, sem o `.card` que o envolve — pra compor dentro de uma
+  // barra de filtros maior (ver clientes-convertidos-table.tsx) em vez de
+  // aparecer como seu próprio card empilhado.
+  bare?: boolean
 }) {
   const router = useRouter()
 
@@ -34,21 +39,21 @@ export function AcademiaFilterLinks({
     return query ? `${basePath}?${query}` : basePath
   }
 
-  return (
-    <div className="card p-4">
-      <select
-        value={academiaId ?? ''}
-        onChange={(e) => router.push(hrefFor(e.target.value || null))}
-        aria-label="Filtrar por academia"
-        className="select w-full sm:w-64"
-      >
-        <option value="">Todas as academias</option>
-        {academias.map((academia) => (
-          <option key={academia.id} value={academia.id}>
-            {academia.nome}
-          </option>
-        ))}
-      </select>
-    </div>
+  const select = (
+    <select
+      value={academiaId ?? ''}
+      onChange={(e) => router.push(hrefFor(e.target.value || null))}
+      aria-label="Filtrar por academia"
+      className="select w-full sm:w-64"
+    >
+      <option value="">Todas as academias</option>
+      {academias.map((academia) => (
+        <option key={academia.id} value={academia.id}>
+          {academia.nome}
+        </option>
+      ))}
+    </select>
   )
+
+  return bare ? select : <div className="card p-4">{select}</div>
 }

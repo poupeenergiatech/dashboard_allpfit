@@ -11,6 +11,7 @@ export function ListFilterBar<TStatus extends string>({
   statusOptions,
   status,
   onStatusChange,
+  bare = false,
 }: {
   search: string
   onSearchChange: (value: string) => void
@@ -18,9 +19,13 @@ export function ListFilterBar<TStatus extends string>({
   statusOptions: { value: TStatus; label: string }[]
   status: TStatus
   onStatusChange: (value: TStatus) => void
+  // Sem o `.card` que envolve os campos — pra compor dentro de uma barra de
+  // filtros maior (ver clientes-convertidos-table.tsx) em vez de aparecer
+  // como seu próprio card empilhado.
+  bare?: boolean
 }) {
-  return (
-    <div className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+  const content = (
+    <>
       <input
         type="search"
         value={search}
@@ -48,6 +53,10 @@ export function ListFilterBar<TStatus extends string>({
           ))}
         </div>
       )}
-    </div>
+    </>
   )
+
+  if (bare) return content
+
+  return <div className="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">{content}</div>
 }

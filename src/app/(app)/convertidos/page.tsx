@@ -1,4 +1,3 @@
-import { AcademiaFilterLinks } from '@/components/dashboard/academia-filter-links'
 import { ClientesConvertidosTable } from '@/components/dashboard/clientes-convertidos-table'
 import { fetchActiveAcademias } from '@/lib/dashboard/fetch-academias'
 import { fetchClientesConvertidos } from '@/lib/dashboard/fetch-clientes-convertidos'
@@ -31,11 +30,11 @@ export default async function ConvertidosPage({
         )}
       </div>
 
-      <AcademiaFilterLinks basePath="/convertidos" academias={academias} academiaId={requestedAcademiaId} />
-
       <ClientesConvertidosTable
         clientes={clientes}
         academias={academias}
+        academiaFilterBasePath="/convertidos"
+        academiaId={requestedAcademiaId}
         editable={!!profile && canManageManualData(profile.role)}
       />
     </div>

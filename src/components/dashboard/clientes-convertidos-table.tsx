@@ -11,6 +11,7 @@ import {
 } from '@/app/(app)/convertidos/actions'
 import { bulkUpdateClientesAlleStatus, deleteClienteAlle, reprovarClienteAlle } from '@/app/(app)/clientes-alle/actions'
 import { Avatar } from '@/components/ui/avatar'
+import { AcademiaFilterLinks } from './academia-filter-links'
 import { ListFilterBar } from './list-filter-bar'
 import { Pagination } from './pagination'
 import { useToast } from '@/components/ui/toast'
@@ -120,6 +121,8 @@ function Pills<T extends string>({
 export function ClientesConvertidosTable({
   clientes,
   academias,
+  academiaFilterBasePath,
+  academiaId = null,
   editable = true,
   onUpdate = updateClienteConvertidoAcademia,
   onSetStatusAne = definirStatusClienteConvertido,
@@ -132,6 +135,11 @@ export function ClientesConvertidosTable({
 }: {
   clientes: ClienteConvertido[]
   academias: Academia[]
+  // Filtro de academia (topo da página) composto dentro da mesma barra do
+  // filtro de busca/status — ver bloco único abaixo. Sem `academiaFilterBasePath`
+  // o filtro de academia não aparece (ex: preview sem navegação por rota).
+  academiaFilterBasePath?: string
+  academiaId?: string | null
   editable?: boolean
   onUpdate?: UpdateAction
   onSetStatusAne?: SetStatusAction
@@ -189,33 +197,43 @@ export function ClientesConvertidosTable({
 
   return (
     <div className="space-y-3">
-      <ListFilterBar
-        search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Buscar por nome ou telefone…"
-        statusOptions={semUnidadeCount > 0 ? STATUS_OPTIONS : []}
-        status={status}
-        onStatusChange={setStatus}
-      />
-
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          {filtered.length === clientes.length ? (
-            <>
-              <span className="font-semibold text-slate-900 dark:text-white">{clientes.length}</span>{' '}
-              {clientes.length === 1 ? 'cliente' : 'clientes'}
-            </>
-          ) : (
-            <>
-              <span className="font-semibold text-slate-900 dark:text-white">{filtered.length}</span> de {clientes.length}{' '}
-              {clientes.length === 1 ? 'cliente' : 'clientes'}
-            </>
+      {/* Filtro de academia + busca/status + export, tudo numa barra só (antes
+          eram 3 blocos empilhados: card do select, card da busca, linha da
+          contagem+botão) — pedido do usuário. A contagem fica de fora, numa
+          linha própria logo abaixo. */}
+      <div className="card flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          {academiaFilterBasePath && (
+            <AcademiaFilterLinks basePath={academiaFilterBasePath} academias={academias} academiaId={academiaId} bare />
           )}
-        </p>
+          <ListFilterBar
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Buscar por nome ou telefone…"
+            statusOptions={semUnidadeCount > 0 ? STATUS_OPTIONS : []}
+            status={status}
+            onStatusChange={setStatus}
+            bare
+          />
+        </div>
         <button type="button" onClick={handleExport} className="btn-secondary btn-sm">
           Exportar CSV
         </button>
       </div>
+
+      <p className="text-sm text-slate-500 dark:text-slate-400">
+        {filtered.length === clientes.length ? (
+          <>
+            <span className="font-semibold text-slate-900 dark:text-white">{clientes.length}</span>{' '}
+            {clientes.length === 1 ? 'cliente' : 'clientes'}
+          </>
+        ) : (
+          <>
+            <span className="font-semibold text-slate-900 dark:text-white">{filtered.length}</span> de {clientes.length}{' '}
+            {clientes.length === 1 ? 'cliente' : 'clientes'}
+          </>
+        )}
+      </p>
 
       <div className="card flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center">
         {editable && (

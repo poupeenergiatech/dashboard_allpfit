@@ -1,4 +1,3 @@
-import { AcademiaFilterLinks } from '@/components/dashboard/academia-filter-links'
 import { ClientesConvertidosTable } from '@/components/dashboard/clientes-convertidos-table'
 import { MOCK_ACADEMIAS, MOCK_CLIENTES_CONVERTIDOS } from '@/lib/preview/mock-data'
 import { mockSave } from '@/lib/preview/mock-actions'
@@ -15,11 +14,10 @@ export default function PreviewConvertidosPage() {
         </p>
       </div>
 
-      <AcademiaFilterLinks basePath="/preview/convertidos" academias={MOCK_ACADEMIAS} academiaId={null} />
-
       <ClientesConvertidosTable
         clientes={MOCK_CLIENTES_CONVERTIDOS}
         academias={MOCK_ACADEMIAS}
+        academiaFilterBasePath="/preview/convertidos"
         onUpdate={mockSave}
         onSetStatusAne={mockSave}
         onReprovarAne={mockSave}
