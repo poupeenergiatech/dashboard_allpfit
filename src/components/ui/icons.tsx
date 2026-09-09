@@ -29,6 +29,7 @@ export type IconName =
   | 'upload'
   | 'search'
   | 'clock'
+  | 'help'
 
 const PATHS: Record<IconName, React.ReactNode> = {
   chart: (
@@ -165,6 +166,13 @@ const PATHS: Record<IconName, React.ReactNode> = {
   upload: <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12M7 9l5-5 5 5M5 20h14" />,
   search: <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.2-5.2m0 0a7.5 7.5 0 10-10.6 0 7.5 7.5 0 0010.6 0z" />,
   clock: <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
+  help: (
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M9.879 7.519a3 3 0 114.243 4.243c-.204.182-.43.332-.67.451-.746.361-1.452.999-1.452 1.83v.207M21 12a9 9 0 11-18 0 9 9 0 0118 0zM12 17.25h.008v.008H12v-.008z"
+    />
+  ),
 }
 
 export function Icon({

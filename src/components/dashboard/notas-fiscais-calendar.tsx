@@ -66,6 +66,14 @@ const CHIP_PALETTE = {
   },
 } as const
 
+// Só a borda sólida por tipo, pra moldura do mockup em NotaFiscalTutorialModal
+// — separado de CHIP_PALETTE.dashed porque aquele já vem com hover:bg (feito
+// pro botão "+ Tipo", não pra um bloco estático de referência).
+const TUTORIAL_BORDER = {
+  blue: 'border-blue-200 dark:border-blue-500/30',
+  amber: 'border-amber-200 dark:border-amber-500/30',
+} as const
+
 const STATUS_LABEL: Record<NotaFiscalStatus, string> = {
   pendente: 'Pendente',
   validado: 'Validado',
@@ -227,6 +235,221 @@ function NotaFiscalChip({
         <Icon name="clock" className="h-3.5 w-3.5" />
       </button>
     </div>
+  )
+}
+
+type TutorialTipo = 'unidade' | 'individual'
+
+// Dados 100% fictícios (pedido explícito do usuário: "faça com dados de
+// exemplo") — não é uma lista fechada de exigência fiscal, é só o conjunto de
+// campos que uma NFS-e comum costuma ter, pra o gestor conferir visualmente
+// antes de anexar. Unidade e Individual têm o mesmo "formato" de nota, só o
+// prestador do serviço muda (CNPJ da academia vs CPF/CNPJ do gestor).
+const TUTORIAL_DATA: Record<
+  TutorialTipo,
+  {
+    tipoLabel: string
+    prestadorLabel: string
+    prestador: { label: string; value: string }[]
+    tomador: { label: string; value: string }[]
+    discriminacao: string
+  }
+> = {
+  unidade: {
+    tipoLabel: 'Nota da unidade',
+    prestadorLabel: 'Prestador de serviços (emitente) — CNPJ da academia',
+    prestador: [
+      { label: 'Razão social', value: 'Allp Fit Pinheiros Ltda' },
+      { label: 'CNPJ', value: '12.345.678/0001-90' },
+      { label: 'Inscrição municipal', value: '123.456-7' },
+    ],
+    tomador: [
+      { label: 'Nome / Razão social', value: 'Allp Fit Energia Ltda' },
+      { label: 'CNPJ', value: '98.765.432/0001-10' },
+    ],
+    discriminacao: 'Prestação de serviços de academia',
+  },
+  individual: {
+    tipoLabel: 'Nota individual do gestor',
+    prestadorLabel: 'Prestador de serviços (emitente) — CPF/CNPJ do gestor',
+    prestador: [
+      { label: 'Nome', value: 'João da Silva' },
+      { label: 'CPF ou CNPJ (MEI)', value: '123.456.789-00' },
+    ],
+    tomador: [
+      { label: 'Nome / Razão social', value: 'Allp Fit Pinheiros Ltda' },
+      { label: 'CNPJ', value: '12.345.678/0001-90' },
+    ],
+    discriminacao: 'Serviços de gestão da unidade',
+  },
+}
+
+function MockField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</p>
+      <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{value}</p>
+    </div>
+  )
+}
+
+// Mockup de NFS-e (não é upload de verdade, só referência visual) — aberto
+// tanto pelo botão de ajuda no cabeçalho do calendário (sem initialTipo, ver
+// NotasFiscaisCalendar) quanto pelo botão "Ver modelo" do
+// NotaFiscalConfirmModal (initialTipo = o tipo do slot que a pessoa está
+// tentando anexar, pra abrir já na aba certa). Dados fictícios, deixado
+// explícito com o badge "Exemplo" pra ninguém confundir com uma nota real.
+function NotaFiscalTutorialModal({
+  open,
+  onClose,
+  initialTipo = 'unidade',
+}: {
+  open: boolean
+  onClose: () => void
+  initialTipo?: TutorialTipo
+}) {
+  const [tipo, setTipo] = useState<TutorialTipo>(initialTipo)
+
+  // Reabrir (ex: vindo do fluxo de confirmação de anexo, cada vez pra um mês/
+  // tipo diferente) sempre parte da aba correspondente àquele slot, em vez de
+  // ficar preso na última aba escolhida numa abertura anterior.
+  useEffect(() => {
+    if (open) setTipo(initialTipo)
+  }, [open, initialTipo])
+
+  const data = TUTORIAL_DATA[tipo]
+  const palette = CHIP_PALETTE[tipo === 'unidade' ? 'blue' : 'amber']
+  const mesExemplo = `${MESES[7]}/2026` // Agosto/2026 — mesmo mês usado nos dados de exemplo abaixo
+
+  return (
+    <Modal open={open} onClose={onClose} title="Modelo de nota fiscal" subtitle="Dados de exemplo, só de referência" maxWidthClassName="max-w-2xl">
+      <div className="mb-4 inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
+        {(['unidade', 'individual'] as const).map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => setTipo(opt)}
+            aria-pressed={tipo === opt}
+            className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold transition ${
+              tipo === opt
+                ? 'bg-white dark:bg-slate-900 text-brand-700 dark:text-brand-300 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+            }`}
+          >
+            {TUTORIAL_DATA[opt].tipoLabel}
+          </button>
+        ))}
+      </div>
+
+      <div className={`rounded-xl border-2 ${TUTORIAL_BORDER[tipo === 'unidade' ? 'blue' : 'amber']} p-4`}>
+        <div className="mb-3 flex items-start justify-between gap-2">
+          <div>
+            <p className="text-sm font-extrabold text-slate-900 dark:text-white">Nota Fiscal de Serviços (NFS-e)</p>
+            <p className={`text-xs font-semibold uppercase tracking-wide ${palette.label}`}>{data.tipoLabel}</p>
+          </div>
+          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${palette.filled} ${palette.label}`}>
+            Exemplo
+          </span>
+        </div>
+
+        <div className="space-y-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            {data.prestadorLabel}
+          </p>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            {data.prestador.map((field) => (
+              <MockField key={field.label} {...field} />
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-2.5 space-y-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            Tomador de serviços
+          </p>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+            {data.tomador.map((field) => (
+              <MockField key={field.label} {...field} />
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-2.5 grid grid-cols-1 gap-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 p-3 sm:grid-cols-3">
+          <MockField label="Discriminação dos serviços" value={data.discriminacao} />
+          <MockField label="Competência" value={mesExemplo} />
+          <MockField label="Valor total dos serviços" value="R$ 1.000,00" />
+        </div>
+      </div>
+
+      <ul className="mt-4 space-y-1.5 text-sm text-slate-600 dark:text-slate-300">
+        <li>
+          <strong className="font-semibold text-slate-800 dark:text-white">Competência</strong> precisa bater com o
+          mês do quadradinho onde você está anexando (ex.: nota de {mesExemplo} vai no slot de{' '}
+          {MESES[7]} no calendário).
+        </li>
+        <li>
+          <strong className="font-semibold text-slate-800 dark:text-white">CPF/CNPJ do emitente</strong> tem que ser o
+          {tipo === 'unidade' ? ' CNPJ da academia' : ' CPF (ou CNPJ de MEI) do gestor'}, não o de outra unidade/pessoa.
+        </li>
+        <li>
+          <strong className="font-semibold text-slate-800 dark:text-white">Valor</strong> não pode estar em branco ou
+          zerado.
+        </li>
+      </ul>
+
+      <div className="mt-5 flex justify-end">
+        <button type="button" onClick={onClose} className="btn-secondary btn-sm">
+          Fechar
+        </button>
+      </div>
+    </Modal>
+  )
+}
+
+// Passo obrigatório antes de qualquer anexo (primeiro upload ou reenvio,
+// pedido explícito do usuário — "nos dois casos") — abre no lugar do modal de
+// upload direto quando a pessoa clica em "+ Tipo" ou no botão de reenviar de
+// um chip já preenchido (ver onRequestUpload em NotasFiscaisCalendar). "Ver
+// modelo" leva pro NotaFiscalTutorialModal (já na aba do tipo certo); "Já vi,
+// continuar" é o único jeito de chegar no modal de upload de verdade.
+function NotaFiscalConfirmModal({
+  target,
+  ano,
+  onClose,
+  onViewModel,
+  onConfirm,
+}: {
+  target: UploadTarget | null
+  ano: number
+  onClose: () => void
+  onViewModel: () => void
+  onConfirm: () => void
+}) {
+  const label = target?.tipo === 'individual' ? 'Nota individual do gestor' : 'Nota da unidade'
+
+  return (
+    <Modal
+      open={!!target}
+      onClose={onClose}
+      title="Antes de anexar"
+      subtitle={target ? `${MESES[target.mes - 1]} ${ano} · ${label}` : undefined}
+    >
+      <p className="text-sm text-slate-600 dark:text-slate-300">
+        Você já viu o modelo de nota fiscal com os dados que precisam aparecer nela?
+      </p>
+
+      <div className="mt-5 flex flex-wrap justify-end gap-2">
+        <button type="button" onClick={onClose} className="btn-secondary btn-sm">
+          Cancelar
+        </button>
+        <button type="button" onClick={onViewModel} className="btn-secondary btn-sm">
+          Ver modelo
+        </button>
+        <button type="button" onClick={onConfirm} className="btn-primary btn-sm">
+          Já vi, continuar
+        </button>
+      </div>
+    </Modal>
   )
 }
 
@@ -576,6 +799,31 @@ export function NotasFiscaisCalendar({
   const [uploadTarget, setUploadTarget] = useState<UploadTarget | null>(null)
   const [historicoTarget, setHistoricoTarget] = useState<UploadTarget | null>(null)
   const [validarTarget, setValidarTarget] = useState<NotaFiscalEntry | null>(null)
+  const [tutorialOpen, setTutorialOpen] = useState(false)
+  // Fluxo obrigatório antes de qualquer anexo: "+ Tipo"/reenviar não abre
+  // uploadTarget direto — passa por attachTarget (NotaFiscalConfirmModal)
+  // primeiro. attachTutorialOpen alterna qual dos dois modais aparece por
+  // cima enquanto attachTarget continua setado (ver NotaFiscalConfirmModal e
+  // NotaFiscalTutorialModal mais abaixo).
+  const [attachTarget, setAttachTarget] = useState<UploadTarget | null>(null)
+  const [attachTutorialOpen, setAttachTutorialOpen] = useState(false)
+
+  function requestAttach(target: UploadTarget) {
+    setAttachTarget(target)
+    setAttachTutorialOpen(false)
+  }
+
+  function cancelAttachFlow() {
+    setAttachTarget(null)
+    setAttachTutorialOpen(false)
+  }
+
+  function confirmAttachFlow() {
+    if (!attachTarget) return
+    setUploadTarget(attachTarget)
+    setAttachTarget(null)
+    setAttachTutorialOpen(false)
+  }
 
   const reload = useCallback(async () => {
     if (!academiaId) {
@@ -604,7 +852,17 @@ export function NotasFiscaisCalendar({
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Notas fiscais</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">Notas fiscais</p>
+            <button
+              type="button"
+              onClick={() => setTutorialOpen(true)}
+              title="Ver modelo de nota fiscal"
+              className="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+            >
+              <Icon name="help" className="h-4 w-4" />
+            </button>
+          </div>
           <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
             Nota da unidade (CNPJ da academia) e nota individual do gestor, mês a mês.
           </p>
@@ -691,7 +949,7 @@ export function NotasFiscaisCalendar({
                     canManage={canManage}
                     canViewHistorico={canViewHistorico}
                     canValidate={canValidate}
-                    onRequestUpload={() => setUploadTarget({ mes, tipo: 'unidade' })}
+                    onRequestUpload={() => requestAttach({ mes, tipo: 'unidade' })}
                     onDeleted={reload}
                     onOpenHistorico={() => setHistoricoTarget({ mes, tipo: 'unidade' })}
                     onOpenValidar={() => unidade && setValidarTarget(unidade)}
@@ -703,7 +961,7 @@ export function NotasFiscaisCalendar({
                     canManage={canManage}
                     canViewHistorico={canViewHistorico}
                     canValidate={canValidate}
-                    onRequestUpload={() => setUploadTarget({ mes, tipo: 'individual' })}
+                    onRequestUpload={() => requestAttach({ mes, tipo: 'individual' })}
                     onDeleted={reload}
                     onOpenHistorico={() => setHistoricoTarget({ mes, tipo: 'individual' })}
                     onOpenValidar={() => individual && setValidarTarget(individual)}
@@ -740,6 +998,22 @@ export function NotasFiscaisCalendar({
           setValidarTarget(null)
           reload()
         }}
+      />
+
+      <NotaFiscalTutorialModal open={tutorialOpen} onClose={() => setTutorialOpen(false)} />
+
+      <NotaFiscalConfirmModal
+        target={attachTutorialOpen ? null : attachTarget}
+        ano={ano}
+        onClose={cancelAttachFlow}
+        onViewModel={() => setAttachTutorialOpen(true)}
+        onConfirm={confirmAttachFlow}
+      />
+
+      <NotaFiscalTutorialModal
+        open={!!attachTarget && attachTutorialOpen}
+        onClose={() => setAttachTutorialOpen(false)}
+        initialTipo={attachTarget?.tipo}
       />
     </div>
   )
