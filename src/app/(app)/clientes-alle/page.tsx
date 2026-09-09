@@ -1,4 +1,3 @@
-import { AcademiaFilterLinks } from '@/components/dashboard/academia-filter-links'
 import { ClientesAlleForm } from '@/components/dashboard/clientes-alle-form'
 import { ClientesAlleImportForm } from '@/components/dashboard/clientes-alle-import-form'
 import { ClientesAlleStatusChart } from '@/components/dashboard/clientes-alle-status-chart'
@@ -46,13 +45,13 @@ export default async function ClientesAllePage({
         )}
       </div>
 
-      <AcademiaFilterLinks basePath="/clientes-alle" academias={academias} academiaId={requestedAcademiaId} />
-
       <ClientesAlleStatusChart clientes={clientes} />
 
       <ClientesAlleTable
         clientes={clientes}
         academias={academias}
+        academiaFilterBasePath="/clientes-alle"
+        academiaId={requestedAcademiaId}
         editable={canManageClientesAlle(profile.role)}
       />
 

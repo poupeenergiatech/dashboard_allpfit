@@ -9,6 +9,7 @@ import {
   updateClienteAlle,
 } from '@/app/(app)/clientes-alle/actions'
 import { Avatar } from '@/components/ui/avatar'
+import { AcademiaFilterLinks } from './academia-filter-links'
 import { ListFilterBar } from './list-filter-bar'
 import { Pagination } from './pagination'
 import { useToast } from '@/components/ui/toast'
@@ -67,6 +68,8 @@ const PAGE_SIZE = 15
 export function ClientesAlleTable({
   clientes,
   academias,
+  academiaFilterBasePath,
+  academiaId = null,
   editable = true,
   onUpdate = updateClienteAlle,
   onDelete = deleteClienteAlle,
@@ -76,6 +79,11 @@ export function ClientesAlleTable({
 }: {
   clientes: ClienteAlle[]
   academias: Academia[]
+  // Filtro de academia (topo da página) composto dentro da mesma barra do
+  // filtro de busca/status, em vez de aparecer sozinho acima do gráfico — ver
+  // clientes-alle/page.tsx. Sem `academiaFilterBasePath` o filtro não aparece.
+  academiaFilterBasePath?: string
+  academiaId?: string | null
   editable?: boolean
   onUpdate?: UpdateAction
   onDelete?: DeleteAction
@@ -223,14 +231,22 @@ export function ClientesAlleTable({
 
   return (
     <div className="space-y-3">
-      <ListFilterBar
-        search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Buscar por nome ou telefone…"
-        statusOptions={STATUS_OPTIONS}
-        status={status}
-        onStatusChange={setStatus}
-      />
+      {/* Filtro de academia + busca/status numa barra só (antes o de academia
+          ficava sozinho, acima do gráfico) — pedido do usuário. */}
+      <div className="card flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center">
+        {academiaFilterBasePath && (
+          <AcademiaFilterLinks basePath={academiaFilterBasePath} academias={academias} academiaId={academiaId} bare />
+        )}
+        <ListFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Buscar por nome ou telefone…"
+          statusOptions={STATUS_OPTIONS}
+          status={status}
+          onStatusChange={setStatus}
+          bare
+        />
+      </div>
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-slate-500 dark:text-slate-400">

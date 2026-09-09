@@ -1,4 +1,3 @@
-import { AcademiaFilterLinks } from '@/components/dashboard/academia-filter-links'
 import { ClientesAlleForm } from '@/components/dashboard/clientes-alle-form'
 import { ClientesAlleStatusChart } from '@/components/dashboard/clientes-alle-status-chart'
 import { ClientesAlleTable } from '@/components/dashboard/clientes-alle-table'
@@ -13,13 +12,12 @@ export default function PreviewClientesAllePage() {
         <p className="page-subtitle">Clientes ativos na Alle Energia, cadastrados manualmente por academia.</p>
       </div>
 
-      <AcademiaFilterLinks basePath="/preview/clientes-alle" academias={MOCK_ACADEMIAS} academiaId={null} />
-
       <ClientesAlleStatusChart clientes={MOCK_CLIENTES_ALLE} />
 
       <ClientesAlleTable
         clientes={MOCK_CLIENTES_ALLE}
         academias={MOCK_ACADEMIAS}
+        academiaFilterBasePath="/preview/clientes-alle"
         onUpdate={mockSave}
         onDelete={mockConfirm}
         onBulkUpdateStatus={mockSave}
