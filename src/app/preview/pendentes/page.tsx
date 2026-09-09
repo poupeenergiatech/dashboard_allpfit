@@ -1,3 +1,4 @@
+import { AcademiaFilterLinks } from '@/components/dashboard/academia-filter-links'
 import { PendenciaSection } from '@/components/dashboard/pendencia-section'
 import { PendenciasPorAcademiaChart } from '@/components/dashboard/pendencias-por-academia-chart'
 import { PendenciasTotalCard } from '@/components/dashboard/pendencias-total-card'
@@ -18,7 +19,12 @@ export default function PreviewPendentesPage() {
         <p className="page-subtitle">Quantos alunos estão com assinatura de termo pendente, por academia.</p>
       </div>
 
-      <PendenciasTotalCard rows={MOCK_PENDENCIAS_POR_ACADEMIA} />
+      {/* Espelha o bloco de /pendentes real: filtro de academia + total numa
+          barra só (essa página de prévia não tinha o filtro antes). */}
+      <div className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <AcademiaFilterLinks basePath="/preview/pendentes" academias={MOCK_ACADEMIAS} academiaId={null} bare />
+        <PendenciasTotalCard rows={MOCK_PENDENCIAS_POR_ACADEMIA} bare />
+      </div>
 
       <PendenciasPorAcademiaChart rows={MOCK_PENDENCIAS_POR_ACADEMIA} />
       <PendenciasTrendChart series={MOCK_PENDENCIAS_TREND} />

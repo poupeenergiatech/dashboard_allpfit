@@ -55,9 +55,12 @@ export default async function PendentesPage({
         )}
       </div>
 
-      <AcademiaFilterLinks basePath="/pendentes" academias={academias} academiaId={requestedAcademiaId} />
-
-      <PendenciasTotalCard rows={porAcademia} />
+      {/* Filtro de academia + total de pendências numa barra só (antes eram 2
+          cards empilhados) — pedido do usuário. */}
+      <div className="card flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <AcademiaFilterLinks basePath="/pendentes" academias={academias} academiaId={requestedAcademiaId} bare />
+        <PendenciasTotalCard rows={porAcademia} bare />
+      </div>
 
       <PendenciasPorAcademiaChart rows={porAcademia} />
       <PendenciasTrendChart series={trend} />

@@ -1,3 +1,4 @@
+import { AnimatedNumber } from './animated-number'
 import { FunnelCard } from './funnel-card'
 import type { PendenciaPorAcademia } from '@/lib/dashboard/fetch-pendencias-assinatura'
 
@@ -16,8 +17,32 @@ const PEN_ICON = (
 // Soma do backlog atual (última quantidade lançada por academia, ver
 // fetchPendenciasPorAcademia) — é o mesmo dado do gráfico de barras logo abaixo,
 // só que como número único de "olhar rápido".
-export function PendenciasTotalCard({ rows }: { rows: PendenciaPorAcademia[] }) {
+export function PendenciasTotalCard({
+  rows,
+  bare = false,
+}: {
+  rows: PendenciaPorAcademia[]
+  // Versão compacta (ícone + label + número, sem o card próprio) pra compor
+  // ao lado do filtro de academia numa barra só — ver pendentes/page.tsx.
+  bare?: boolean
+}) {
   const total = rows.reduce((sum, row) => sum + row.quantidade, 0)
+
+  if (bare) {
+    return (
+      <div className="flex items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
+          {PEN_ICON}
+        </span>
+        <div>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total de pendências</p>
+          <p className="text-2xl font-extrabold tabular-nums tracking-tight text-slate-900 dark:text-white">
+            <AnimatedNumber value={total} />
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-xs">
