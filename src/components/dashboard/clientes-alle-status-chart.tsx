@@ -6,16 +6,22 @@ import { getChartChrome } from '@/lib/dashboard/chart-theme'
 import { useIsDark } from '@/lib/dashboard/use-is-dark'
 import type { ClienteAlle, ClienteAlleStatus } from '@/lib/dashboard/fetch-clientes-alle'
 
-// Ordem "de saúde decrescente" (ativo -> pendente -> as duas fricções -> neutro ->
-// reprovado) — mesma leitura de cima a baixo que os filtros da tabela. As cores são
-// as mesmas dos badges de status em toda a tela (clientes-alle-table.tsx,
-// clientes-convertidos-table.tsx), exceto sem_informacao: o slate-400/700 do badge
-// tem chroma baixo demais pra virar preenchimento de barra (validate_palette.js
-// FAIL de chroma floor) — um azul-acinzentado no lugar mantém a leitura "neutro/sem
-// dado" sem falhar o mínimo de saturação. Paleta validada com
-// validate_palette.js --mode light/dark (6 categorias, ordem fixa importa: mudar a
-// posição de com_impedimentos pra perto de reprovado faz o ΔE cair abaixo do piso —
-// revalidar se reordenar).
+// Ordem "de saúde decrescente" (ativo -> pendente -> as duas fricções -> soma das
+// fricções -> neutro -> reprovado) — mesma leitura de cima a baixo que os filtros
+// da tabela. As cores das linhas de status são as mesmas dos badges em toda a tela
+// (clientes-alle-table.tsx, clientes-convertidos-table.tsx), exceto sem_informacao:
+// o slate-400/700 do badge tem chroma baixo demais pra virar preenchimento de barra
+// (validate_palette.js FAIL de chroma floor) — um azul-acinzentado no lugar mantém
+// a leitura "neutro/sem dado" sem falhar o mínimo de saturação.
+//
+// "Reprovados Alle" (com_impedimentos + falta_documentos somados) é a única linha
+// que não é um status real — é o valor calculado a partir das duas linhas
+// anteriores, inserido logo depois delas (pedido do usuário: virar barra própria
+// no gráfico, em vez do texto que ficava no cabeçalho). Fica com cor própria
+// (violeta, roxo-700) pra não competir com fricções/reprovado.
+//
+// Paleta validada com validate_palette.js --mode light/dark (7 linhas, ordem fixa
+// importa — revalidar as 7 cores juntas se reordenar ou trocar qualquer uma).
 const STATUS_META: { status: ClienteAlleStatus; label: string; light: string; dark: string }[] = [
   { status: 'ativo', label: 'Ativo', light: '#10b981', dark: '#059669' },
   { status: 'pendente', label: 'Pendente', light: '#f59e0b', dark: '#d97706' },
@@ -25,42 +31,47 @@ const STATUS_META: { status: ClienteAlleStatus; label: string; light: string; da
   { status: 'reprovado', label: 'Reprovado', light: '#f43f5e', dark: '#e11d48' },
 ]
 
+const REPROVADOS_ALLE_COLOR = { light: '#6d28d9', dark: '#6d28d9' }
+
 export function ClientesAlleStatusChart({ clientes }: { clientes: ClienteAlle[] }) {
   const isDark = useIsDark()
   const chrome = getChartChrome(isDark)
 
-  const { data, reprovadosAlle } = useMemo(() => {
+  const data = useMemo(() => {
     const counts = new Map<ClienteAlleStatus, number>()
     for (const c of clientes) counts.set(c.status, (counts.get(c.status) ?? 0) + 1)
-    const data = STATUS_META.map((meta) => {
-      const value = counts.get(meta.status) ?? 0
-      // Valor embutido no rótulo do eixo (não um LabelList por cima da barra) — com
-      // 0 clientes a barra tem largura zero e o LabelList simplesmente não desenha
-      // nada ali, o que lê como "esqueceram de mostrar esse status" em vez de "zero
-      // gente nesse status". Embutir garante que o 0 apareça sempre.
-      return { label: `${meta.label} — ${value}`, value, color: isDark ? meta.dark : meta.light }
-    })
-    // "Reprovados Alle" = com_impedimentos + falta_documentos somados. Vivia num
-    // card separado acima do gráfico; movido pra cá (pedido do usuário) pra ficar
-    // do lado das duas barras que ele soma, sem precisar somá-las de cabeça e sem
-    // um card só pra isso.
+
+    // Valor embutido no rótulo do eixo (não um LabelList por cima da barra) — com
+    // 0 clientes a barra tem largura zero e o LabelList simplesmente não desenha
+    // nada ali, o que lê como "esqueceram de mostrar esse status" em vez de "zero
+    // gente nesse status". Embutir garante que o 0 apareça sempre.
+    function row(label: string, value: number, color: string) {
+      return { label: `${label} — ${value}`, value, color }
+    }
+
+    const rows = STATUS_META.map((meta) => row(meta.label, counts.get(meta.status) ?? 0, isDark ? meta.dark : meta.light))
+
     const reprovadosAlle = (counts.get('com_impedimentos') ?? 0) + (counts.get('falta_documentos') ?? 0)
-    return { data, reprovadosAlle }
+    const reprovadosAlleRow = row(
+      'Reprovados Alle',
+      reprovadosAlle,
+      isDark ? REPROVADOS_ALLE_COLOR.dark : REPROVADOS_ALLE_COLOR.light
+    )
+
+    // Insere logo depois de "Falta documentos" (índice 3 em STATUS_META), pra ficar
+    // ao lado das duas linhas que soma.
+    rows.splice(4, 0, reprovadosAlleRow)
+    return rows
   }, [clientes, isDark])
 
   if (clientes.length === 0) return null
 
   return (
     <div className="card p-5">
-      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Clientes Alle por status</p>
-        <p className="text-xs text-slate-400 dark:text-slate-500">
-          Reprovados Alle:{' '}
-          <span className="font-semibold text-slate-600 dark:text-slate-300">{reprovadosAlle}</span>
-          <span className="ml-1">(com impedimentos + falta documentos)</span>
-        </p>
-      </div>
-      <div style={{ height: 260 }}>
+      <p className="mb-3 text-sm font-medium text-slate-500 dark:text-slate-400">Clientes Alle por status</p>
+      {/* 300px pra 7 linhas agora (era 260 pra 6) — mantém a mesma altura por
+          linha (~43px) de antes da linha "Reprovados Alle" entrar. */}
+      <div style={{ height: 300 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ top: 4, right: 32, left: 8, bottom: 0 }}>
             <CartesianGrid stroke={chrome.grid} horizontal={false} />
