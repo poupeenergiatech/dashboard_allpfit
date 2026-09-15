@@ -9,7 +9,7 @@ import { getRequestOrigin } from '@/lib/dashboard/request-origin'
 import { sendUserCredentialsEmail } from '@/lib/email/send-user-credentials-email'
 import type { UserCredentialsEmailVariant } from '@/lib/email/user-credentials-email-template'
 
-const VALID_ROLES: UserRole[] = ['super_admin', 'direcao', 'gestor', 'coordenador', 'visualizador']
+const VALID_ROLES: UserRole[] = ['super_admin', 'direcao', 'gestor', 'visualizador']
 const MIN_PASSWORD_LENGTH = 8
 
 // Reusado por updateUser/deleteUser/resetUserPassword pra saber o role ATUAL do
@@ -93,9 +93,9 @@ export async function createUser(formData: FormData): Promise<PasswordResult> {
     throw new Error('Apenas Super Admin pode criar uma conta Super Admin.')
   }
 
-  const needsAcademia = role === 'coordenador' || role === 'visualizador'
+  const needsAcademia = role === 'gestor' || role === 'visualizador'
   if (needsAcademia && !academiaId) {
-    throw new Error('Coordenador e Visualizador precisam de uma academia vinculada.')
+    throw new Error('Gestor e Visualizador precisam de uma academia vinculada.')
   }
 
   const result = resolvePassword(formData)
@@ -169,7 +169,7 @@ export async function resetUserPassword(userId: string, formData: FormData): Pro
 }
 
 // Edita email/role/academia de um usuário já existente. Mesma validação de
-// createUser (coordenador/visualizador precisam de academia); se a mudança de role
+// createUser (gestor e visualizador precisam de academia); se a mudança de role
 // tirar o único Super Admin restante do cargo, bloqueia.
 export async function updateUser(userId: string, formData: FormData) {
   const profile = await getCurrentUserProfile()
@@ -193,9 +193,9 @@ export async function updateUser(userId: string, formData: FormData) {
     throw new Error('Apenas Super Admin pode promover alguém a Super Admin.')
   }
 
-  const needsAcademia = role === 'coordenador' || role === 'visualizador'
+  const needsAcademia = role === 'gestor' || role === 'visualizador'
   if (needsAcademia && !academiaId) {
-    throw new Error('Coordenador e Visualizador precisam de uma academia vinculada.')
+    throw new Error('Gestor e Visualizador precisam de uma academia vinculada.')
   }
 
   if (role !== 'super_admin') {

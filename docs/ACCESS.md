@@ -33,9 +33,14 @@ feita em código, não no banco)._
 | Role | O que vê | O que pode editar |
 | --- | --- | --- |
 | **Super Admin** | Todas as academias, todos os módulos | Tudo, incluindo gestão de usuários |
-| **Gestor** | Todas as academias | Tudo, exceto gestão de usuários |
-| **Coordenador** | Só a própria academia | Dados manuais e pendentes da própria academia |
-| **Visualizador** | Só a própria academia | Nada — acesso somente leitura |
+| **Direção** | Todas as academias | Gestão de usuários e ações operacionais; sem Configurações |
+| **Gestor** | Só a própria academia (vínculo obrigatório) | Dados manuais, pendentes, Financeiro e notas fiscais da própria academia |
+| **Visualizador** | Só a própria academia (vínculo obrigatório) | Nada — acesso somente leitura |
+
+Gestor e Visualizador sempre têm uma academia vinculada — não existe conta de
+nenhum dos dois sem unidade. O painel comparativo (`/gestores`, "Dashboard" no
+menu) é a única exceção: todo Gestor vê o comparativo entre todas as unidades ali,
+mesmo enxergando só a própria em todo o resto do sistema.
 
 ## Como usar cada módulo
 

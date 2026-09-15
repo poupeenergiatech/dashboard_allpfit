@@ -25,7 +25,7 @@ function keyOf(academiaId: string, day: string): string {
 // Chamada como Server Action direto do hook client (use-funnel-data.ts) — roda em
 // Node.js runtime, então pode falar com o Postgres. requestedAcademiaId vem do filtro
 // escolhido no client, mas é sempre resolvido de novo aqui via scopeAcademiaId: sem
-// RLS, essa é a única barreira real contra um coordenador pedindo dados de outra
+// RLS, essa é a única barreira real contra um gestor pedindo dados de outra
 // academia manipulando o valor no client.
 export async function fetchFunnelCounts(
   requestedAcademiaId: string | null,

@@ -23,7 +23,7 @@ export type NotaFiscalEntry = {
 }
 
 // requestedAcademiaId sempre resolvido de novo via scopeAcademiaId (mesmo motivo de
-// fetchFunnelCounts) — sem RLS, essa é a barreira real contra um coordenador pedindo
+// fetchFunnelCounts) — sem RLS, essa é a barreira real contra um gestor pedindo
 // notas de outra academia manipulando o valor no client. null (sem academia
 // selecionável, ou nenhuma academia ativa) devolve lista vazia em vez de todas —
 // diferente do resto do funil, nota fiscal é sempre por academia específica, "todas"

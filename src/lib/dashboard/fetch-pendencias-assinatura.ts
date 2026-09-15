@@ -17,7 +17,7 @@ export type PendenciaPorAcademia = {
 //
 // requestedAcademiaId vem do filtro de academia da tela (?academia=, ver page.tsx) —
 // scopeAcademiaId ignora o valor pedido pra quem só enxerga a própria academia, então
-// um coordenador não consegue ver outra unidade manipulando a URL.
+// um gestor não consegue ver outra unidade manipulando a URL.
 export async function fetchPendenciasPorAcademia(
   profile: UserProfile,
   requestedAcademiaId?: string | null

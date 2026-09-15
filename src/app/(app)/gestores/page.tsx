@@ -14,16 +14,16 @@ export default async function GestoresPage() {
   }
 
   // Sem profile aqui de propósito — fetchActiveAcademias(profile) escoparia pra
-  // uma unidade só no caso de coordenador, mas o painel mostra todas pra quem tem
-  // acesso (ver canAccessPainelGestores), então o filtro precisa listar todas
-  // também, não só a do usuário.
+  // uma unidade só, mas o painel mostra todas pra quem tem acesso (ver
+  // canAccessPainelGestores), então o filtro precisa listar todas também, não só
+  // a do usuário.
   const academias = await fetchActiveAcademias()
 
-  // Coordenador continua vendo o painel inteiro (comparativo entre todas as
-  // unidades, ver canAccessPainelGestores) — só o filtro parte pré-selecionado na
-  // própria unidade a cada carregamento da página, em vez de "Todas as
-  // academias", pedido explícito do usuário. Nada trava: o select continua
-  // habilitado, dá pra trocar pra outra unidade ou "Todas" a qualquer momento.
+  // Gestor continua vendo o painel inteiro (comparativo entre todas as unidades,
+  // ver canAccessPainelGestores) — só o filtro parte pré-selecionado na própria
+  // unidade a cada carregamento da página, em vez de "Todas as academias", pedido
+  // explícito do usuário. Nada trava: o select continua habilitado, dá pra trocar
+  // pra outra unidade ou "Todas" a qualquer momento.
   const initialAcademiaId = seesAllAcademias(profile.role) ? null : profile.academiaId
 
   return (

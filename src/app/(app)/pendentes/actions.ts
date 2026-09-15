@@ -21,7 +21,7 @@ export async function savePendenciaAssinatura(formData: FormData) {
     throw new Error('Quantidade inválida.')
   }
 
-  // Sem RLS, essa é a barreira de verdade: um coordenador não pode lançar dados em
+  // Sem RLS, essa é a barreira de verdade: um gestor não pode lançar dados em
   // outra academia mesmo manipulando o campo escondido do formulário.
   const academiaId = scopeAcademiaId(profile, requestedAcademiaId)
   if (academiaId !== requestedAcademiaId) {

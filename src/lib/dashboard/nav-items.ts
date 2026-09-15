@@ -19,7 +19,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: 'Dashboard',
     href: '/gestores',
-    roles: ['super_admin', 'direcao', 'gestor', 'coordenador'],
+    roles: ['super_admin', 'direcao', 'gestor'],
     icon: 'trend',
     hint: 'Resumo comparativo entre unidades — performance, scans, conversões e treinamento num só lugar.',
     group: 'PRINCIPAL',

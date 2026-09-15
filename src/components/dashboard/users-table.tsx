@@ -17,7 +17,7 @@ export type UserRow = {
   academiaNome: string | null
 }
 
-type RoleFilter = 'todos' | 'super_admin' | 'direcao' | 'gestor' | 'coordenador' | 'visualizador'
+type RoleFilter = 'todos' | 'super_admin' | 'direcao' | 'gestor' | 'visualizador'
 type ResetPasswordAction = (userId: string, formData: FormData) => Promise<PasswordResult>
 type UpdateAction = (userId: string, formData: FormData) => Promise<void>
 type DeleteAction = (userId: string) => Promise<void>
@@ -28,7 +28,6 @@ const ROLE_OPTIONS: { value: RoleFilter; label: string }[] = [
   { value: 'super_admin', label: 'Super Admin' },
   { value: 'direcao', label: 'Direção' },
   { value: 'gestor', label: 'Gestor' },
-  { value: 'coordenador', label: 'Coordenador' },
   { value: 'visualizador', label: 'Visualizador' },
 ]
 
@@ -162,7 +161,7 @@ export function UsersTable({
                       )}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                      {u.academiaNome ?? (u.role === 'super_admin' || u.role === 'direcao' || u.role === 'gestor' ? 'Todas' : '—')}
+                      {u.academiaNome ?? (u.role === 'super_admin' || u.role === 'direcao' ? 'Todas' : '—')}
                     </td>
                     <td className="px-4 py-3">
                       {canManageTarget(u.role) ? (
@@ -227,16 +226,16 @@ function UserEditRow({
   onCancel: () => void
   onSaved: () => void
 }) {
-  const [role, setRole] = useState(user.role ?? 'coordenador')
+  const [role, setRole] = useState(user.role ?? 'gestor')
   const [pending, startTransition] = useTransition()
   const { showToast } = useToast()
-  const needsAcademia = role === 'coordenador' || role === 'visualizador'
+  const needsAcademia = role === 'gestor' || role === 'visualizador'
   // Direção não pode promover ninguém a Super Admin (ver canManageUserAccount em
   // profile.ts) — a opção nem aparece no dropdown.
   const availableRoles =
     currentUserRole === 'direcao'
-      ? (['direcao', 'gestor', 'coordenador', 'visualizador'] as const)
-      : (['super_admin', 'direcao', 'gestor', 'coordenador', 'visualizador'] as const)
+      ? (['direcao', 'gestor', 'visualizador'] as const)
+      : (['super_admin', 'direcao', 'gestor', 'visualizador'] as const)
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()

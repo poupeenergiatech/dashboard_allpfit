@@ -436,11 +436,17 @@ export const MOCK_GESTORES_PANEL: GestoresPanelData = {
 
 export const MOCK_USERS: UserRow[] = [
   { id: 'u1', email: 'superadmin@allpfit.dev', role: 'super_admin', academiaId: null, academiaNome: null },
-  { id: 'u2', email: 'gestor@allpfit.dev', role: 'gestor', academiaId: null, academiaNome: null },
+  {
+    id: 'u2',
+    email: 'gestor.tatuape@allpfit.dev',
+    role: 'gestor',
+    academiaId: MOCK_ACADEMIAS[2].id,
+    academiaNome: MOCK_ACADEMIAS[2].nome,
+  },
   {
     id: 'u3',
-    email: 'coordenador.pinheiros@allpfit.dev',
-    role: 'coordenador',
+    email: 'gestor.pinheiros@allpfit.dev',
+    role: 'gestor',
     academiaId: MOCK_ACADEMIAS[0].id,
     academiaNome: MOCK_ACADEMIAS[0].nome,
   },

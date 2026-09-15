@@ -4,7 +4,6 @@ export const ROLE_LABEL: Record<UserRole, string> = {
   super_admin: 'Super Admin',
   direcao: 'Direção',
   gestor: 'Gestor',
-  coordenador: 'Coordenador',
   visualizador: 'Visualizador',
 }
 
@@ -17,6 +16,5 @@ export const ROLE_BADGE_CLASS: Record<UserRole, string> = {
   super_admin: 'bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-400',
   direcao: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
   gestor: 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400',
-  coordenador: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
   visualizador: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
 }

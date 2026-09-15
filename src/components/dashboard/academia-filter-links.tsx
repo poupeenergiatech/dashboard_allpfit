@@ -28,7 +28,7 @@ export function AcademiaFilterLinks({
 }) {
   const router = useRouter()
 
-  // Coordenador/visualizador só têm 1 academia visível — nesse caso não faz
+  // Gestor escopado a 1 unidade/visualizador só têm 1 academia visível — nesse caso não faz
   // sentido mostrar o filtro (mesma regra da FilterBar).
   if (academias.length <= 1) return null
 

@@ -2,7 +2,7 @@ import { cache } from 'react'
 import { pool } from '@/lib/db/pool'
 import { getSessionUserId } from './session'
 
-export type UserRole = 'super_admin' | 'direcao' | 'gestor' | 'coordenador' | 'visualizador'
+export type UserRole = 'super_admin' | 'direcao' | 'gestor' | 'visualizador'
 
 export type UserProfile = {
   userId: string
@@ -143,30 +143,37 @@ export function canLaunchManualScans(role: UserRole): boolean {
   return role === 'super_admin'
 }
 
+// Gestor sempre exige uma academia vinculada (ver validação em usuarios/actions.ts)
+// — não existe mais "gestor pleno" que enxerga todas as unidades, então essa
+// função só é true pra Super Admin/Direção. O escopo de um gestor pra sua própria
+// academia vem de scopeAcademiaId, que devolve profile.academiaId pra quem não
+// está aqui.
 export function seesAllAcademias(role: UserRole): boolean {
+  return role === 'super_admin' || role === 'direcao'
+}
+
+// Dashboard (/gestores, exibido como "Dashboard" no menu): resumo comparativo entre
+// TODAS as unidades, feito pra gerar competição — inclui Gestor de propósito,
+// diferente de seesAllAcademias, porque o objetivo ali é justamente deixar quem
+// toca uma unidade só ver como ela se compara às outras, não só a si mesma.
+// visualizador fica de fora (leitura já é ampla demais pra também ganhar um placar
+// entre unidades).
+export function canAccessPainelGestores(role: UserRole): boolean {
   return role === 'super_admin' || role === 'direcao' || role === 'gestor'
 }
 
-// Dashboard (/gestores, exibido como "Dashboard" no menu): resumo comparativo entre TODAS as unidades, feito
-// pra gerar competição — inclui coordenador de propósito, diferente de
-// seesAllAcademias, porque o objetivo ali é justamente deixar um coordenador ver como
-// a própria unidade se compara às outras, não só a si mesmo. visualizador fica de
-// fora (leitura já é ampla demais pra também ganhar um placar entre unidades).
-export function canAccessPainelGestores(role: UserRole): boolean {
-  return role === 'super_admin' || role === 'direcao' || role === 'gestor' || role === 'coordenador'
-}
-
-// Financeiro: Super Admin, Direção e Gestor — dado sensível o bastante pra ficar
-// de fora do alcance de coordenador (pedido explícito do usuário). Gate de
-// VISUALIZAÇÃO só; escrita (anexar nota fiscal) é canManageNotasFiscais.
+// Financeiro: Super Admin, Direção e Gestor — cada um só vê o que já é escopado
+// pra ele (Gestor sempre tem academia_id, então só vê a própria unidade, ver
+// scopeAcademiaId). Gate de VISUALIZAÇÃO só; escrita (anexar nota fiscal) é
+// canManageNotasFiscais.
 export function canAccessFinanceiro(role: UserRole): boolean {
   return role === 'super_admin' || role === 'direcao' || role === 'gestor'
 }
 
-// Anexar/remover PDF de nota fiscal no calendário de /financeiro — Super Admin
-// e Gestor. Direção enxerga o financeiro inteiro (canAccessFinanceiro) mas só
-// em leitura, mesma regra de canManageManualData; Gestor mantém a escrita que
-// já tinha, sem mudança.
+// Anexar/remover PDF de nota fiscal no calendário de /financeiro — Super Admin e
+// Gestor (escopado à própria academia). Direção enxerga o financeiro inteiro
+// (canAccessFinanceiro) mas só em leitura, mesma regra de canManageManualData;
+// Gestor mantém a escrita que já tinha, sem mudança.
 export function canManageNotasFiscais(role: UserRole): boolean {
   return role === 'super_admin' || role === 'gestor'
 }
@@ -210,9 +217,10 @@ export function canManageTreinamentosWebinar(role: UserRole): boolean {
 // qualquer role já vê nessa página. Super Admin, Direção e Gestor (pedido
 // explícito do usuário — Super Admin/Direção já tinham a mesma informação,
 // com edição, em /clientes-alle, mas pediram essa visão agrupada aqui também
-// por conveniência); Coordenador e Visualizador continuam só com os
-// agregados. Sempre em modo leitura em /pendentes, mesmo pra quem teria
-// canManageClientesAlle noutra tela — ver AlunosPendentesPorUnidade.
+// por conveniência; Gestor sempre escopado à própria academia via
+// scopeAcademiaId); Visualizador continua só com os agregados. Sempre em modo
+// leitura em /pendentes, mesmo pra quem teria canManageClientesAlle noutra tela —
+// ver AlunosPendentesPorUnidade.
 export function canViewAlunosPendentesList(role: UserRole): boolean {
   return role === 'super_admin' || role === 'direcao' || role === 'gestor'
 }

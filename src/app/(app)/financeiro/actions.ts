@@ -34,10 +34,10 @@ export async function uploadNotaFiscal(formData: FormData) {
   if (file.type !== 'application/pdf') throw new Error('Só arquivos PDF são aceitos.')
   if (file.size > MAX_SIZE_BYTES) throw new Error('Arquivo maior que 10MB.')
 
-  // canManageNotasFiscais hoje só libera super_admin/gestor, e os dois enxergam todas
-  // as academias (seesAllAcademias) — scopeAcademiaId aqui é rede de segurança caso
-  // essa permissão passe a incluir uma role escopada no futuro (mesmo padrão de
-  // clientes-alle/actions.ts).
+  // Sem RLS, essa é a barreira real: canManageNotasFiscais libera super_admin/gestor,
+  // mas gestor é sempre escopado à própria academia (seesAllAcademias) — sem isso,
+  // um gestor conseguiria anexar nota fiscal de outra unidade manipulando o campo
+  // escondido do formulário (mesmo padrão de clientes-alle/actions.ts).
   const academiaId = scopeAcademiaId(profile, requestedAcademiaId)
   if (academiaId !== requestedAcademiaId) {
     throw new Error('Sem permissão para anexar nota fiscal dessa academia.')

@@ -25,7 +25,7 @@ export type ClienteAlle = {
 // db/migrations/0014_clientes_alle.sql, 0015_clientes_alle_status.sql e
 // importClientesAlleCsv em app/(app)/clientes-alle/actions.ts). Sem sincronização
 // automática por enquanto. requestedAcademiaId passa por scopeAcademiaId, mesmo
-// padrão de fetchAcademiaPerformance: roles escopados (coordenador/visualizador)
+// padrão de fetchAcademiaPerformance: roles escopados (gestor de 1 unidade/visualizador)
 // sempre caem na própria academia, mesmo que peçam outra.
 export async function fetchClientesAlle(
   profile: UserProfile,

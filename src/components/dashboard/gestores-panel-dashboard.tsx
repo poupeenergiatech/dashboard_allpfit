@@ -38,7 +38,7 @@ export function GestoresPanelDashboard({
   isSuperAdmin = false,
 }: {
   academias: Academia[]
-  // Unidade vinculada de quem está vendo (coordenador) — filtro parte já
+  // Unidade vinculada de quem está vendo (gestor) — filtro parte já
   // selecionado nela a cada carregamento da página, em vez de "Todas as
   // academias" (ver comentário em gestores/page.tsx). null pra quem enxerga
   // todas as academias, que continua vendo o painel sem filtro por padrão.

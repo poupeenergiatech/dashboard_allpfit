@@ -8,7 +8,7 @@ import { buildAcademiaNomeResolver } from '@/lib/dashboard/resolve-academia-by-n
 import type { ClienteAlleStatus } from '@/lib/dashboard/fetch-clientes-alle'
 
 // A página /clientes-alle inteira já é restrita a Super Admin e Direção (ver
-// canManageUsers em clientes-alle/page.tsx — gestor, coordenador e visualizador nem
+// canManageUsers em clientes-alle/page.tsx — gestor e visualizador nem
 // chegam a ver a tabela). Escrita fica ainda mais restrita, só Super Admin — Direção
 // só visualiza, sem editar/reprovar/excluir/selecionar em massa nem cadastrar/
 // importar (ver canManageClientesAlle).

@@ -16,7 +16,7 @@ function rate(value: number, base: number): number | null {
 // adiciona reprovados/clientes Alle, que não são etapas sequenciais do funil — por
 // isso não recebem conversionRate. Convertidos Ane/Manual só aparecem pro Super
 // Admin: é detalhe operacional de canal de entrada, não algo que um
-// gestor/coordenador precise pra ler o funil — o total já soma os dois em "Total de
+// gestor precise pra ler o funil — o total já soma os dois em "Total de
 // clientes convertidos" acima.
 export function FunnelGrid({ counts, isSuperAdmin }: { counts: FunnelCounts; isSuperAdmin: boolean }) {
   const {

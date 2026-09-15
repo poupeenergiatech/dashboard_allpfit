@@ -1,5 +1,6 @@
 // Sprint 2 — S2-14: cria um usuário de teste para cada role (super_admin, direcao,
-// gestor, coordenador, visualizador) e o respectivo user_profiles.
+// gestor, visualizador) e o respectivo user_profiles. Gestor e visualizador são
+// sempre vinculados a uma academia (obrigatório, ver src/lib/auth/profile.ts).
 //
 // Requer o schema já migrado e pelo menos uma academia cadastrada
 // (rode db/seed/academias.sql antes).
@@ -34,8 +35,7 @@ const TEST_PASSWORD = 'TesteAllpFit#2026'
 const USERS = [
   { role: 'super_admin', email: 'teste.superadmin@allpfit.dev', scoped: false },
   { role: 'direcao', email: 'teste.direcao@allpfit.dev', scoped: false },
-  { role: 'gestor', email: 'teste.gestor@allpfit.dev', scoped: false },
-  { role: 'coordenador', email: 'teste.coordenador@allpfit.dev', scoped: true },
+  { role: 'gestor', email: 'teste.gestor@allpfit.dev', scoped: true },
   { role: 'visualizador', email: 'teste.visualizador@allpfit.dev', scoped: true },
 ]
 
@@ -53,7 +53,7 @@ async function main() {
   }
 
   const testAcademiaId = academias[0].id
-  console.log(`Usuários "coordenador" e "visualizador" de teste serão vinculados a: ${academias[0].nome}`)
+  console.log(`Usuários "gestor" e "visualizador" de teste serão vinculados a: ${academias[0].nome}`)
 
   const passwordHash = await hashPassword(TEST_PASSWORD)
 

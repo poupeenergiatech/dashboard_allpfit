@@ -10,7 +10,6 @@ const ROLES: { value: string; label: string }[] = [
   { value: 'super_admin', label: 'Super Admin' },
   { value: 'direcao', label: 'Direção' },
   { value: 'gestor', label: 'Gestor' },
-  { value: 'coordenador', label: 'Coordenador' },
   { value: 'visualizador', label: 'Visualizador' },
 ]
 
@@ -31,12 +30,12 @@ export function InviteUserForm({
   // profile.ts) — some a opção do dropdown pra não deixar tentar e levar o erro
   // da action.
   const availableRoles = currentUserRole === 'direcao' ? ROLES.filter((r) => r.value !== 'super_admin') : ROLES
-  const [role, setRole] = useState('coordenador')
+  const [role, setRole] = useState('gestor')
   const [password, setPassword] = useState('')
   const [pending, startTransition] = useTransition()
   const [result, setResult] = useState<PasswordResult | null>(null)
   const { showToast } = useToast()
-  const needsAcademia = role === 'coordenador' || role === 'visualizador'
+  const needsAcademia = role === 'gestor' || role === 'visualizador'
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -49,7 +48,7 @@ export function InviteUserForm({
         setResult(next)
         showToast('Usuário criado.')
         form.reset()
-        setRole('coordenador')
+        setRole('gestor')
         setPassword('')
       } catch (err) {
         showToast(err instanceof Error ? err.message : 'Erro ao criar usuário.', 'error')

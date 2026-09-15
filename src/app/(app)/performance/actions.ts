@@ -34,7 +34,7 @@ export async function saveManualData(formData: FormData) {
     throw new Error('Academia e data são obrigatórios.')
   }
 
-  // Sem RLS, essa é a barreira de verdade: um coordenador não pode lançar dados em
+  // Sem RLS, essa é a barreira de verdade: um gestor não pode lançar dados em
   // outra academia mesmo manipulando o campo escondido do formulário.
   const academiaId = scopeAcademiaId(profile, requestedAcademiaId)
   if (academiaId !== requestedAcademiaId) {

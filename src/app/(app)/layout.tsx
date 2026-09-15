@@ -22,7 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const profile = await getCurrentUserProfile().catch(() => null)
 
   // Super Admin nunca tem o link escondido, então nem consulta o toggle — só
-  // Direção/Gestor/Coordenador/Visualizador dependem dele (ver
+  // Direção/Gestor/Visualizador dependem dele (ver
   // FinanceiroVisibilityToggle em /configuracoes e a mesma checagem em
   // financeiro/page.tsx, que é quem de fato bloqueia o acesso direto pela URL;
   // isso aqui só evita mostrar um link morto no menu).

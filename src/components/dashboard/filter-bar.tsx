@@ -29,7 +29,7 @@ export function FilterBar({
   customRange: DateRange | null
   onCustomRangeChange: (range: DateRange) => void
 }) {
-  // Coordenador/visualizador só têm 1 academia visível (RLS já cuida disso) —
+  // Gestor escopado a 1 unidade/visualizador só têm 1 academia visível (RLS já cuida disso) —
   // nesse caso não faz sentido mostrar "Todas" nem um seletor (não há o que trocar).
   const showAcademiaPicker = academias.length > 1
 
