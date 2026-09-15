@@ -1,7 +1,6 @@
 import { AcademiaFilterLinks } from '@/components/dashboard/academia-filter-links'
 import { PeriodFilterLinks } from '@/components/dashboard/period-filter-links'
 import { ScansDailyTable } from '@/components/dashboard/scans-daily-table'
-import { ScansRankingChart } from '@/components/dashboard/scans-ranking-chart'
 import { ScansRankingTable } from '@/components/dashboard/scans-ranking-table'
 import { ScansSummaryCards } from '@/components/dashboard/scans-summary-cards'
 import { ScansTrendChart } from '@/components/dashboard/scans-trend-chart'
@@ -83,7 +82,6 @@ export default async function ScansPage({
 
       <ScansTrendChart series={summary.series} />
 
-      <ScansRankingChart rows={summary.porAcademia} />
       <ScansRankingTable rows={summary.porAcademia} />
 
       <div>

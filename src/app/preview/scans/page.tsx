@@ -1,5 +1,4 @@
 import { ScansDailyTable } from '@/components/dashboard/scans-daily-table'
-import { ScansRankingChart } from '@/components/dashboard/scans-ranking-chart'
 import { ScansRankingTable } from '@/components/dashboard/scans-ranking-table'
 import { ScansSummaryCards } from '@/components/dashboard/scans-summary-cards'
 import { ScansTrendChart } from '@/components/dashboard/scans-trend-chart'
@@ -17,7 +16,6 @@ export default function PreviewScansPage() {
 
       <ScansTrendChart series={MOCK_SCANS_SUMMARY.series} />
 
-      <ScansRankingChart rows={MOCK_SCANS_SUMMARY.porAcademia} />
       <ScansRankingTable rows={MOCK_SCANS_SUMMARY.porAcademia} />
 
       <div>

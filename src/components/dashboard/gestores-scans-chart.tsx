@@ -5,8 +5,8 @@ import { getChartChrome } from '@/lib/dashboard/chart-theme'
 import { useIsDark } from '@/lib/dashboard/use-is-dark'
 import type { GestoresPanelRow } from '@/lib/dashboard/fetch-gestores-panel'
 
-// Violet = mesma identidade de "scans" usada em /scans (scans-trend-chart.tsx,
-// scans-ranking-chart.tsx). Âmbar pro "hoje" é um par categórico validado com
+// Violet = mesma identidade de "scans" usada em /scans (scans-trend-chart.tsx).
+// Âmbar pro "hoje" é um par categórico validado com
 // scripts/validate_palette.js (skill dataviz) nos dois modos — claro usa #f59e0b
 // (WARN de contraste aceitável com legenda + rótulos visíveis, que este gráfico já
 // tem); escuro precisa do tom mais escuro #d97706 pra entrar na faixa de
